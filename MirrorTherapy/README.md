@@ -29,7 +29,7 @@ Please merge to the project directory.
 
 ## Usage
 1. boot up Ubuntu12.04 on VMware.
-2. start SIGServer on Ubuntu.
+2. start SIGServer on Ubuntu. SIGVerse must be sigverse-2.2.0.  
 3. start SIGViewer on Windows8.
 4. push start button on SIGViewer to start simulation.
 5. edit MirrorTherapy.bat, set your IPadress and port number of Ubuntu.
