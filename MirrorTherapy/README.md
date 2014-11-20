@@ -1,8 +1,7 @@
 Name
 ====
-MirrorTherapy
-
-Overview
+MirrorTherapy  
+Overview  
  Rehabilitation project of phantom limb pain, as Visual Studio 2013 C++ project.
 
 ## Description
