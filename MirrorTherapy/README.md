@@ -21,7 +21,7 @@ include
 library  
 ../lib: SIGVerse library file and OpenNI library file needed  
 rutime  
-../Release: OpenCV dynamic library files needed  
+../Release: OpenCV dynamic link library files needed  
 
 you can download from below:  
 <**********>  
