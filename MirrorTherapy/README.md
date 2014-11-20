@@ -16,32 +16,33 @@ Overview
 ## VS. 
 
 ## Requirement
- include 
- ../include: SIGVerse header files and OpenNI header files needed
- library
- ../lib: SIGVerse library file and OpenNI library file needed
- rutime
- ../Release: OpenCV dynamic library files needed
+include  
+../include: SIGVerse header files and OpenNI header files needed  
+library  
+../lib: SIGVerse library file and OpenNI library file needed  
+rutime  
+../Release: OpenCV dynamic library files needed  
 
- you can download from below:
- socio4:/home/tome-ikeda/MirrorTherapy_additional_files
- Please merge to the project directory.
+you can download from below:  
+<socio4:/home/tome-ikeda/MirrorTherapy_additional_files>  
+Please merge to the project directory.  
 
 ## Usage
- 1. boot up Ubuntu12.04 on VMware.
- 2. start SIGServer on Ubuntu.
- 3. start SIGViewer on Windows8.
- 4. push start button on SIGViewer to start simulation.
- 5. edit MirrorTherapy.bat, set your IPadress and port number of Ubuntu.
- 6. execute MirrorTherapy.bat.
- 7. move your body infront fo Kinect sensor.
+1. boot up Ubuntu12.04 on VMware.
+2. start SIGServer on Ubuntu.
+3. start SIGViewer on Windows8.
+4. push start button on SIGViewer to start simulation.
+5. edit MirrorTherapy.bat, set your IPadress and port number of Ubuntu.
+6. execute MirrorTherapy.bat.
+7. move your body infront fo Kinect sensor.
 
 ## Install
- set any place
+ set any place  
 
 ## Contribution
 
 ## Licence
 
 ## Author
- National Institute of Informatics
+National Institute of Informatics  
+ 
