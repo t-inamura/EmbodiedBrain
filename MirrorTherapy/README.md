@@ -24,7 +24,7 @@ rutime
 ../Release: OpenCV dynamic library files needed  
 
 you can download from below:  
-<socio4:/home/tome-ikeda/MirrorTherapy_additional_files>  
+<**********>  
 Please merge to the project directory.  
 
 ## Usage
