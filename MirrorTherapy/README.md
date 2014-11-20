@@ -8,7 +8,7 @@ Overview
 ## Description
  if you lost your limbs or arms, you might suffer from pain of them even they doesn't exist. 
  That is called "phantom limb pain". You might relieve your pain with "MirrorTherapy". 
- "MirrorTherapy" is that you move existing limb or arm int the  mirror, recognizing it as a lost limb or arm. 
+ "MirrorTherapy" is that you move existing limb or arm in the  mirror, recognizing it as a lost limb or arm. 
  MirrorTherapy project make the therapy efficient and easy with Kinect V2 and Oculus Rift. 
 
 ## Demo
