@@ -4,11 +4,6 @@
 # Exception for unchangeable libs.
 
 # User-specific files
-Release/
-Debug/
-packages/
-lib/
-include/
 *.suo
 *.user
 *.sln.docstates
