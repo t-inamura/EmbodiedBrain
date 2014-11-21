@@ -41,7 +41,7 @@ MirrorTherapy
  4. push start button on SIGViewer to start simulation.
  5. edit MirrorTherapy.bat, set your IPadress and port number of Ubuntu.
  6. execute MirrorTherapy.bat.
- 7. move your body infront fo Kinect sensor.
+ 7. move your body in front fo Kinect sensor.
 
 ## Install
  set any place  
