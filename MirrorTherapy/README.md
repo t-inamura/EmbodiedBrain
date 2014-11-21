@@ -2,7 +2,7 @@ Name
 ====
 MirrorTherapy  
 
-Overview  
+## Overview  
  Rehabilitation project of phantom limb pain with Kinect V2, \as Visual Studio 2013 C++ project.
 
 ## Description
@@ -30,7 +30,7 @@ Overview
 ## Usage
  1. boot up Ubuntu12.04 on VMware.
  2. start SIGServer on Ubuntu. SIGVerse must be sigverse-2.2.0.  
-    $ cd /home/sigverse/sigverse-2.2.0/share/sigverse/data
+    $ cd /home/sigverse/sigverse-2.2.0/share/sigverse/data  
     $ sigserver.sh -w ./MyWorld.xml(filename) -p 9000(port number)  
  3. start SIGViewer on Windows8.
  4. push start button on SIGViewer to start simulation.
