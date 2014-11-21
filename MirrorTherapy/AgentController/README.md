@@ -3,7 +3,7 @@ Name
 MirrorTherapy  
 
 ## Overview  
- Rehabilitation project of phantom limb pain with Kinect V2, \as Visual Studio 2013 C++ project.
+ Rehabilitation project of phantom limb pain with Kinect V2, as C++ project.
 
 ## Description
  If you lost your limbs or arms, you might suffer from pain of them even they doesn't exist. 
@@ -17,21 +17,8 @@ MirrorTherapy
 
 ## Requirement
  Please install SIGServer-2.2.0 and SIGViewer-2.2.0 as below:  
- <http://www.sigverse.com/wiki/en/index.php?Tutorial>  
- Please install Visual Studio 2013  
+ <http://www.sigverse.com/wiki/en/index.php?Tutorial>   
    
- Project settings below:  
- include  
- ../include: SIGVerse header files and OpenNI header files needed  
- library  
- ../lib: SIGVerse library file and OpenNI library file needed  
- rutime  
- ../Release: OpenCV dynamic link library files and a config file needed  
-
- you can download from below:  
- <**********>  
- Please merge to the project directory.  
-
 ## Usage
  1. boot up Ubuntu12.04 on VMware.
  2. start SIGServer on Ubuntu. SIGVerse must be sigverse-2.2.0.  

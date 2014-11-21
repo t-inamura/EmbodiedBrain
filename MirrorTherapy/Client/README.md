@@ -3,7 +3,7 @@ Name
 MirrorTherapy  
 
 ## Overview  
- Rehabilitation project of phantom limb pain with Kinect V2, \as Visual Studio 2013 C++ project.
+ Rehabilitation project of phantom limb pain with Kinect V2, as Visual Studio 2013 C++ project.
 
 ## Description
  If you lost your limbs or arms, you might suffer from pain of them even they doesn't exist. 
