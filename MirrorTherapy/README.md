@@ -16,6 +16,11 @@ MirrorTherapy
 ## VS. 
 
 ## Requirement
+ Please install SIGServer-2.2.0 and SIGViewer-2.2.0 as below:  
+ <http://www.sigverse.com/wiki/en/index.php?Tutorial>  
+ Please install Visual Studio 2013  
+   
+ Project settings below:  
  include  
  ../include: SIGVerse header files and OpenNI header files needed  
  library  
