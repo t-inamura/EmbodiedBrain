@@ -455,41 +455,67 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt) {
                     LOG_MSG(("grasp:%s,type:%s,w:%f,x:%f,y:%f,z:%f", (grasp == true ? "true" : "false"), region, w, x, y, z));
 #endif
                     /* Set rotation quaternion calculated in Kinect*/
-                    printf("----------reverse_hand_mode=%d\n",reverse_hand_mode);
-                    printf("----------reverse_foot_mode=%d\n",reverse_foot_mode);
-                    printf("----------region=\n%s,\tw=%f,\tx=%f,\ty=%f,\tz=%f\n",region,w,x,y,z);
+                    //printf("----------reverse_hand_mode=%d\n",reverse_hand_mode);
+                    //printf("----------reverse_foot_mode=%d\n",reverse_foot_mode);
+                    //printf("----------region=\n%s,\tw=%f,\tx=%f,\ty=%f,\tz=%f\n",region,w,x,y,z);
 
                     if(reverse_hand_mode == REVERSE_RIGHT_HAND)
                     {
                         if(strstr(region,"RARM")!=NULL){ 
                             printf("Conjugate:\t%s\n",type);
                             getConjugateQuaternion(&w,&x,&y,&z);
-                        }                 
+                            printf("----------region=\n%s, w=%f, x=%f, y=%f, z=%f\n",region,w,x,y,z);
+                            myself->setJointQuaternion(region, w, x, y, z); 
+                        }
+                        else if(strstr(region,"LARM")!=NULL)
+                        {
+                            printf("----------region=\n%s, w=%f, x=%f, y=%f, z=%f\n",region,w,x,y,z);
+                            myself->setJointQuaternion(region, w, x, y, z); 
+                        }    
                     }
                     if(reverse_hand_mode  == REVERSE_LEFT_HAND)
                     {
                         if(strstr(region,"LARM")!=NULL){ 
                             printf("Conjugate:\t%s\n",type);
                             getConjugateQuaternion(&w,&x,&y,&z);
-                        }                 
+                            printf("----------region=\n%s, w=%f, x=%f, y=%f, z=%f\n",region,w,x,y,z);
+                            myself->setJointQuaternion(region, w, x, y, z); 
+                        } 
+                        else if(strstr(region,"RARM")!=NULL)
+                        {
+                            printf("----------region=\n%s, w=%f, x=%f, y=%f, z=%f\n",region,w,x,y,z);
+                            myself->setJointQuaternion(region, w, x, y, z); 
+                        }             
                     }
                     if(reverse_foot_mode  == REVERSE_RIGHT_FOOT)
                     {
                         if(strstr(region,"RLEG")!=NULL){ 
                             printf("Conjugate:\t%s\n",type);
                             getConjugateQuaternion(&w,&x,&y,&z);
-                        }                
+                            printf("----------region=\n%s, w=%f, x=%f, y=%f, z=%f\n",region,w,x,y,z);
+                            myself->setJointQuaternion(region, w, x, y, z); 
+                        }else if(strstr(region,"LLEG")!=NULL)
+                        {
+                            printf("----------region=\n%s, w=%f, x=%f, y=%f, z=%f\n",region,w,x,y,z);
+                            myself->setJointQuaternion(region, w, x, y, z); 
+                        }           
                     }
                     if(reverse_foot_mode  == REVERSE_LEFT_FOOT)
                     {
                         if(strstr(region,"LLEG")!=NULL){ 
                             printf("Conjugate:\t%s\n",type);
                             getConjugateQuaternion(&w,&x,&y,&z);
-                        }               
+                            printf("----------region=\n%s, w=%f, x=%f, y=%f, z=%f\n",region,w,x,y,z);
+                            myself->setJointQuaternion(region, w, x, y, z); 
+                        }else if(strstr(region,"RLEG")!=NULL)
+                        {
+                            printf("----------region=\n%s, w=%f, x=%f, y=%f, z=%f\n",region,w,x,y,z);
+                            myself->setJointQuaternion(region, w, x, y, z); 
+                        }
+
                     }
 
-                    printf("----------region=\n%s, w=%f, x=%f, y=%f, z=%f\n",region,w,x,y,z);
-                    myself->setJointQuaternion(region, w, x, y, z); 
+
                     continue; 
                 }  
             } 
