@@ -10,11 +10,13 @@
 #include "Linkage_Grasp.h"
 #include "MirrorTherapy.h"//20141126 tome-ikeda
 
-#define NONE 0
-#define REVERSE_RIGHT_HAND 1
-#define REVERSE_LEFT_HAND 2
-#define REVERSE_RIGHT_FOOT 3
-#define REVERSE_LEFT_FOOT 4
+#define NONE                0
+#define NO_REVERSE_HAND     1
+#define REVERSE_RIGHT_HAND  2
+#define REVERSE_LEFT_HAND   3
+#define NO_REVERSE_FOOT     4
+#define REVERSE_RIGHT_FOOT  5
+#define REVERSE_LEFT_FOOT   6
 
 
 /*!
@@ -304,6 +306,7 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt) {
         SimObj *myself = getObj(myname());  
         std::string sender = evt.getSender();    
         std::string message = evt.getMsg(); 
+        printf("message =\n%s\n",message.c_str());
         printf("[%s] %s\n", sender.c_str(), message.c_str());
         LOG_MSG(("[%s] %s", sender.c_str(), message.c_str())); 
 
@@ -365,7 +368,10 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt) {
                     double x = atof(strtok(NULL, ","));  
                     double y = atof(strtok(NULL, ","));  
                     double z = atof(strtok(NULL, " "));
+                    /*
+                     * tome-ikeda20141128
                     myself->setPosition(pos[X] + x, pos[Y] + y, pos[Z] + z);  
+                     */
                     continue;  
   
                 /* When body orientation notified, */ 
