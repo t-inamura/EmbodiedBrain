@@ -22,6 +22,9 @@ MirrorTherapy
  <http://sigverse.org/sigverse/main/download/>  
  Please install it as below:  
  <http://www.sigverse.com/wiki/en/index.php?Tutorial>   
+ 
+ Ubuntu 12.04  
+ <*****>  
    
 ## Usage
  1. boot up Ubuntu12.04 on VMware.
