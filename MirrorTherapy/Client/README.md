@@ -35,10 +35,10 @@ MirrorTherapy
  <http://opencv.org/downloads.html>  
  OpenNI  
  <**********>  
-suig< Please merge to the project directory.  ]
- sigviewer>
 
-## Usage
+ Please merge to the project directory.  
+
+## Usage  
  1. boot up Ubuntu12.04 on VMware.
  2. start SIGServer on Ubuntu. SIGVerse must be sigverse-2.2.0.  
     $ cd /home/sigverse/sigverse-2.2.0/share/sigverse/data  
