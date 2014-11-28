@@ -29,8 +29,12 @@ MirrorTherapy
  ../Release: OpenCV dynamic link library files and a config file needed  
 
  you can download from below:  
+ OpenCV2.4.9  
+ <http://opencv.org/downloads.html>
+ OpenNI
  <**********>  
- Please merge to the project directory.  
+suig< Please merge to the project directory.  ]
+ sigviewer>
 
 ## Usage
  1. boot up Ubuntu12.04 on VMware.

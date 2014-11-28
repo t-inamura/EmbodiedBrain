@@ -4,9 +4,15 @@
 # Exception for unchangeable libs.
 
 # User-specific files
-*.so
-*.exe
-Client/
+Release/
+Debug/
+packages/
+lib/
+Server/
+include/
+*.suo
+*.user
+*.sln.docstates
 
 # MSTest test Results
 [Tt]est[Rr]esult*/
