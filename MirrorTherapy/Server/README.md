@@ -22,8 +22,8 @@ MirrorTherapy
 ## Usage
  1. boot up Ubuntu12.04 on VMware.
  2. start SIGServer on Ubuntu. SIGVerse must be sigverse-2.2.0.  
-    $ cd /home/sigverse/sigverse-2.2.0/share/sigverse/data  
-    $ sigserver.sh -w ./MyWorld.xml(filename) -p 9000(port number)  
+    $ cd /EmbodiedBrain/MirrorTherapy/Server/Controller
+    $ sigserver.sh -w ./MirrorTherapy.xml(filename) -p 9000(port number)  
  3. start SIGViewer on Windows8.
  4. push start button on SIGViewer to start simulation.
  5. edit MirrorTherapy.bat, set your IPadress and port number of Ubuntu.
