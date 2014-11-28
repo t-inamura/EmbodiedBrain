@@ -29,8 +29,10 @@ MirrorTherapy
  ../Release: OpenCV and OpenNI dynamic link library file(.dll) , SIGVerse config file(.ini) needed  
 
  you can download from below:  
- SIGVerse-2.2.0 ( SIGViewer-2.2.0 and SIGService-2.2.0 )  
- <http://sigverse.org/sigverse/main/download/>  
+ SIGViewer-2.2.0 of SIGVerse-2.2.0   
+ <http://sigverse.org/sigverse/main/download/>
+ Please install it as below:  
+ <http://www.sigverse.com/wiki/en/index.php?Tutorial>   
  OpenCV2.4.9  
  <http://opencv.org/downloads.html>  
  OpenNI  
