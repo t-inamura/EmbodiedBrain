@@ -10,8 +10,16 @@
 #include "Linkage_Grasp.h"
 #include "MirrorTherapy.h"//20141126 tome-ikeda
 
+#define NONE 0
+#define REVERSE_RIGHT_HAND 1
+#define REVERSE_LEFT_HAND 2
+#define REVERSE_RIGHT_FOOT 3
+#define REVERSE_LEFT_FOOT 4
+
+
 /*!
- * @brief This robot imitates the movement of human left arm with its right arm. When the right hand touches the Obon on the desk, it grasp the Obon.
+ * @brief This robot imitates the movement of human left arm with its right arm. 
+ When the right hand touches the Obon on the desk, it grasps the Obon.
  */
 class LinkageController : public Controller {
     public:
@@ -52,6 +60,10 @@ class LinkageController : public Controller {
          * @brief Get right and left leg parts for invert.
          */
         const char *GRASP_FOOT_LINK[2];
+
+        int reverse_hand_mode;
+        int reverse_foot_mode;
+
 
         /*!
          * @brief Put initial position in the xyz coordinate system.
@@ -123,48 +135,48 @@ void LinkageController::onInit(InitEvent &evt) {
     /* Do not set true. it results bug caused by developing mode settings */
     grasp = false;
 
-    /* Define right or left of grasping parts*/
-    /* Use hands */
-#ifndef _REVERSE_GRASP
-    /* Left arm based */
-    GRASP_ARM_LINK[LEFT ] = "LARM";
-    GRASP_ARM_LINK[RIGHT] = "RARM";
-#else
-    /* Right arm based */
-    GRASP_ARM_LINK[RIGHT] = "LARM";
-    GRASP_ARM_LINK[LEFT ] = "RARM";
-#endif 
-    /* Use legs*/
-#ifndef _REVERSE_GRASP
-    /* Left arm based */
-    GRASP_FOOT_LINK[LEFT ] = "LLEG";
-    GRASP_FOOT_LINK[RIGHT] = "RLEG";
-#else
-    /* Right arm based */
-    GRASP_FOOT_LINK[RIGHT] = "LLEG";
-    GRASP_FOOT_LINK[LEFT ] = "RLEG";
-#endif
+//     /* Define right or left of grasping parts*/
+//     /* Use hands */
+// #ifndef _REVERSE_GRASP
+//     /* Left arm based */
+//     GRASP_ARM_LINK[LEFT ] = "LARM";
+//     GRASP_ARM_LINK[RIGHT] = "RARM";
+// #else
+//     /* Right arm based */
+//     GRASP_ARM_LINK[RIGHT] = "LARM";
+//     GRASP_ARM_LINK[LEFT ] = "RARM";
+// #endif 
+//     /* Use legs*/
+// #ifndef _REVERSE_GRASP
+//     /* Left arm based */
+//     GRASP_FOOT_LINK[LEFT ] = "LLEG";
+//     GRASP_FOOT_LINK[RIGHT] = "RLEG";
+// #else
+//     /* Right arm based */
+//     GRASP_FOOT_LINK[RIGHT] = "LLEG";
+//     GRASP_FOOT_LINK[LEFT ] = "RLEG";
+// #endif
 
-    /* Define parts grasping*/
-#ifndef _USE_FOOT
-    /* Use hands */
-#ifndef _REVERSE_GRASP
-    /* Left leg based */
-    GRASP_PARTS = "LARM_LINK7";
-#else
-    /* Right leg based  */
-    GRASP_PARTS = "RARM_LINK7";
-#endif
-#else
-    /* Use legs */
-#ifndef _REVERSE_GRASP
-    /*  Left leg based */
-    GRASP_PARTS = "LLEG_LINK6";
-#else
-    /* Right leg based */
-    GRASP_PARTS = "RLEG_LINK6";
-#endif
-#endif
+//     /* Define parts grasping*/
+// #ifndef _USE_FOOT
+//     /* Use hands */
+// #ifndef _REVERSE_GRASP
+//     /* Left leg based */
+//     GRASP_PARTS = "LARM_LINK7";
+// #else
+//     /* Right leg based  */
+//     GRASP_PARTS = "RARM_LINK7";
+// #endif
+// #else
+//     /* Use legs */
+// #ifndef _REVERSE_GRASP
+//     /*  Left leg based */
+//     GRASP_PARTS = "LLEG_LINK6";
+// #else
+//     /* Right leg based */
+//     GRASP_PARTS = "RLEG_LINK6";
+// #endif
+// #endif
 
     /* Set position of objects grasped*/
     SimObj *target = getObj(GRASP_OBJECT);
@@ -274,17 +286,67 @@ double LinkageController::onAction(ActionEvent &evt) {
     return 0.1;
 }
 
+
+
 /*!
  * @brief Invert and apply the joint angle information of robot left arm to robot right arm.
  */
 void LinkageController::onRecvMsg(RecvMsgEvent &evt) { 
     printf("onRecvMsg\n");
+
     try {
         /* Output received message as log file.*/
-        std::string message = evt.getMsg();    
+        //std::string message = evt.getMsg();    
 
         /* Get myself. */  
+
+        /* Get message and message source */
         SimObj *myself = getObj(myname());  
+        std::string sender = evt.getSender();    
+        std::string message = evt.getMsg(); 
+        printf("[%s] %s\n", sender.c_str(), message.c_str());
+        LOG_MSG(("[%s] %s", sender.c_str(), message.c_str())); 
+
+
+        reverse_hand_mode = NONE;
+        GRASP_ARM_LINK[LEFT ] = "LARM";
+        GRASP_ARM_LINK[RIGHT] = "RARM";
+        if(strcmp(message.c_str(), "REVERSE_RIGHT_HAND") == 0)
+        {
+            /* Left arm based */
+            reverse_hand_mode = REVERSE_RIGHT_HAND;
+            GRASP_ARM_LINK[LEFT ] = "LARM";
+            GRASP_ARM_LINK[RIGHT] = "RARM";
+
+        }
+        else if(strcmp(message.c_str(), "REVERSE_LEFT_HAND") == 0)
+        {
+            /* Right arm based */
+            reverse_hand_mode = REVERSE_LEFT_HAND;
+            GRASP_ARM_LINK[RIGHT] = "LARM";
+            GRASP_ARM_LINK[LEFT ] = "RARM";
+        }
+        printf("reverse_hand_mode=%d\n",reverse_hand_mode);
+
+        reverse_foot_mode = NONE;
+        GRASP_FOOT_LINK[LEFT ] = "LLEG";
+        GRASP_FOOT_LINK[RIGHT] = "RLEG";
+        if(strcmp(message.c_str(), "REVERSE_RIGHT_FOOT") == 0)
+        {
+            /* Left leg based */
+            reverse_foot_mode = REVERSE_RIGHT_FOOT;
+            GRASP_FOOT_LINK[LEFT ] = "LLEG";
+            GRASP_FOOT_LINK[RIGHT] = "RLEG";
+        }
+        else if(strcmp(message.c_str(), "REVERSE_LEFT_FOOT") == 0)
+        {
+            /* Right leg based */
+            reverse_foot_mode = REVERSE_LEFT_FOOT;
+            GRASP_FOOT_LINK[RIGHT] = "LLEG";
+            GRASP_FOOT_LINK[LEFT ] = "RLEG";
+        }
+        printf("reverse_foot_mode=%d\n",reverse_foot_mode);
+
         printf("message=\n%s\n",message.c_str());
         char *msg = strtok((char*)message.c_str(), " ");
         //printf("msg=\n%s\n",msg);
@@ -393,25 +455,39 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt) {
                     LOG_MSG(("grasp:%s,type:%s,w:%f,x:%f,y:%f,z:%f", (grasp == true ? "true" : "false"), region, w, x, y, z));
 #endif
                     /* Set rotation quaternion calculated in Kinect*/
-                    printf("----------region=\n%s, w=%f, x=%f, y=%f, z=%f\n",region,w,x,y,z);
+                    printf("----------reverse_hand_mode=%d\n",reverse_hand_mode);
+                    printf("----------reverse_foot_mode=%d\n",reverse_foot_mode);
+                    printf("----------region=\n%s,\tw=%f,\tx=%f,\ty=%f,\tz=%f\n",region,w,x,y,z);
 
-#ifdef _RIGHT_HAND
-                    if(strstr(region,"RARM")!=NULL){ 
-                        getConjugateQuaternion(&w,&x,&y,&z);
-                    }           
-#elif _LEFT_HAND
-                    if(strstr(region,"LARM")!=NULL){ 
-                        getConjugateQuaternion(&w,&x,&y,&z);
-                    }  
-#elif _RIGHT_FOOT
-                    if(strstr(region,"RLEG")!=NULL){ 
-                        getConjugateQuaternion(&w,&x,&y,&z);
-                    }  
-#elif _LEFT_FOOT
-                    if(strstr(region,"RLEG")!=NULL){ 
-                        getConjugateQuaternion(&w,&x,&y,&z);
-                    }  
-#endif
+                    if(reverse_hand_mode == REVERSE_RIGHT_HAND)
+                    {
+                        if(strstr(region,"RARM")!=NULL){ 
+                            printf("Conjugate:\t%s\n",type);
+                            getConjugateQuaternion(&w,&x,&y,&z);
+                        }                 
+                    }
+                    if(reverse_hand_mode  == REVERSE_LEFT_HAND)
+                    {
+                        if(strstr(region,"LARM")!=NULL){ 
+                            printf("Conjugate:\t%s\n",type);
+                            getConjugateQuaternion(&w,&x,&y,&z);
+                        }                 
+                    }
+                    if(reverse_foot_mode  == REVERSE_RIGHT_FOOT)
+                    {
+                        if(strstr(region,"RLEG")!=NULL){ 
+                            printf("Conjugate:\t%s\n",type);
+                            getConjugateQuaternion(&w,&x,&y,&z);
+                        }                
+                    }
+                    if(reverse_foot_mode  == REVERSE_LEFT_FOOT)
+                    {
+                        if(strstr(region,"LLEG")!=NULL){ 
+                            printf("Conjugate:\t%s\n",type);
+                            getConjugateQuaternion(&w,&x,&y,&z);
+                        }               
+                    }
+
                     printf("----------region=\n%s, w=%f, x=%f, y=%f, z=%f\n",region,w,x,y,z);
                     myself->setJointQuaternion(region, w, x, y, z); 
                     continue; 
