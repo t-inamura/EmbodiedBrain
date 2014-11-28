@@ -27,7 +27,7 @@ MirrorTherapy
  <*****>  
    
 ## Usage
- 1. boot up Ubuntu12.04 on VMware.
+ 1. boot up Ubuntu12.04.
  2. start SIGServer on Ubuntu. SIGVerse must be sigverse-2.2.0.  
     $ cd /EmbodiedBrain/MirrorTherapy/Server/Controller  
     $ sigserver.sh -w ./MirrorTherapy.xml(filename) -p 9000(port number)  
