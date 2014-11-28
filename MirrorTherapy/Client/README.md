@@ -22,13 +22,15 @@ MirrorTherapy
    
  Project settings below:  
  include  
- ../include: SIGVerse header files and OpenNI header files needed  
+ ../include: SIGVerse header files and OpenNI header files (.h) needed  
  library  
- ../lib: SIGVerse library file and OpenNI library file needed  
+ ../lib: SIGVerse library file and OpenNI library file (.lib) needed  
  rutime  
- ../Release: OpenCV dynamic link library files and a config file needed  
+ ../Release: OpenCV dynamic link library files , OpenNI dynamic link library file, a config file (.dll, .ini) needed  
 
  you can download from below:  
+ SIGVerse-2.2.0 ( SIGViewer-2.2.0 and SIGService-2.2.0 )  
+ <http://sigverse.org/sigverse/main/download/>  
  OpenCV2.4.9  
  <http://opencv.org/downloads.html>  
  OpenNI  
