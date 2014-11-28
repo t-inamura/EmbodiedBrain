@@ -12,6 +12,8 @@ include/
 *.suo
 *.user
 *.sln.docstates
+*.so
+*.exe
 
 # MSTest test Results
 [Tt]est[Rr]esult*/
