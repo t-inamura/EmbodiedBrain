@@ -22,9 +22,9 @@ MirrorTherapy
    
  Project settings below:  
  include  
- ../include: SIGVerse header files and OpenNI header files (.h) needed  
+ ../include: SIGVerse and OpenNI header files (.h) needed  
  library  
- ../lib: SIGVerse library file and OpenNI library file (.lib) needed  
+ ../lib: SIGVerse and OpenNI library file (.lib) needed  
  rutime  
  ../Release: OpenCV and OpenNI dynamic link library file(.dll) , SIGVerse config file(.ini) needed  
 
