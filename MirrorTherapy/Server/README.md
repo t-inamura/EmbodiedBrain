@@ -17,7 +17,7 @@ MirrorTherapy
 
 ## Requirement
 
- you can download from below:  
+ You can download from below:  
  SIGViewer-2.2.0 of SIGVerse-2.2.0   
  <http://sigverse.org/sigverse/main/download/>  
  Please install it as below:  
