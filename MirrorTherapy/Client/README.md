@@ -30,8 +30,8 @@ MirrorTherapy
 
  you can download from below:  
  OpenCV2.4.9  
- <http://opencv.org/downloads.html>
- OpenNI
+ <http://opencv.org/downloads.html>  
+ OpenNI  
  <**********>  
 suig< Please merge to the project directory.  ]
  sigviewer>
