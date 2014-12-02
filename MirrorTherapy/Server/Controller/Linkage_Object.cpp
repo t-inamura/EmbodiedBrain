@@ -51,20 +51,25 @@ class ObonController : public Controller {
 /*!
  * @brief Obon adjust its orientatnoin to keep horizontality in grasping.
  */
-double ObonController::onAction(ActionEvent &evt) {
+double ObonController::onAction(ActionEvent &evt) 
+{
     try {
         /* Keep horizontality to the ground */
         SimObj *myself = getObj(myname());
-        if (!myself->dynamics()) { 
+        if (!myself->dynamics()) 
+        { 
             myself->setRotation(br);
         }
         /* Not to be below the prescribed height*/
         Vector3d myself_pos;
         myself->getPosition(myself_pos);
-        if (myself_pos.y() < LIMIT_Y_REVISE) {
+        if (myself_pos.y() < LIMIT_Y_REVISE) 
+        {
             myself->setPosition(myself_pos.x(), LIMIT_Y_REVISE, myself_pos.z());
         } 
-    } catch (SimObj::Exception &err) {
+    } 
+    catch (SimObj::Exception &err) 
+    {
         LOG_MSG(("Exception: %s", err.msg()));
     }
     return 0.1;
@@ -73,7 +78,8 @@ double ObonController::onAction(ActionEvent &evt) {
 /*!
  * @brief Initializing. Keep initial angle.
  */
-void ObonController::onInit(InitEvent &evt) {
+void ObonController::onInit(InitEvent &evt) 
+{
     try {
         SimObj *myself = getObj(myname());
         if (!myself->dynamics()) {
@@ -88,19 +94,22 @@ void ObonController::onInit(InitEvent &evt) {
 /*!
  * @brief Message robot heard
  */
-void ObonController::onRecvMsg(RecvMsgEvent &evt) {
+void ObonController::onRecvMsg(RecvMsgEvent &evt) 
+{
 }
 
 /*
  * @brief Collision check.
  */
-void ObonController::onCollision(CollisionEvent &evt) {
+void ObonController::onCollision(CollisionEvent &evt) 
+{
 }
 
 /*!
  * @brief transmit myself to the sentral server.
  */
-extern "C" Controller * createController () {
+extern "C" Controller * createController () 
+{
     return new ObonController;
 }
 

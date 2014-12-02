@@ -8,7 +8,7 @@
  * ===========================================================================================================
  */
 #include "Linkage_Grasp.h"
-#include "MirrorTherapy.h"//20141126 tome-ikeda
+//#include "MirrorTherapy.h"//20141126 tome-ikeda
 
 /*!
  * @brief This robot imitates the movement of human left arm with its right arm. When the right hand touches the Obon on the desk, it grasp the Obon.
@@ -395,6 +395,7 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt) {
                     /* Set rotation quaternion calculated in Kinect*/
                     printf("----------region=\n%s, w=%f, x=%f, y=%f, z=%f\n",region,w,x,y,z);
 
+                    /*
                     if(strstr(region,"RARM")!=NULL)
                     { 
                         getConjugateQuaternion(&w,&x,&y,&z);
@@ -412,6 +413,7 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt) {
                         getConjugateQuaternion(&w,&x,&y,&z);
                     }  
                     printf("----------region=\n%s, w=%f, x=%f, y=%f, z=%f\n",region,w,x,y,z);
+                    */
                     myself->setJointQuaternion(region, w, x, y, z); 
                     continue; 
                 }  
