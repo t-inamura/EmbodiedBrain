@@ -11,7 +11,7 @@
 #include "Linkage_Grasp.h"
 
 /*!
-* @brief Define lower limit (likes ground) of y value in grasping Obon.
+ * @brief Define lower limit (likes ground) of y value in grasping Obon.
  */
 #define LIMIT_Y_REVISE (LIMIT_Y - 1)
 

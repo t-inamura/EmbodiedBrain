@@ -116,7 +116,7 @@ void LinkageController::onInit(InitEvent &evt) {
 
     /* Maximum number processed at once is 15  */  
     //maxsize = 15;  
-    maxsize = 100;//20141128tome-ikeda  
+    maxsize = 40;//20141128tome-ikeda  
 
  
     /* At the first, the robot does not grasp anything. */
@@ -289,7 +289,6 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt) {
         char *msg = strtok((char*)message.c_str(), " ");
         //printf("msg=\n%s\n",msg);
         if (strcmp(msg, "KINECT_DATA") == 0) {  
-        	//printf("msg=\n%s\n",msg);
             int i = 0;  
             while(i < maxsize + 1) {  
                 i++;  
@@ -392,28 +391,6 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt) {
 #ifdef _VERBOSE
                     LOG_MSG(("grasp:%s,type:%s,w:%f,x:%f,y:%f,z:%f", (grasp == true ? "true" : "false"), region, w, x, y, z));
 #endif
-                    /* Set rotation quaternion calculated in Kinect*/
-                    printf("----------region=\n%s, w=%f, x=%f, y=%f, z=%f\n",region,w,x,y,z);
-
-                    /*
-                    if(strstr(region,"RARM")!=NULL)
-                    { 
-                        getConjugateQuaternion(&w,&x,&y,&z);
-                    }
-                    else if(strstr(region,"LARM")!=NULL)
-                    { 
-                        getConjugateQuaternion(&w,&x,&y,&z);
-                    }  
-                    if(strstr(region,"RLEG")!=NULL)
-                    { 
-                        getConjugateQuaternion(&w,&x,&y,&z);
-                    }  
-                    if(strstr(region,"RLEG")!=NULL)
-                    { 
-                        getConjugateQuaternion(&w,&x,&y,&z);
-                    }  
-                    printf("----------region=\n%s, w=%f, x=%f, y=%f, z=%f\n",region,w,x,y,z);
-                    */
                     myself->setJointQuaternion(region, w, x, y, z); 
                     continue; 
                 }  
@@ -459,8 +436,6 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt) {
             dQMultiply1(t3, qbody, t2);
 
             /* Apply calculated angle to neck.*/
-            //if(strstr(msg, "RARM")!=NULL && false){ }
-            //getConjugateQuaternion(&t3[0], &t3[1], &t3[2], &t3[3]);
             myself->setJointQuaternion("HEAD_JOINT0", t3[0], t3[1], t3[2], t3[3]);
  
         } else if (strcmp(msg, "INIT") == 0) {
@@ -503,7 +478,6 @@ void LinkageController::onCollision(CollisionEvent &evt) {
             CParts *parts = myself->getParts(GRASP_PARTS);
             Vector3d parts_pos;
             parts->getPosition(parts_pos);
-            //printf("LIMIT_Y=\n%f\n",LIMIT_Y);
             if (parts_pos.y() >= LIMIT_Y) {    
 #ifdef _VERBOSE
                 LOG_MSG(("grasp:%s", grasp == true ? "true" : "false"));
