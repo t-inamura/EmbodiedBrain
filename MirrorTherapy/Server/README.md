@@ -24,7 +24,8 @@ MirrorTherapy
  <http://www.sigverse.com/wiki/en/index.php?Tutorial>   
  
  Ubuntu 12.04  
- <*****>  
+ Only Japanese edition can be obtained now.  
+ <https://www.ubuntulinux.jp/News/ubuntu1204-desktop-ja-remix>  
    
 ## Usage  
  1. boot up Ubuntu12.04.  
@@ -38,11 +39,11 @@ MirrorTherapy
  7. move your body in front fo Kinect sensor.  
 
 You can send text message with SIGViewer to change the movement of avator. Text messages are below:
-* HAND_FIXED            : fix both left and right hands.
+* HAND_FIXED            : fix both left and right hand.
 * REVERSE_NONE_HAND     : able to move both hands as usual.
 * REVERSE_RIGHT_HAND    : reverse right hand movement to aply left hand.
 * REVERSE_LEFT_HAND     : reverse left hand movement to aply right hand.
-* FOOT_FIXED            : fix both left and right legs.
+* FOOT_FIXED            : fix both left and right leg.
 * REVERSE_NONE_FOOT     : able to move both legss as usual.
 * REVERSE_RIGHT_FOOT    : reverse right leg movement to aply left leg.
 * REVERSE_LEFT_FOOT     : reverse left leg movement to aply right leg.
