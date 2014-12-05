@@ -38,7 +38,7 @@ MirrorTherapy
  6. execute MirrorTherapy2013.bat.  
  7. move your body in front fo Kinect sensor.  
 
-You can send text message with SIGViewer to change the movement of avator. Text messages are below:
+You can send text messages with SIGViewer to change the movement of avator. Text messages are below:
 * HAND_FIXED            : fix both left and right hand.
 * REVERSE_NONE_HAND     : able to move both hands as usual.
 * REVERSE_RIGHT_HAND    : reverse right hand movement to aply left hand.
