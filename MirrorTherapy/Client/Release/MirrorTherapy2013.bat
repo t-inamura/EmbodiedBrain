@@ -1,2 +1,2 @@
-MirrorTherapy2013 192.168.15.128  9000
+MirrorTherapy2013 <IPadress> <port number>
 PAUSE
