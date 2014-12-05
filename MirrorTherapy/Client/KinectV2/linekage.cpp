@@ -1,25 +1,25 @@
 ﻿/*!
-* ==========================================================================================
-*  @brief   caluculate inverted angle from left joint angle of Kinect, tlansmit it to each joint of right hand
-*  @file   linkage.cpps
-*  @date   2013/4/18
-*  @author National Institute of Informatics
-*  @par    1.0.0
-* ==========================================================================================
-*/
+ * ==========================================================================================
+ *  @brief   caluculate inverted angle from left joint angle of Kinect, tlansmit it to each joint of right hand
+ *  @file   linkage.cpps
+ *  @date   2013/4/18
+ *  @author National Institute of Informatics
+ *  @par    1.0.0
+ * ==========================================================================================
+ */
 //---------------------------------------------------------------------------
 // Includes
 //---------------------------------------------------------------------------
 #include "linkage.h"
 
 /*!
-* ------------------------------------------------------------------------------------------
-* @brief calculate vector of child bone from 2 joint angle 
-* @param[out] XnPoint3D&             output vector
-* @param[in]  XnSkeltonJointPosition input joint ange of parent bone
-* @param[in]  XnSkeltonJointPosition input joint ange of child bone
-* ------------------------------------------------------------------------------------------
-*/
+ * ------------------------------------------------------------------------------------------
+ * @brief calculate vector of child bone from 2 joint angle 
+ * @param[out] XnPoint3D&             output vector
+ * @param[in]  XnSkeltonJointPosition input joint ange of parent bone
+ * @param[in]  XnSkeltonJointPosition input joint ange of child bone
+ * ------------------------------------------------------------------------------------------
+ */
 bool DiffVec(XnPoint3D &rvec, XnSkeletonJointPosition jvec, XnSkeletonJointPosition kvec) {
 
 	if (jvec.fConfidence < 0.5 || kvec.fConfidence < 0.5) {
@@ -39,13 +39,13 @@ bool DiffVec(XnPoint3D &rvec, XnSkeletonJointPosition jvec, XnSkeletonJointPosit
 }
 
 /*!
-* ------------------------------------------------------------------------------------------
-* @brief calculate quaternion from 2 of 3D vectors
-* @param[in] XnPoint3D input source vector
-* @param[in] XnPoint3D output destination vector
-* @return calculated quaternion
-* ------------------------------------------------------------------------------------------
-*/
+ * ------------------------------------------------------------------------------------------
+ * @brief calculate quaternion from 2 of 3D vectors
+ * @param[in] XnPoint3D input source vector
+ * @param[in] XnPoint3D output destination vector
+ * @return calculated quaternion
+ * ------------------------------------------------------------------------------------------
+ */
 Quaternion CalcQuaternion(XnPoint3D kvec, XnPoint3D svec) {
 	Quaternion q;
 	// return 0 angle quaternion if same position
@@ -77,15 +77,14 @@ Quaternion CalcQuaternion(XnPoint3D kvec, XnPoint3D svec) {
 }
 
 /*!
-* ------------------------------------------------------------------------------------------
-* @brief （R×P×Q：backward rotation:forward rotation in SIGVerse）calculate 3D vector rotated from 3D vector and rotation quaternion 
-* @param[in/out] XnPoint3D& input and output source 3D vector
-* @param[in]     Quaterion& input rotation quaternion(parent bone: initial line, child bone: radius vector)
-* @param[in]     bool       whether only X axis is valid or not
-* ------------------------------------------------------------------------------------------
-*/
+ * ------------------------------------------------------------------------------------------
+ * @brief （R×P×Q：backward rotation:forward rotation in SIGVerse）calculate 3D vector rotated from 3D vector and rotation quaternion 
+ * @param[in/out] XnPoint3D& input and output source 3D vector
+ * @param[in]     Quaterion& input rotation quaternion(parent bone: initial line, child bone: radius vector)
+ * @param[in]     bool       whether only X axis is valid or not
+ * ------------------------------------------------------------------------------------------
+ */
 void RotVec(XnPoint3D &v, Quaternion q, bool axis1) {
-
 	//invalidate Y and Z axes rotation if only X axis is valid
 	if (axis1 == true) {
 		q.qy = 0.0;
@@ -105,14 +104,14 @@ void RotVec(XnPoint3D &v, Quaternion q, bool axis1) {
 }
 
 /*!
-* ------------------------------------------------------------------------------------------
-* @deprecated
-* @brief （Q×P×R：forward rotation,backward rotation in SIGVerse）calculate 3D vector from 3D vector and rotation quaternion
-* @param[in/out] XnPoint3D& input and output of source 3D vector
-* @param[in]     Quaterion& input rotation quaternion(parent bone: initial line, child bone: radius vector)
-* @param[in]     bool       wheter only X axis is valid or not
-* ------------------------------------------------------------------------------------------
-*/
+ * ------------------------------------------------------------------------------------------
+ * @deprecated
+ * @brief （Q×P×R：forward rotation,backward rotation in SIGVerse）calculate 3D vector from 3D vector and rotation quaternion
+ * @param[in/out] XnPoint3D& input and output of source 3D vector
+ * @param[in]     Quaterion& input rotation quaternion(parent bone: initial line, child bone: radius vector)
+ * @param[in]     bool       wheter only X axis is valid or not
+ * ------------------------------------------------------------------------------------------
+ */
 void RotVec_Reverse(XnPoint3D &v, Quaternion q, bool axis1) {
 
 	// （Q×P）calculate vector ratated by quaternion
@@ -131,13 +130,13 @@ void RotVec_Reverse(XnPoint3D &v, Quaternion q, bool axis1) {
 }
 
 /*!
-* ------------------------------------------------------------------------------------------
-* @brief （Q×P×R：forward rotation, backward rotation in SIGVerse）return 3D vector rotated from 3D vector and rotation quaternion
-* @param[in/out] XnPoint3D& input and output 3D vector
-* @param[in]     Quaterion& input rotation quaternion(parent bone: initial line, child bone: radius vector)
-* @param[in]     bool       whether only X axis is valid or not
-* ------------------------------------------------------------------------------------------
-*/
+ * ------------------------------------------------------------------------------------------
+ * @brief （Q×P×R：forward rotation, backward rotation in SIGVerse）return 3D vector rotated from 3D vector and rotation quaternion
+ * @param[in/out] XnPoint3D& input and output 3D vector
+ * @param[in]     Quaterion& input rotation quaternion(parent bone: initial line, child bone: radius vector)
+ * @param[in]     bool       whether only X axis is valid or not
+ * ------------------------------------------------------------------------------------------
+ */
 void RotVec_Xaxis_Reverse(XnPoint3D &v, Quaternion q, bool axis1) {
 
 	//invalidate Y and Z axes when only X axis is valid
@@ -167,14 +166,14 @@ void RotVec_Xaxis_Reverse(XnPoint3D &v, Quaternion q, bool axis1) {
 }
 
 /*!
-* ------------------------------------------------------------------------------------------
-* @deprecated
-* @brief return cross product of quaternions
-* @param[in]  Quaternion input quaternion1
-* @param[in]  Quaternion input quaternion2
-* @param[out] Quaternion output cross product of quaternions
-* ------------------------------------------------------------------------------------------
-*/
+ * ------------------------------------------------------------------------------------------
+ * @deprecated
+ * @brief return cross product of quaternions
+ * @param[in]  Quaternion input quaternion1
+ * @param[in]  Quaternion input quaternion2
+ * @param[out] Quaternion output cross product of quaternions
+ * ------------------------------------------------------------------------------------------
+ */
 Quaternion MultiQuaternion(Quaternion p, Quaternion q) {
 
 	Quaternion r;
@@ -185,5 +184,3 @@ Quaternion MultiQuaternion(Quaternion p, Quaternion q) {
 
 	return r;
 }
-
-

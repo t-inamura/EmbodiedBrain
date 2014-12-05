@@ -13,8 +13,8 @@
 class KinectApp
 {
 	/*!
-	* @brief ERROR_CHECK
-	*/
+	 * @brief ERROR_CHECK
+	 */
 	#define ERROR_CHECK( ret )  \
 		if ( (ret) != S_OK ) {    \
 			std::stringstream ss;	\
@@ -23,57 +23,53 @@ class KinectApp
 		}
 
 	/*!
-	* @brief define order of left and right hand to invert main hand easily later.
-	*/
+	 * @brief define order of left and right hand to invert main hand easily later.
+	 */
 	enum TARGET_HANDS {
 		LEFT,
 		RIGHT
 	};
 	/*!
-	* @brief map of joint names and their quaternions
-	*/
+	 * @brief map of joint names and their quaternions
+	 */
 	typedef std::map<std::string, Quaternion> QMap;
 private:
 	IKinectSensor* kinect = nullptr;
 	IBodyFrameReader* bodyFrameReader = nullptr;
 	IBody* bodies[6];
-	//SIGKINECT_Linkage* srv = nullptr;
-	JointOrientation jointorientations[JointType_Count];
+JointOrientation jointorientations[JointType_Count];
 	Joint joints[JointType_Count];
 	Logger* log;
-	//IInfraredFrameReader* infraredFrameReader = nullptr;
-	//std::vector<UINT16> infraredBuffer;
 	int width = 512;// fixed in Kinect Machine?
 	int height = 424;// fixed in Kinect Machine?
 	int colorWidth;// fixed in Kinect Machine?
 	int colorHeight;// fixed in Kinect Machine?
 	IColorFrameReader* colorFrameReader = nullptr;
-
-	std::vector<BYTE> colorBuffer;
+	double fps = 5.0;
 	unsigned int colorBytesPerPixel;
-	CvCapture* capture = nullptr;
 	IplImage* frame = nullptr;
-	int c;
-	cv::VideoWriter* writer = nullptr;
 	bool roc_button = false;
 	bool roc_mode = false;
 	std::string message = "";
 	std::string strMsg = "";
 	XnSkeletonJointPosition sfoot, sknee;
+	CvVideoWriter *vw;
+	IplImage iplcolorImage;
+	long colorBufferSize;
 
 	/*!
-	* @brief handle the left shoulder and left elbow in grasping
-	*/
+	 * @brief handle the left shoulder and left elbow in grasping
+     */
 	XnSkeletonJointPosition ssld, selb, shand;
 public:
+	bool br = true;
+
 	void initialize();//initalize
-	void run();
 	void update();//update Data
 	void updateBodyFrame();//update BodyFrame
 	void draw();
 	void drawBodyIndexFrame();
-	//void sendMessage(std::string& agent_name);
-	void sendMessage(sigverse::SIGService *srv, std::string& agent_name);
+	void sendMessage(sigverse::SIGService *srv, std::string& agent_name, clock_t now);
 	std::string FloatToString(float x);
 	std::string GetStringFromQuaternion(std::string jname, Quaternion q);
 	std::string GetStringFromQuaternion_Vectror4(std::string jname, Vector4 q);
@@ -116,6 +112,7 @@ public:
 	void RotVec_Yaxis_Reverse(XnPoint3D &v, Quaternion q, bool axis1);
 	void RotVec_YZaxis_Reverse(XnPoint3D &v, Quaternion q, bool axis1);
 	bool DiffVec_Xaxis(XnPoint3D &rvec, XnSkeletonJointPosition jvec, XnSkeletonJointPosition kvec);
+	Quaternion makeConjugateQuaternion(Quaternion quaternion);
 };
 
 #endif

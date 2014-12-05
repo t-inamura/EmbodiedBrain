@@ -3,10 +3,8 @@
 //---------------------------------------------------------------------------
 #include "KinectApp.h"
 //consider to use  "CComPtr" if you use Visual Studio Professional.
-
 //create instance of "SIGKINECT_Linkage"
 SIGKINECT_Linkage* srv;
-
 
 std::string agent_name;
 
@@ -24,14 +22,17 @@ void mainLoop(std::string saddr, KinectApp kinectapp, SIGKINECT_Linkage* srv)
 	m_onLoop = true;
 	double ltime;
 	ltime = -1.0;
-	while (1) {
+	while (true) {
 		kinectapp.update();
 		kinectapp.draw();
 		auto key = cv::waitKey(10);
 		if (key == 'q'){
+			printf("quit mainloop\n");
+			kinectapp.br = false;
 			break;
 		}
-		kinectapp.sendMessage(srv,agent_name);
+		now = clock();
+		kinectapp.sendMessage(srv, agent_name, now);
 		Sleep(100); /* wait 0.1 seconds */
 		if (m_onLoop){
 			if (ltime > 0){
@@ -47,10 +48,11 @@ void mainLoop(std::string saddr, KinectApp kinectapp, SIGKINECT_Linkage* srv)
 				break;
 			}
 		}
-		else break;
+		else
+		{
+			break;
+		}
 	}
-
-	std::printf("end  loop\n");
 }
 
 int main(int argc, char **argv)
@@ -59,14 +61,11 @@ int main(int argc, char **argv)
 	std::string sname = "SIGKINECT_Linkage";
 	TCHAR spd[64] = "";
 	GetPrivateProfileString(_T("SETTING"), _T("SERVICE_NAME"), '\0', spd, 256, _T("./SIGNiUserTracker.ini"));
-	std::printf("sname=%s\n",sname.c_str());
+	printf("sname=%s\n",sname.c_str());
 	printf("SERVICENAME=%s\n",sname.c_str());
 	SIGKINECT_Linkage srv(sname);
 	char saddr[128];
 	int portnumber;
-
-	//1.connect to SIGVerse server.
-
 
 	if (argc == 1) {
 		std::cout << "Cannot find Server host name and port number.\n";
@@ -105,13 +104,10 @@ int main(int argc, char **argv)
     try {
 		KinectApp kinectapp;
 		kinectapp.initialize();
-        //app.run();
 		mainLoop(saddr, kinectapp, &srv);
 
     }
     catch ( std::exception& ex ){
         std::cout << ex.what() << std::endl;
     }
-
-
 }
