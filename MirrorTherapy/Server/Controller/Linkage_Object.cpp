@@ -13,11 +13,15 @@
 /*!
  * @brief Define lower limit (likes ground) of y value in grasping Obon.
  */
-#define LIMIT_Y_REVISE (LIMIT_Y - 1)
+//#define LIMIT_Y_REVISE (LIMIT_Y - 1)
 
 /*!
  * @brief Move to the initial position after received order.
  */
+
+double LIMIT_Y;
+double LIMIT_Y_REVISE;
+
 class ObonController : public Controller {
     public:
         /*
@@ -96,6 +100,7 @@ void ObonController::onInit(InitEvent &evt)
  */
 void ObonController::onRecvMsg(RecvMsgEvent &evt) 
 {
+
 }
 
 /*

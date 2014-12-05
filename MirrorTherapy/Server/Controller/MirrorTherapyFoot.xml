@@ -9,7 +9,8 @@
         <set-attr-value name="z" value="40.0"/>
         <set-attr-value name="collision" value="true"/>
         <set-attr-value name="language" value="c++"/>
-        <set-attr-value name="implementation" value="/home/sigverse/sigverse-2.2.0/share/sigverse/samples/Linkage_RightFootGrasp.so"/>
+        <!--<set-attr-value name="implementation" value="./Linkage_Grasp.so"/>-->
+        <set-attr-value name="implementation" value="./Linkage_Grasp.so"/>
         <camera id="1" link="HEAD_LINK" direction="0 -1 1" aspectRatio="1.5" fov="60" position="0.0 0.0 5.0"/>  
   </instanciate>
   <instanciate class="B2_chair.xml">

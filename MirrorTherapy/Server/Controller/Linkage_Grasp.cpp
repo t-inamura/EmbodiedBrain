@@ -10,8 +10,22 @@
 #include "Linkage_Grasp.h"
 //#include "MirrorTherapy.h"//20141126 tome-ikeda
 
+#define HAND_FIXED          0
+#define REVERSE_NONE_HAND   1
+#define REVERSE_RIGHT_HAND  2
+#define REVERSE_LEFT_HAND   3
+#define FOOT_FIXED          4     
+#define REVERSE_NONE_FOOT   5
+#define REVERSE_RIGHT_FOOT  6
+#define REVERSE_LEFT_FOOT   7
+
+std::string GRASP_OBJECT;
+double LIMIT_Y;
+
+
 /*!
- * @brief This robot imitates the movement of human left arm with its right arm. When the right hand touches the Obon on the desk, it grasp the Obon.
+ * @brief This robot imitates the movement of human left arm with its right arm. 
+ When the right hand touches the Obon on the desk, it grasps the Obon.
  */
 class LinkageController : public Controller {
     public:
@@ -52,6 +66,10 @@ class LinkageController : public Controller {
          * @brief Get right and left leg parts for invert.
          */
         const char *GRASP_FOOT_LINK[2];
+
+        int hand_mode;
+        int foot_mode;
+        //int grasp_mode;
 
         /*!
          * @brief Put initial position in the xyz coordinate system.
@@ -95,6 +113,9 @@ class LinkageController : public Controller {
  */
 void LinkageController::onInit(InitEvent &evt) {
 
+    GRASP_OBJECT = "Tray";
+    LIMIT_Y  = 65.0;
+ 
     /* Set default position of myself */
     SimObj *myself = getObj(myname());  
     pos[X] = myself->x();  
@@ -116,58 +137,22 @@ void LinkageController::onInit(InitEvent &evt) {
 
     /* Maximum number processed at once is 15  */  
     //maxsize = 15;  
-    maxsize = 40;//20141128tome-ikeda  
+    maxsize = 50;//20141128tome-ikeda  
 
- 
+    //reverse_hand_mode = REVERSE_RIGHT_HAND;
+   // reverse_foot_mode=REVERSE_RIGHT_FOOT;
     /* At the first, the robot does not grasp anything. */
     /* Do not set true. it results bug caused by developing mode settings */
     grasp = false;
 
-    /* Define right or left of grasping parts*/
-    /* Use hands */
-#ifndef _REVERSE_GRASP
-    /* Left arm based */
+
     GRASP_ARM_LINK[LEFT ] = "LARM";
     GRASP_ARM_LINK[RIGHT] = "RARM";
-#else
-    /* Right arm based */
-    GRASP_ARM_LINK[RIGHT] = "LARM";
-    GRASP_ARM_LINK[LEFT ] = "RARM";
-#endif 
-    /* Use legs*/
-#ifndef _REVERSE_GRASP
-    /* Left arm based */
     GRASP_FOOT_LINK[LEFT ] = "LLEG";
     GRASP_FOOT_LINK[RIGHT] = "RLEG";
-#else
-    /* Right arm based */
-    GRASP_FOOT_LINK[RIGHT] = "LLEG";
-    GRASP_FOOT_LINK[LEFT ] = "RLEG";
-#endif
-
-    /* Define parts grasping*/
-#ifndef _USE_FOOT
-    /* Use hands */
-#ifndef _REVERSE_GRASP
-    /* Left leg based */
-    GRASP_PARTS = "LARM_LINK7";
-#else
-    /* Right leg based  */
-    GRASP_PARTS = "RARM_LINK7";
-#endif
-#else
-    /* Use legs */
-#ifndef _REVERSE_GRASP
-    /*  Left leg based */
-    GRASP_PARTS = "LLEG_LINK6";
-#else
-    /* Right leg based */
-    GRASP_PARTS = "RLEG_LINK6";
-#endif
-#endif
 
     /* Set position of objects grasped*/
-    SimObj *target = getObj(GRASP_OBJECT);
+    SimObj *target = getObj(GRASP_OBJECT.c_str());
     Vector3d target_pos;
     target->getPosition(target_pos);
     gb[X] = target_pos.x();
@@ -177,17 +162,21 @@ void LinkageController::onInit(InitEvent &evt) {
     /* Get angle of a object grasped*/
     target->getRotation(br);                      
 
+    hand_mode = REVERSE_RIGHT_HAND;
+    foot_mode = REVERSE_RIGHT_FOOT;
+    GRASP_PARTS = "LLEG_LINK6";
 }
 
 /*!
  * @brief Robot movement, for debug. 
  */
 double LinkageController::onAction(ActionEvent &evt) {
+    //printf("onAction\n");
     if (grasp == true) {
         try {
             /* Keep grasping object*/
             SimObj *myself  = getObj(myname());
-            SimObj *grasped = getObj(GRASP_OBJECT);
+            SimObj *grasped = getObj(GRASP_OBJECT.c_str());
 
             if (myself && grasped) {
                 if (!myself->dynamics() && !grasped->dynamics()) {
@@ -216,7 +205,7 @@ double LinkageController::onAction(ActionEvent &evt) {
                         }
 
                         /* Move released object to initial position*/
-                        SimObj *target = getObj(GRASP_OBJECT);
+                        SimObj *target = getObj(GRASP_OBJECT.c_str());
                         Vector3d target_pos;
                         target->getPosition(target_pos);
 
@@ -244,7 +233,7 @@ double LinkageController::onAction(ActionEvent &evt) {
                         target->setAxisAndAngle(0.0, 0.0, 1.0, dz);  
 #endif
 
-                        LOG_MSG(("%s release %s", myname(), GRASP_OBJECT));
+                        LOG_MSG(("%s release %s", myname(), GRASP_OBJECT.c_str()));
                     
                     } else {
                         /* Move object while grasping*/
@@ -269,40 +258,52 @@ double LinkageController::onAction(ActionEvent &evt) {
             LOG_MSG(("Exception: %s", err.msg()));
         }
     }
-
+    //printf("end of onAction\n");
     /* Called every 0.1 second to execute grasp process*/
     return 0.1;
 }
+
+
 
 /*!
  * @brief Invert and apply the joint angle information of robot left arm to robot right arm.
  */
 void LinkageController::onRecvMsg(RecvMsgEvent &evt) { 
-    printf("onRecvMsg\n");
+    //printf("onRecvMsg\n");
     try {
-        /* Output received message as log file.*/
-        std::string message = evt.getMsg();    
 
+
+
+ 
+
+        /* Output received message as log file.*/
         /* Get myself. */  
+        /* Get message and message source */
         SimObj *myself = getObj(myname());  
-        printf("message=\n%s\n",message.c_str());
+        std::string sender = evt.getSender();    
+        std::string message = evt.getMsg(); 
+        //printf("message =\n%s\n",message.c_str());
+        //printf("[%s] %s\n", sender.c_str(), message.c_str());
+        //LOG_MSG(("[%s] %s", sender.c_str(), message.c_str())); 
         char *msg = strtok((char*)message.c_str(), " ");
-        //printf("msg=\n%s\n",msg);
-        if (strcmp(msg, "KINECT_DATA") == 0) {  
+        if (strcmp(msg, "KINECT_DATA") == 0) 
+        {  
             int i = 0;  
             while(i < maxsize + 1) {  
                 i++;  
-                //char *type = strtok(msg, ":");
                 char *type = strtok(NULL, ":");  
-                //printf("type=\n%s\n",type);
                 /* When body position notified, */ 
                 /* as the joint angle use the body position and notice as initial coordinate,*/
                 /* apply below values to the agent*/ 
-                if(strcmp(type,"POSITION") == 0) {  
+                if(strcmp(type,"POSITION") == 0) 
+                {  
                     double x = atof(strtok(NULL, ","));  
                     double y = atof(strtok(NULL, ","));  
                     double z = atof(strtok(NULL, " "));
+                    /*
+                     * tome-ikeda20141128
                     myself->setPosition(pos[X] + x, pos[Y] + y, pos[Z] + z);  
+                     */
                     continue;  
   
                 /* When body orientation notified, */ 
@@ -313,12 +314,14 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt) {
                     double x = atof(strtok(NULL, ","));  
                     double y = atof(strtok(NULL, ","));  
                     double z = atof(strtok(NULL, " "));  
-                    myself->setAxisAndAngle(x, y, z, acos(w) * 2);  
+                    //myself->setAxisAndAngle(x, y, z, acos(w) * 2);  //tome-ikeda20141201
                     continue;  
   
-                } else if(strcmp(type,"END") == 0) {
+                } 
+                else if(strcmp(type,"END") == 0) 
+                {
+                    //printf("end of loop\n");
                     break;  
-  
                 /* Notice of joint angle comes*/  
                 } else { 
                     /* Get quaternion of each joint angle*/
@@ -337,65 +340,120 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt) {
                     if (len < (1 - range) || (1 + range) < len) {
                         continue;
                     }  
-            
-                    /* Unnecessary information does not processed after grasping. */
-                    if (strstr(type, (std::string(GRASP_ARM_LINK[RIGHT]) + std::string("_JOINT2")).c_str() ) != NULL 
-                     || strstr(type, (std::string(GRASP_ARM_LINK[RIGHT]) + std::string("_JOINT3")).c_str() ) != NULL) {
-                        if ((grasp == false && (strcmp(type, (std::string(GRASP_ARM_LINK[RIGHT]) + std::string("_JOINT2-1")).c_str()) != 0 
-                                            &&  strcmp(type, (std::string(GRASP_ARM_LINK[RIGHT]) + std::string("_JOINT3-1")).c_str()) != 0)) 
-                          || grasp == true  && (strcmp(type, (std::string(GRASP_ARM_LINK[RIGHT]) + std::string("_JOINT2-2")).c_str()) != 0 
-                                            &&  strcmp(type, (std::string(GRASP_ARM_LINK[RIGHT]) + std::string("_JOINT3-2")).c_str()) != 0)) {
-                            /* In grasping, use 1 joint angle, or use 2 joint angles.*/
-                             /* In case 1, 1 no baai ha sayuu no ashi ga taishousei wo motsu  ugoki wo shi?*/
-                            /* In case 2, 2 no baai ha hidari to migi ha onaji (soushinaito ryoutei de tsukamemasen)  ugoki wo shimasu?*/
-                            continue;    
-                        }
-                    }
-                    /*  Unnecessary information does not processed after grasping. */
-                    if (strstr(type, (std::string(GRASP_FOOT_LINK[RIGHT]) + std::string("_JOINT2")).c_str() ) != NULL 
-                     || strstr(type, (std::string(GRASP_FOOT_LINK[RIGHT]) + std::string("_JOINT4")).c_str() ) != NULL) {
-                        if ((grasp == false && (strcmp(type, (std::string(GRASP_FOOT_LINK[RIGHT]) + std::string("_JOINT2-1")).c_str()) != 0 
-                                            &&  strcmp(type, (std::string(GRASP_FOOT_LINK[RIGHT]) + std::string("_JOINT4-1")).c_str()) != 0)) 
-                          || grasp == true  && (strcmp(type, (std::string(GRASP_FOOT_LINK[RIGHT]) + std::string("_JOINT2-2")).c_str()) != 0 
-                                            &&  strcmp(type, (std::string(GRASP_FOOT_LINK[RIGHT]) + std::string("_JOINT4-2")).c_str()) != 0)) {
-                            /* In grasping, use 1 joint angle, or use 2 joint angles. */
-                            /* In case 1, 1 no baai ha sayuu no ashi ga taishousei wo motsu  ugoki wo shi?*/
-                            /* In case 2, 2 no baai ha hidari to migi ha onaji (soushinaito ryouashi de tsukamemasen) ugoki wo shimasu?*/
-                            continue;    
-                        }
-                    }
-
                     /* Apply rotation quaternion from Kinect to its joints*/
                     /* Change objects in below cases*/
-                    char region[256];
-                    if (strstr(type,   (std::string(GRASP_ARM_LINK[RIGHT]) + std::string("_JOINT2")).c_str()) != NULL) {
-                        /* Use below as right shoulder information*/
-                        strcpy(region, (std::string(GRASP_ARM_LINK[RIGHT]) + std::string("_JOINT2")).c_str());
-
-                    } else if (strstr(type,   (std::string(GRASP_FOOT_LINK[RIGHT]) + std::string("_JOINT2")).c_str()) != NULL) {
-                        /* Use below as right shoulder information */
-                        strcpy(region, (std::string(GRASP_FOOT_LINK[RIGHT]) + std::string("_JOINT2")).c_str());
-
-                    } else if (strstr(type, (std::string(GRASP_ARM_LINK[RIGHT]) + std::string("_JOINT3")).c_str()) != NULL) {
-                        /* Use below as right elbow information */
-                        strcpy(region, (std::string(GRASP_ARM_LINK[RIGHT]) + std::string("_JOINT3")).c_str());
-
-                    } else if (strstr(type, (std::string(GRASP_FOOT_LINK[RIGHT]) + std::string("_JOINT4")).c_str()) != NULL) {
-                        /*  Use below as right elbow information */
-                        strcpy(region, (std::string(GRASP_FOOT_LINK[RIGHT]) + std::string("_JOINT4")).c_str());
-
-                    } else {
-                        /*  Use below as other */
-                        strcpy(region, type);
+                    std::string part = "";
+                    std::string detail = "";
+                    if (strstr(type,   std::string(GRASP_ARM_LINK[RIGHT]).c_str()) != NULL)
+                    {
+                        part = "RARM";
                     }
+                    else if (strstr(type,   std::string(GRASP_ARM_LINK[LEFT ]).c_str()) != NULL)
+                    {
+                        part = "LARM";
+                    }
+                    else if (strstr(type,   std::string(GRASP_FOOT_LINK[RIGHT]).c_str()) != NULL)
+                    {
+                        part = "RLEG";
+                    }
+                    else if (strstr(type,   std::string(GRASP_FOOT_LINK[LEFT ]).c_str()) != NULL)
+                    {
+                        part = "LLEG";
+                    }
+
+
+                    if (strstr(type,   std::string("_JOINT2").c_str()) != NULL)
+                    {
+                        detail = "_JOINT2";
+                    }
+                    else if(strstr(type,   std::string("_JOINT3").c_str()) != NULL)
+                    {
+                        detail = "_JOINT3";
+                    }
+                    else if(strstr(type,   std::string("_JOINT4").c_str()) != NULL)
+                    {
+                        detail = "_JOINT4";
+                    }
+                    else if(strstr(type,   std::string("_JOINT5").c_str()) != NULL)
+                    {
+                        detail = "_JOINT5";
+                    }
+                    else if(strstr(type,   std::string("_JOINT6").c_str()) != NULL)
+                    {
+                        detail = "_JOINT6";
+                    }
+                    //std::cout << "\tpart=\t"<< part << "\tdetail=\t" << detail <<std::endl;
+
 #ifdef _VERBOSE
                     LOG_MSG(("grasp:%s,type:%s,w:%f,x:%f,y:%f,z:%f", (grasp == true ? "true" : "false"), region, w, x, y, z));
 #endif
-                    myself->setJointQuaternion(region, w, x, y, z); 
+                    /* Set rotation quaternion calculated in Kinect*/
+                    if(hand_mode == HAND_FIXED)
+                    {
+                        //nothing
+                    }
+                    else if(hand_mode == REVERSE_NONE_HAND)
+                    {
+                        if(strstr(part.c_str(),"RARM")!=NULL){ 
+                            myself->setJointQuaternion(("RARM"+detail).c_str(), w, x, y, z); 
+                        }
+                        else if(strstr(part.c_str(),"LARM")!=NULL)
+                        {
+                            myself->setJointQuaternion(("LARM"+detail).c_str(), w, x, y, z); 
+                        }  
+                    }
+                    else if(hand_mode == REVERSE_RIGHT_HAND)
+                    {
+                        if(strstr(part.c_str(),"LARM")!=NULL)
+                        {
+                            myself->setJointQuaternion(("LARM"+detail).c_str(), w, x, y, z); 
+                            myself->setJointQuaternion(("RARM"+detail).c_str(), w, -x, -y, -z); 
+                        }  
+                    }
+                    else if(hand_mode == REVERSE_LEFT_HAND)
+                    {
+                        if(strstr(part.c_str(),"RARM")!=NULL)
+                        {
+                            myself->setJointQuaternion(("RARM"+detail).c_str(), w, x, y, z); 
+                            myself->setJointQuaternion(("LARM"+detail).c_str(), w, -x, -y, -z); 
+                        }          
+                    }
+                    if(foot_mode == FOOT_FIXED)
+                    {
+                        //nothing
+                    }
+                    if(foot_mode == REVERSE_NONE_FOOT)
+                    {
+                        if(strstr(part.c_str(),"RLEG")!=NULL){ 
+                            myself->setJointQuaternion(("RLEG"+detail).c_str(), w, x, y, z); 
+                        }
+                        else if(strstr(part.c_str(),"LLEG")!=NULL)
+                        {
+                            myself->setJointQuaternion(("LLEG"+detail).c_str(), w, x, y, z); 
+                        } 
+                    }
+                    else if(foot_mode == REVERSE_RIGHT_FOOT)
+                    {
+                        if(strstr(part.c_str(),"LLEG")!=NULL)
+                        {
+                            myself->setJointQuaternion(("LLEG"+detail).c_str(), w, x, y, z); 
+                            myself->setJointQuaternion(("RLEG"+detail).c_str(), w, x, -y, -z); 
+                        }          
+                    }
+                    else if(foot_mode == REVERSE_LEFT_FOOT)
+                    {
+                        if(strstr(part.c_str(),"RLEG")!=NULL)
+                        {
+                            myself->setJointQuaternion(("RLEG"+detail).c_str(), w, x, y, z); 
+                            myself->setJointQuaternion(("LLEG"+detail).c_str(), w, x, -y, -z); 
+                        }  
+                    }
                     continue; 
                 }  
             } 
-        } else if (strcmp(msg, "HMD_DATA") == 0) {
+        }
+        else if (strcmp(msg, "HMD_DATA") == 0) 
+        {
             /* Tlanslate YPR from HMD to its quaternion*/ 
             /* and Apply joint angle of avator neck. */
             double y = atof(strtok(NULL, ","));  
@@ -434,11 +492,13 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt) {
             /* Calculate joint angle f neck from the difference between body orientation and neck orientation. */
             dQuaternion t3;
             dQMultiply1(t3, qbody, t2);
-
             /* Apply calculated angle to neck.*/
+            //if(strstr(msg, "RARM")!=NULL && false){ }
+            //getConjugateQuaternion(&t3[0], &t3[1], &t3[2], &t3[3]);
             myself->setJointQuaternion("HEAD_JOINT0", t3[0], t3[1], t3[2], t3[3]);
- 
-        } else if (strcmp(msg, "INIT") == 0) {
+        }
+        else if (strcmp(msg, "INIT") == 0) 
+        {
             /* Ajust the position of legs when initializing avator body.*/
             /* Adjust the joint angle of knees to sit on the chair*/
             /* Root of both legs.*/
@@ -447,13 +507,65 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt) {
             /* Both knees */
             myself->setJointAngle("RLEG_JOINT4", DEG2RAD( 90));
             myself->setJointAngle("LLEG_JOINT4", DEG2RAD( 90));
- 
-        } else {
+        }
+        else if(strcmp(msg, "HAND_FIXED") == 0)
+        {
+            printf("HAND_FIXED\n");
+            hand_mode = HAND_FIXED;
+            GRASP_PARTS = "LARM_LINK7";
+        }
+        else if(strcmp(msg, "REVERSE_NONE_HAND") == 0)
+        {
+            printf("REVERSE_NONE_HAND\n");
+            hand_mode = REVERSE_NONE_HAND;
+            GRASP_PARTS = "LARM_LINK7";
+        }
+        else if(strcmp(msg, "REVERSE_RIGHT_HAND") == 0)
+        {
+            /* Left arm based */
+            printf("REVERSE_RIGHT_HAND\n");
+            hand_mode = REVERSE_RIGHT_HAND;
+            GRASP_PARTS = "LARM_LINK7";
+        }
+        else if(strcmp(msg, "REVERSE_LEFT_HAND") == 0)
+        {
+            /* Right arm based */
+            printf("REVERSE_LEFT_HAND\n");
+            hand_mode = REVERSE_LEFT_HAND;
+            GRASP_PARTS = "RARM_LINK7";
+        }
+        else if(strcmp(msg, "FOOT_FIXED") == 0)
+        {
+            printf("FOOT_FIXED\n");
+            foot_mode = FOOT_FIXED;
+            GRASP_PARTS = "LARM_LINK7";
+        }
+        else if(strcmp(msg, "REVERSE_NONE_FOOT") == 0)
+        {
+            printf("REVERSE_NONE_FOOT\n");
+            foot_mode = REVERSE_NONE_FOOT;
+            GRASP_PARTS = "LARM_LINK7";
+        }
+        else if(strcmp(msg, "REVERSE_RIGHT_FOOT") == 0)
+        {
+            /* Left leg based */
+            printf("REVERSE_RIGHT_FOOT\n");
+            foot_mode = REVERSE_RIGHT_FOOT;
+            GRASP_PARTS = "LARM_LINK7";
+        }
+        else if(strcmp(msg, "REVERSE_LEFT_FOOT") == 0)
+        {
+            /* Right leg based */
+            printf("REVERSE_LEFT_FOOT\n");
+            foot_mode = REVERSE_LEFT_FOOT;
+            GRASP_PARTS = "LARM_LINK7";
+        }
+        else 
+        {
             /* Display message received. */
             LOG_MSG(("[%s][%d]%s received message of %s by %s", __FUNCTION__, __LINE__, myname(), message.c_str(), evt.getSender()));
 
         }
-
     } catch(SimObj::NoAttributeException &err) {
         LOG_MSG(("NoAttributeException: %s", err.msg()));
 
@@ -463,7 +575,7 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt) {
     } catch(SimObj::Exception &err) {
         LOG_MSG(("Exception: %s", err.msg()));
     }
-
+    //printf("end of recvmsg()\n");
 }
 
 #ifndef _NO_GRASP
@@ -472,12 +584,15 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt) {
  */
 void LinkageController::onCollision(CollisionEvent &evt) {
     try {
+        printf("onCollision\n");
         if (grasp == false) {
             /* Left hand doesn't grasp Obon when it is below the prescribed height*/
             SimObj *myself = getObj(myname());
+            //std::cout << "GRASP_PARTS" << GRASP_PARTS << std::endl;
             CParts *parts = myself->getParts(GRASP_PARTS);
             Vector3d parts_pos;
             parts->getPosition(parts_pos);
+            //printf("LIMIT_Y=%f\tparts_pos.y()=%f\n",LIMIT_Y,parts_pos.y());
             if (parts_pos.y() >= LIMIT_Y) {    
 #ifdef _VERBOSE
                 LOG_MSG(("grasp:%s", grasp == true ? "true" : "false"));
@@ -490,7 +605,8 @@ void LinkageController::onCollision(CollisionEvent &evt) {
 
                 for (int i = 0; i < with.size(); i++) {
                     /* Grasp object when collision of left hand or arm */
-#ifdef _VERBOSE
+                    //printf("mparts[i].c_str()=%s\n",mparts[i].c_str());
+#ifdef _VERBOSEz
                     LOG_MSG(("target:%s,parts:%s,define:%s", with[i].c_str(), mparts[i].c_str(), GRASP_PARTS));
 #endif
                     /* In consideration of the hand opposite to based hand collides, */
@@ -503,7 +619,7 @@ void LinkageController::onCollision(CollisionEvent &evt) {
                         parts->graspObj(GRASP_OBJECT);   
 #endif
                          /* Keep grasping*/
-                        LOG_MSG(("%s grasp %s", GRASP_PARTS, GRASP_OBJECT));
+                        LOG_MSG(("%s grasp %s", GRASP_PARTS, GRASP_OBJECT.c_str()));
                         grasp = true;
 
                         /* Notify grasping to service proider.*/

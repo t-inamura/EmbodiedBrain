@@ -34,11 +34,13 @@
 /*!
  * @brief Define object name grasped
  */
+ /*
 #ifndef _USE_FOOT
 #define GRASP_OBJECT "Tray"
 #else
 #define GRASP_OBJECT "Ball"
 #endif
+*/
 
 /*!
  * @brief Define port number in Kinect service.
@@ -73,10 +75,12 @@ enum TARGET_AXIS {
 /*!
  * @brief Define lower limit of y value in grasping object.
  */
+ /*
 #ifndef _USE_FOOT
 #define LIMIT_Y 65.0
 #else
 #define LIMIT_Y 10.0
 #endif
+*/
 
 
