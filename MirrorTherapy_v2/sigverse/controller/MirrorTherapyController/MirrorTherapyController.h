@@ -4,8 +4,8 @@
  *  Created on: 2015/03/25
  *      Author: Nozaki
  */
-#ifndef __MIRROR_THERAPY_CONTROLLER_H__
-#define __MIRROR_THERAPY_CONTROLLER_H__
+#ifndef SIGVERSE_MIRROR_THERAPY_CONTROLLER_H
+#define SIGVERSE_MIRROR_THERAPY_CONTROLLER_H
 
 #include <sigverse/Controller.h>
 #include <sigverse/ControllerEvent.h>
@@ -107,4 +107,4 @@ public:
 	std::vector<TimeAndPosture> pastTimeAndPostures;
 };
 
-#endif //__MIRROR_THERAPY_CONTROLLER_H__
+#endif // SIGVERSE_MIRROR_THERAPY_CONTROLLER_H

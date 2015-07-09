@@ -117,24 +117,24 @@ void MirrorTherapyController::onRecvMsg(RecvMsgEvent &evt)
 				sensorData.setSensorData(sensorDataMap);
 
 				// Convert kinect v2 quaternions(orientations) to man-nii posture(sigverse quaternion format).
-				ManNiiPosture manNiiPosture = KinectV2DeviceManager::convertKinectData2ManNiiPosture(sensorData);
+				ManNiiPosture posture = KinectV2DeviceManager::convertSensorData2ManNiiPosture(sensorData);
 
 
 				// Store current posture and time stamp.
-				int currentIndex = this->storeCurrentPosture(manNiiPosture);
+				int currentIndex = this->storeCurrentPosture(posture);
 
 				// Search nearest neighbor of target delay time in stored time stamps.
 				//   last 500 postures is in this->pastPostures.
 				//   find nearest index.
 				ManNiiPosture delayedPosture = this->getDelayedPosture(currentIndex);
 
-				this->invertPosture(manNiiPosture, delayedPosture);
+				this->invertPosture(posture, delayedPosture);
 
 
 				// Set SIGVerse quaternions and positions
 				SimObj *obj = getObj(myname());
 				this->kinectV2DeviceManager.setRootPosition(obj, sensorData.rootPosition);
-				this->kinectV2DeviceManager.setJointQuaternions2ManNii(obj, manNiiPosture, sensorData);
+				KinectV2DeviceManager::setJointQuaternions2ManNii(obj, posture, sensorData);
 
 				this->frameNumber++;
 			}
@@ -146,10 +146,10 @@ void MirrorTherapyController::onRecvMsg(RecvMsgEvent &evt)
 				OculusRiftDK1SensorData sensorData;
 				sensorData.setSensorData(sensorDataMap);
 
-				ManNiiPosture manNiiPosture = this->oculusDK1DeviceManager.convertEulerAngle2ManNiiPosture(sensorData.getEulerAngle());
+				ManNiiPosture posture = OculusDK1DeviceManager::convertEulerAngle2ManNiiPosture(sensorData.getEulerAngle());
 
 				SimObj *obj = getObj(myname());
-				this->oculusDK1DeviceManager.setJointQuaternions2ManNii(obj, manNiiPosture);
+				OculusDK1DeviceManager::setJointQuaternions2ManNii(obj, posture);
 			}
 		}
 		/*
@@ -288,7 +288,7 @@ bool MirrorTherapyController::setReverseModeAndDelayTime(const std::map<std::str
 ///@return When couldn't read parameter file, return false;
 void MirrorTherapyController::readIniFileAndInitialize()
 {
-	std::ifstream ifs(MirrorTherapyController::parameterFileName.c_str());
+	std::ifstream ifs(parameterFileName.c_str());
 
 	std::string kinectV2ServiceName;
 	std::string kinectV2DeviceType;
@@ -303,15 +303,15 @@ void MirrorTherapyController::readIniFileAndInitialize()
 	// Parameter file is "not" exists.
 	if (ifs.fail())
 	{
-		std::cout << "Not exist : " << MirrorTherapyController::parameterFileName << std::endl;
+		std::cout << "Not exist : " << parameterFileName << std::endl;
 		std::cout << "Use default parameter." << std::endl;
 
 		kinectV2ServiceName    = SERVICE_NAME_KINECT_V2;
 		kinectV2DeviceType     = DEV_TYPE_KINECT_V2;
 		kinectV2DeviceUniqueID = DEV_UNIQUE_ID_0;
 
-		sensorDataModeStr = MirrorTherapyController::paramFileValKinectV2SensorDataModeDefault;
-		scaleRatio        = MirrorTherapyController::paramFileValKinectV2ScaleRatioDefault;
+		sensorDataModeStr = paramFileValKinectV2SensorDataModeDefault;
+		scaleRatio        = paramFileValKinectV2ScaleRatioDefault;
 
 		oculusDK1ServiceName    = SERVICE_NAME_OCULUS_DK1;
 		oculusDK1DeviceType     = DEV_TYPE_OCULUS_DK1;
@@ -322,16 +322,16 @@ void MirrorTherapyController::readIniFileAndInitialize()
 	{
 		try
 		{
-			std::cout << "Read " << MirrorTherapyController::parameterFileName << std::endl;
+			std::cout << "Read " << parameterFileName << std::endl;
 			boost::property_tree::ptree pt;
-			boost::property_tree::read_ini(MirrorTherapyController::parameterFileName, pt);
+			boost::property_tree::read_ini(parameterFileName, pt);
 
 			kinectV2ServiceName    = pt.get<std::string>(paramFileKeyKinectV2ServiceName);
 			kinectV2DeviceType     = pt.get<std::string>(paramFileKeyKinectV2Devicetype);
 			kinectV2DeviceUniqueID = pt.get<std::string>(paramFileKeyKinectV2DeviceUniqueID);
 
-			sensorDataModeStr = pt.get<std::string>(MirrorTherapyController::paramFileKeyKinectV2SensorDataMode);
-			scaleRatio        = pt.get<double>     (MirrorTherapyController::paramFileKeyKinectV2ScaleRatio);
+			sensorDataModeStr = pt.get<std::string>(paramFileKeyKinectV2SensorDataMode);
+			scaleRatio        = pt.get<double>     (paramFileKeyKinectV2ScaleRatio);
 
 			oculusDK1ServiceName    = pt.get<std::string>(paramFileKeyOculusDK1ServiceName);
 			oculusDK1DeviceType     = pt.get<std::string>(paramFileKeyOculusDK1Devicetype);
@@ -339,7 +339,7 @@ void MirrorTherapyController::readIniFileAndInitialize()
 		}
 		catch (boost::exception &ex)
 		{
-			std::cout << MirrorTherapyController::parameterFileName << " ERR :" << *boost::diagnostic_information_what(ex) << std::endl;
+			std::cout << parameterFileName << " ERR :" << *boost::diagnostic_information_what(ex) << std::endl;
 		}
 	}
 
@@ -347,8 +347,8 @@ void MirrorTherapyController::readIniFileAndInitialize()
 	std::cout << paramFileKeyKinectV2Devicetype     << ":" << kinectV2DeviceType     << std::endl;
 	std::cout << paramFileKeyKinectV2DeviceUniqueID << ":" << kinectV2DeviceUniqueID << std::endl;
 
-	std::cout << MirrorTherapyController::paramFileKeyKinectV2SensorDataMode << ":" << sensorDataModeStr << std::endl;
-	std::cout << MirrorTherapyController::paramFileKeyKinectV2ScaleRatio     << ":" << scaleRatio << std::endl;
+	std::cout << paramFileKeyKinectV2SensorDataMode << ":" << sensorDataModeStr << std::endl;
+	std::cout << paramFileKeyKinectV2ScaleRatio     << ":" << scaleRatio << std::endl;
 
 	std::cout << paramFileKeyOculusDK1ServiceName    << ":" << oculusDK1ServiceName    << std::endl;
 	std::cout << paramFileKeyOculusDK1Devicetype     << ":" << oculusDK1DeviceType     << std::endl;
