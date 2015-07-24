@@ -48,7 +48,7 @@ MainFrame::MainFrame( wxWindow* parent, wxWindowID id, const wxString& title, co
 	m_staticText_delay_time->Wrap( -1 );
 	fgSizer111->Add( m_staticText_delay_time, 0, wxALL, 5 );
 	
-	m_textCtrl_delay_time = new wxTextCtrl( this, wxID_ANY, wxT("500"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_textCtrl_delay_time = new wxTextCtrl( this, wxID_ANY, wxT("1000"), wxDefaultPosition, wxDefaultSize, 0 );
 	fgSizer111->Add( m_textCtrl_delay_time, 0, wxALL, 5 );
 	
 	
