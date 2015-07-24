@@ -46,13 +46,13 @@ void MirrorTherapyGUIMainFrame::OnMirrorTherapyClick( wxCommandEvent& event )
 
 	switch (reverseModeNo)
 	{
-	case 0 : { reverseModeStr = "LEFTHAND";  break; }
-	case 1 : { reverseModeStr = "RIGHTHAND"; break; }
-	case 2 : { reverseModeStr = "NOREVERSE"; break; }
+		case 0 : { reverseModeStr = "LEFTHAND";  break; }
+		case 1 : { reverseModeStr = "RIGHTHAND"; break; }
+		case 2 : { reverseModeStr = "NOREVERSE"; break; }
 	}
 	std::string delayTimeStr = m_textCtrl_delay_time->GetValue();
 
-	avatarController.sendMessageToController("AVATAR:MirrorTherapy;REVERSE:"+reverseModeStr+";DELAY:"+delayTimeStr+";");
+	avatarController.sendMessageToController("AVATAR:mirror_therapy_man;REVERSE:"+reverseModeStr+";DELAY:"+delayTimeStr+";");
 }
 
 void MirrorTherapyGUIMainFrame::OnReverseModeChoice( wxCommandEvent& event )
@@ -62,15 +62,15 @@ void MirrorTherapyGUIMainFrame::OnReverseModeChoice( wxCommandEvent& event )
 
 void MirrorTherapyGUIMainFrame::OnLongArmClick( wxCommandEvent& event )
 {
-	avatarController.sendMessageToController("AVATAR:LongArm;");
+	avatarController.sendMessageToController("AVATAR:right_arm_long_man;");
 }
 
 void MirrorTherapyGUIMainFrame::OnShortArmClick( wxCommandEvent& event )
 {
-	avatarController.sendMessageToController("AVATAR:ShortArm;");
+	avatarController.sendMessageToController("AVATAR:right_arm_short_man;");
 }
 
 void MirrorTherapyGUIMainFrame::OnRobotArmClick( wxCommandEvent& event )
 {
-	avatarController.sendMessageToController("AVATAR:RobotArm;");
+	avatarController.sendMessageToController("AVATAR:right_arm_robot_man;");
 }
