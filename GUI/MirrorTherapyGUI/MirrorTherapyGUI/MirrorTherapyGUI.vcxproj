@@ -11,8 +11,8 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{CD2BFED6-51A5-4E7B-9CFA-EB434F4B0241}</ProjectGuid>
-    <RootNamespace>KinectV2_vs2013</RootNamespace>
+    <ProjectGuid>{B801FDF1-3380-41C9-B3C3-3B80771CF2F7}</ProjectGuid>
+    <RootNamespace>MirrorTherapyGUI</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -26,7 +26,7 @@
     <UseDebugLibraries>false</UseDebugLibraries>
     <PlatformToolset>v120</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
-    <CharacterSet>MultiByte</CharacterSet>
+    <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -58,46 +58,39 @@
       <FunctionLevelLinking>true</FunctionLevelLinking>
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>$(SIGSERVICE_120_LIB_DIR)\SIGService;$(BOOST_1_55_0_LIB_DIR);$(KINECTSDK20_DIR)\inc;$(OPENCV_LIB_DIR)\build\include;$(SIGVERSE_BUILD_PATH);%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
-      <PreprocessorDefinitions>DEBUG_PRINT;_MBCS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <AdditionalIncludeDirectories>.\src;$(BOOST_1_55_0_LIB_DIR);$(SIGSERVICE_120_LIB_DIR);$(WXWIDGETS_LIB_DIR)\include\msvc;$(WXWIDGETS_LIB_DIR)\include</AdditionalIncludeDirectories>
+      <PreprocessorDefinitions>_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
     </ClCompile>
     <Link>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SIGSERVICE_120_LIB_DIR)\Release_2013;$(BOOST_1_55_0_LIB_DIR)\lib32-msvc-12.0;$(OPENCV_LIB_DIR)\build\x86\vc12\lib;$(KINECTSDK20_DIR)\Lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SIGService.lib;kinect20.lib;opencv_highgui2410.lib;opencv_core2410.lib;opencv_imgproc2410.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ws2_32.lib;winmm.lib;SIGService.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(BOOST_1_55_0_LIB_DIR)\lib32-msvc-12.0;$(SIGSERVICE_120_LIB_DIR)\Release_2013;$(WXWIDGETS_LIB_DIR)\lib\vc_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <SubSystem>
+      </SubSystem>
     </Link>
     <PostBuildEvent>
-      <Command>copy ".\KinectV2.ini" "..\Release"
-copy "$(OPENCV_LIB_DIR)\build\x86\vc12\bin\opencv_core2410.dll" "..\Release"
-copy "$(OPENCV_LIB_DIR)\build\x86\vc12\bin\opencv_highgui2410.dll" "..\Release"
-copy "$(OPENCV_LIB_DIR)\build\x86\vc12\bin\opencv_imgproc2410.dll" "..\Release"
-</Command>
+      <Command>copy "config\MirrorTherapyGUI.ini" "..\Release"</Command>
     </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\..\common\device\DeviceCommon.h" />
-    <ClInclude Include="..\..\..\common\device\KinectV2SensorData.h" />
-    <ClInclude Include="..\..\..\common\device\SensorData.h" />
-    <ClInclude Include="..\..\..\Common\Quaternion.h" />
-    <ClInclude Include="..\..\..\Common\SigCmn.h" />
-    <ClInclude Include="..\..\common\CheckRecvSIGServiceData.h" />
-    <ClInclude Include="..\..\common\Device.h" />
-    <ClInclude Include="KinectV2Device.h" />
+    <ClCompile Include="src\sigverse\plugin\common\CheckRecvSIGServiceData.cpp" />
+    <ClCompile Include="src\sigverse\tools\MirrorTherapyGUI\gui\MirrorTherapyGUIFrame.cpp" />
+    <ClCompile Include="src\sigverse\tools\MirrorTherapyGUI\gui\MirrorTherapyGUIMainFrame.cpp" />
+    <ClCompile Include="src\sigverse\tools\MirrorTherapyGUI\AvatarController.cpp" />
+    <ClCompile Include="src\sigverse\tools\MirrorTherapyGUI\Main.cpp" />
+    <ClCompile Include="src\sigverse\tools\MirrorTherapyGUI\Param.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\..\Common\device\KinectV2SensorData.cpp" />
-    <ClCompile Include="..\..\..\Common\device\SensorData.cpp" />
-    <ClCompile Include="..\..\..\Common\Quaternion.cpp" />
-    <ClCompile Include="..\..\..\Common\SigCmn.cpp" />
-    <ClCompile Include="..\..\common\CheckRecvSIGServiceData.cpp" />
-    <ClCompile Include="..\..\common\Device.cpp" />
-    <ClCompile Include="KinectV2Device.cpp" />
-    <ClCompile Include="Main.cpp" />
+    <ClInclude Include="src\sigverse\plugin\common\CheckRecvSIGServiceData.h" />
+    <ClInclude Include="src\sigverse\tools\MirrorTherapyGUI\gui\MirrorTherapyGUIFrame.h" />
+    <ClInclude Include="src\sigverse\tools\MirrorTherapyGUI\gui\MirrorTherapyGUIMainFrame.h" />
+    <ClInclude Include="src\sigverse\tools\MirrorTherapyGUI\AvatarController.h" />
+    <ClInclude Include="src\sigverse\tools\MirrorTherapyGUI\Param.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="KinectV2.ini" />
+    <None Include="config\MirrorTherapyGUI.ini" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

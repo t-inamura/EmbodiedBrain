@@ -7,7 +7,7 @@
     </Filter>
     <Filter Include="ヘッダー ファイル">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+      <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
     <Filter Include="リソース ファイル">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
@@ -15,43 +15,43 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Main.cpp">
+    <ClCompile Include="src\sigverse\plugin\common\CheckRecvSIGServiceData.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="OculusRiftDK1Device.cpp">
+    <ClCompile Include="src\sigverse\tools\MirrorTherapyGUI\Param.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\common\Device.cpp">
+    <ClCompile Include="src\sigverse\tools\MirrorTherapyGUI\gui\MirrorTherapyGUIFrame.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\common\device\OculusRiftDK1SensorData.cpp">
+    <ClCompile Include="src\sigverse\tools\MirrorTherapyGUI\gui\MirrorTherapyGUIMainFrame.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\common\device\SensorData.cpp">
+    <ClCompile Include="src\sigverse\tools\MirrorTherapyGUI\Main.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\common\CheckRecvSIGServiceData.cpp">
+    <ClCompile Include="src\sigverse\tools\MirrorTherapyGUI\AvatarController.cpp">
       <Filter>ソース ファイル</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="OculusRiftDK1Device.h">
+    <ClInclude Include="src\sigverse\plugin\common\CheckRecvSIGServiceData.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\common\Device.h">
+    <ClInclude Include="src\sigverse\tools\MirrorTherapyGUI\Param.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\common\device\OculusRiftDK1SensorData.h">
+    <ClInclude Include="src\sigverse\tools\MirrorTherapyGUI\gui\MirrorTherapyGUIFrame.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\common\device\SensorData.h">
+    <ClInclude Include="src\sigverse\tools\MirrorTherapyGUI\gui\MirrorTherapyGUIMainFrame.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\common\CheckRecvSIGServiceData.h">
+    <ClInclude Include="src\sigverse\tools\MirrorTherapyGUI\AvatarController.h">
       <Filter>ヘッダー ファイル</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\..\common\device\DeviceCommon.h">
-      <Filter>ヘッダー ファイル</Filter>
-    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="config\MirrorTherapyGUI.ini" />
   </ItemGroup>
 </Project>
