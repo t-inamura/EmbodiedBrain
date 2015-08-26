@@ -58,8 +58,9 @@ public:
 	{
 		RIGHT     = 0,
 		LEFT      = 1,
-		NOREVERSE = 2,
-		ReverseMode_Count = (NOREVERSE + 1)
+		ReverseMode_Count = (LEFT + 1)
+//		NOREVERSE = 2,
+//		ReverseMode_Count = (NOREVERSE + 1)
 	};
 
 	static const std::string limbModes[LimbMode_Count];
@@ -70,15 +71,15 @@ public:
 	static const std::string linkageObjName4Hand;
 	static const std::string linkageObjName4Foot;
 
-	static const double linkageObjWidth4Hand;
-	static const double linkageObjWidth4Foot;
+	static const std::string rightLink4Hand;
+	static const std::string leftLink4Hand;
+	static const std::string rightLink4Foot;
+	static const std::string leftLink4Foot;
 
-	static const double tableHeight;
-	static const double floorHeight;
+	static const double distance4ReleaseJudgeOnHand;
+	static const double distance4ReleaseJudgeOnFoot;
 
-	static const double shiftDistanceForChangingObj;
-
-//	~LinkageController();
+	static const double shiftDistanceForChangingLimb;
 
 	///@brief Initialize this controller.
 	void onInit(InitEvent &evt);
@@ -100,6 +101,9 @@ public:
 
 	void changeMode(const std::map<std::string, std::vector<std::string> > &map);
 
+	void reset4Hand();
+	void reset4Foot();
+
 
 	KinectV2DeviceManager  kinectV2DeviceManager;
 	OculusDK1DeviceManager oculusDK1DeviceManager;
@@ -108,19 +112,22 @@ public:
 	Vector3d linkageObjIniPos4Hand;
 	Vector3d linkageObjIniPos4Foot;
 
+	std::string rightLink;
+	std::string leftLink;
+
 	///@brief Whether grasping or not.
 	bool isGrasping;
 
 	std::string linkageObjName;
-	double      linkageObjWidth;
-	Vector3d    linkageObjIniPos;
-	double      puttingHeight;
+	double      distance4Releasejudge;
+	Vector3d    minOfLinkageObj;
+	Vector3d    maxOfLinkageObj;
 
 	///@brief For Mirror therapy variables.
 	std::string limbMode;
 	std::string reverseMode;
 
-	std::string myGraspingPart;
+	std::string myGraspingPartName;
 
 	bool usingOculus;
 
@@ -131,6 +138,8 @@ public:
 	std::thread thCheckService;
 
 	double elapsedTimeSinceRelease;
+
+	Vector3d distanceAtGrasping;
 };
 
 #endif // SIGVERSE_LINKAGE_CONTROLLER_H

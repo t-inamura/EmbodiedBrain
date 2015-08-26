@@ -42,25 +42,21 @@ const std::string LinkageController::msgKeyReverse  = "REVERSE";
 const std::string LinkageController::limbModes[LimbMode_Count] = { "HAND", "FOOT" };
 const std::string LinkageController::reverseModes[ReverseMode_Count] = { "RIGHT", "LEFT", "NOREVERSE" };
 
+const std::string LinkageController::rightLink4Hand = "RARM_LINK7";
+const std::string LinkageController::leftLink4Hand  = "LARM_LINK7";
+const std::string LinkageController::rightLink4Foot = "RLEG_LINK6";
+const std::string LinkageController::leftLink4Foot  = "LLEG_LINK6";
+
 const std::string LinkageController::chairName           = "chair";
 const std::string LinkageController::tableName           = "table";
 const std::string LinkageController::linkageObjName4Hand = "linkageObj4Hand";
 const std::string LinkageController::linkageObjName4Foot = "linkageObj4Foot";
 
-const double      LinkageController::linkageObjWidth4Hand = 30.0;
-const double      LinkageController::linkageObjWidth4Foot = 30.0;
+const double      LinkageController::distance4ReleaseJudgeOnHand = 12.0+1.0; // graspRadius + margin.
+const double      LinkageController::distance4ReleaseJudgeOnFoot = 12.0+1.0; // graspRadius + margin.
 
-const double      LinkageController::tableHeight = 65.0;
-const double      LinkageController::floorHeight = 10.0;
+const double      LinkageController::shiftDistanceForChangingLimb = 1000.0;
 
-const double      LinkageController::shiftDistanceForChangingObj = 1000.0;
-
-
-
-//LinkageController::~LinkageController()
-//{
-////	this->thCheckService.join();
-//}
 
 
 ///@brief Initialize this controller.
@@ -80,17 +76,9 @@ void LinkageController::onInit(InitEvent &evt)
 	SimObj *linkageObj4Foot = getObj(this->linkageObjName4Foot.c_str());
 	linkageObj4Foot->getPosition(this->linkageObjIniPos4Foot);
 
-	// Initialize Linkage parameter.
-	this->limbMode         = limbModes[HAND];     // Set limb mode.
-	this->puttingHeight    = this->tableHeight;
-	this->linkageObjName   = this->linkageObjName4Hand;
-	this->linkageObjWidth  = this->linkageObjWidth4Hand;
-	this->linkageObjIniPos = this->linkageObjIniPos4Hand;
-	this->reverseMode      = reverseModes[RIGHT]; // Set reverse mode.
+	this->reverseMode = this->reverseModes[RIGHT]; // Set reverse mode.
 
-	// Shift objects to become hand mode.
-	linkageObj4Foot->setPosition(this->linkageObjIniPos4Foot.x(), this->linkageObjIniPos4Foot.y(), this->linkageObjIniPos4Foot.z()+this->shiftDistanceForChangingObj);
-
+	reset4Hand();
 
 //	/* Adjustment of knee angles to sit on the chair */
 //	/* Root of both legs */
@@ -109,6 +97,12 @@ void LinkageController::onInit(InitEvent &evt)
 	this->usingOculus = false;
 
 	this->guiService = NULL;
+
+	this->myGraspingPartName = "";
+
+	this->distanceAtGrasping.x(0.0);
+	this->distanceAtGrasping.y(0.0);
+	this->distanceAtGrasping.z(0.0);
 
 	std::thread thCheckService(&LinkageController::checkServiceForThread, this);
 	thCheckService.detach();
@@ -135,53 +129,64 @@ double LinkageController::onAction(ActionEvent &evt)
 		if (this->isGrasping)
 		{
 			/* Keep adjusting the position of object while grasping*/
-			CParts *myParts  = myself->getParts(myGraspingPart.c_str());
+			CParts *myParts  = myself->getParts(this->myGraspingPartName.c_str());
 
 			/* Get name and position of parts grasped */
 			Vector3d myPartsPos;
 			myParts->getPosition(myPartsPos);
 
+			Vector3d newTargetPos;
+			newTargetPos.x(targetPos.x());
+			newTargetPos.y(myPartsPos.y()+this->distanceAtGrasping.y());
+			newTargetPos.z(myPartsPos.z()+this->distanceAtGrasping.z());
+
+			//Reposition after landing.
+			if(newTargetPos.y() < this->minOfLinkageObj.y())
+			{
+				newTargetPos.y(this->minOfLinkageObj.y());
+				if(newTargetPos.z() < this->minOfLinkageObj.z()){ newTargetPos.z(this->minOfLinkageObj.z()); }
+				if(newTargetPos.z() > this->maxOfLinkageObj.z()){ newTargetPos.z(this->maxOfLinkageObj.z()); }
+			}
 //			std::cout << "onAction 1:" << grasped_pos.y() << std::endl;
 
-			double distance = 2.0*std::fabs(myPartsPos.x());
+			//Recalc.
+			this->distanceAtGrasping.x(newTargetPos.x()-myPartsPos.x());
+			this->distanceAtGrasping.y(newTargetPos.y()-myPartsPos.y());
+			this->distanceAtGrasping.z(newTargetPos.z()-myPartsPos.z());
 
-			if (targetPos.y() <= this->puttingHeight || distance > this->linkageObjWidth)
+			target->setPosition(newTargetPos);
+
+			if (this->distanceAtGrasping.length() > this->distance4Releasejudge)
 			{
 				this->isGrasping = false;
+				this->elapsedTimeSinceRelease = 0.0;
 
-				if(targetPos.y() > this->puttingHeight)
-				{
-					this->elapsedTimeSinceRelease+=interval;
-					double gravity = -980.665;
-					double distanceOfFreeFall = interval*gravity*(2.0*this->elapsedTimeSinceRelease-interval)/2.0;
-					target->setPosition(targetPos.x(), targetPos.y()+distanceOfFreeFall, targetPos.z());
-				}
-				else
-				{
-					/* Set position as its height when it is below the prescribed height(e.g. the case arm pulled down fast) */
-//						target->setPosition(target_pos.x(), LIMIT_Y, target_pos.z());
-					target->setPosition(targetPos.x(), this->puttingHeight, targetPos.z());
-				}
-
-				LOG_MSG(("%s release %s", myname(), linkageObjName.c_str()));
-			}
-			else
-			{
-//				std::cout << "onAction 21" << std::endl;
-//
-				/* Adjust position as it is grasped. */
-				/* Move object about only y axis direction (-5: adustment of hand size) */
-				target->setPosition(targetPos.x(), myPartsPos.y(), myPartsPos.z());
+				LOG_MSG(("Release %s.", linkageObjName.c_str()));
 			}
 		}
 		else
 		{
-			if(targetPos.y() > this->puttingHeight)
+			if(targetPos.y() > this->minOfLinkageObj.y())
 			{
 				this->elapsedTimeSinceRelease+=interval;
 				double gravity = -980.665;
 				double distanceOfFreeFall = interval*gravity*(2.0*this->elapsedTimeSinceRelease-interval)/2.0;
-				target->setPosition(targetPos.x(), targetPos.y()+distanceOfFreeFall, targetPos.z());
+				double newYpos = targetPos.y()+distanceOfFreeFall;
+
+				Vector3d newTargetPos;
+				newTargetPos.x(targetPos.x());
+				newTargetPos.y(newYpos);
+				newTargetPos.z(targetPos.z());
+
+				//Reposition after landing.
+				if(newTargetPos.y() < this->minOfLinkageObj.y())
+				{
+					newTargetPos.y(this->minOfLinkageObj.y());
+					if(newTargetPos.z() < this->minOfLinkageObj.z()){ newTargetPos.z(this->minOfLinkageObj.z()); }
+					if(newTargetPos.z() > this->maxOfLinkageObj.z()){ newTargetPos.z(this->maxOfLinkageObj.z()); }
+				}
+
+				target->setPosition(newTargetPos);
 			}
 		}
 	}
@@ -337,8 +342,8 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt)
 
 void LinkageController::makeInvertPosture(ManNiiPosture &posture)
 {
-	// left hand motion affects right hand.
-	if (this->reverseMode == reverseModes[RIGHT])
+	// Left hand motion affects right hand.
+	if (this->limbMode ==limbModes[HAND] && this->reverseMode == reverseModes[RIGHT])
 	{
 		// Get original quaternions.
 		double w2, x2, y2, z2, w3, x3, y3, z3;
@@ -349,8 +354,8 @@ void LinkageController::makeInvertPosture(ManNiiPosture &posture)
 		posture.joint[ManNiiPosture::RARM_JOINT2].quaternion.setQuaternion(w2, x2, -y2, -z2);
 		posture.joint[ManNiiPosture::RARM_JOINT3].quaternion.setQuaternion(w3, x3, -y3, -z3);
 	}
-	// right hand motion affects left hand.
-	else if (this->reverseMode == reverseModes[LEFT])
+	// Right hand motion affects left hand.
+	else if (this->limbMode ==limbModes[HAND] && this->reverseMode == reverseModes[LEFT])
 	{
 		// Get original quaternions.
 		double w2, x2, y2, z2, w3, x3, y3, z3;
@@ -360,6 +365,30 @@ void LinkageController::makeInvertPosture(ManNiiPosture &posture)
 		// Set reverse quaternions.
 		posture.joint[ManNiiPosture::LARM_JOINT2].quaternion.setQuaternion(w2, x2, -y2, -z2);
 		posture.joint[ManNiiPosture::LARM_JOINT3].quaternion.setQuaternion(w3, x3, -y3, -z3);
+	}
+	// Left foot motion affects right foot.
+	else if (this->limbMode ==limbModes[FOOT] && this->reverseMode == reverseModes[RIGHT])
+	{
+		// Get original quaternions.
+		double w2, x2, y2, z2, w4, x4, y4, z4;
+		posture.joint[ManNiiPosture::LLEG_JOINT2].quaternion.getQuaternion(w2, x2, y2, z2);
+		posture.joint[ManNiiPosture::LLEG_JOINT4].quaternion.getQuaternion(w4, x4, y4, z4);
+
+		// Set reverse quaternions.
+		posture.joint[ManNiiPosture::RLEG_JOINT2].quaternion.setQuaternion(w2, x2, -y2, -z2);
+		posture.joint[ManNiiPosture::RLEG_JOINT4].quaternion.setQuaternion(w4, x4, -y4, -z4);
+	}
+	// Right foot motion affects left foot.
+	else if (this->limbMode ==limbModes[FOOT] && this->reverseMode == reverseModes[LEFT])
+	{
+		// Get original quaternions.
+		double w2, x2, y2, z2, w4, x4, y4, z4;
+		posture.joint[ManNiiPosture::RLEG_JOINT2].quaternion.getQuaternion(w2, x2, y2, z2);
+		posture.joint[ManNiiPosture::RLEG_JOINT4].quaternion.getQuaternion(w4, x4, y4, z4);
+
+		// Set reverse quaternions.
+		posture.joint[ManNiiPosture::LLEG_JOINT2].quaternion.setQuaternion(w2, x2, -y2, -z2);
+		posture.joint[ManNiiPosture::LLEG_JOINT4].quaternion.setQuaternion(w4, x4, -y4, -z4);
 	}
 }
 
@@ -378,45 +407,11 @@ void LinkageController::changeMode(const std::map<std::string, std::vector<std::
 
 		if(it->second[0]==limbModes[HAND])
 		{
-			// Set Linkage parameter.
-			this->limbMode         = limbModes[HAND];     // Set limb mode.
-			this->puttingHeight    = this->tableHeight;
-			this->linkageObjName   = this->linkageObjName4Hand;
-			this->linkageObjWidth  = this->linkageObjWidth4Hand;
-			this->linkageObjIniPos = this->linkageObjIniPos4Hand;
-
-			// Set table position.
-			SimObj *table = getObj(this->tableName.c_str());
-			table->setPosition(this->tableIniPos);
-
-			// Set linkageObj4Hand position.
-			SimObj *linkageObj4Hand = getObj(this->linkageObjName4Hand.c_str());
-			linkageObj4Hand->setPosition(this->linkageObjIniPos4Hand);
-
-			// Shift linkageObj4Foot position.
-			SimObj *linkageObj4Foot = getObj(this->linkageObjName4Foot.c_str());
-			linkageObj4Foot->setPosition(this->linkageObjIniPos4Foot.x(), this->linkageObjIniPos4Foot.y(), this->linkageObjIniPos4Foot.z()+this->shiftDistanceForChangingObj);
+			this->reset4Hand();
 		}
 		else if(it->second[0]==limbModes[FOOT])
 		{
-			// Set Linkage parameter.
-			this->limbMode         = limbModes[FOOT];     // Set limb mode.
-			this->puttingHeight    = this->floorHeight;
-			this->linkageObjName   = this->linkageObjName4Foot;
-			this->linkageObjWidth  = this->linkageObjWidth4Foot;
-			this->linkageObjIniPos = this->linkageObjIniPos4Foot;
-
-			// Shift table position.
-			SimObj *table = getObj(this->tableName.c_str());
-			table->setPosition(this->tableIniPos.x(), this->tableIniPos.y(), this->tableIniPos.z()+this->shiftDistanceForChangingObj);
-
-			// Shift linkageObj4Hand position.
-			SimObj *linkageObj4Hand = getObj(this->linkageObjName4Hand.c_str());
-			linkageObj4Hand->setPosition(this->linkageObjIniPos4Hand.x(), this->linkageObjIniPos4Hand.y(), this->linkageObjIniPos4Hand.z()+this->shiftDistanceForChangingObj);
-
-			// Set linkageObj4Foot position.
-			SimObj *linkageObj4Foot = getObj(this->linkageObjName4Foot.c_str());
-			linkageObj4Foot->setPosition(this->linkageObjIniPos4Foot);
+			this->reset4Foot();
 		}
 	}
 
@@ -427,6 +422,69 @@ void LinkageController::changeMode(const std::map<std::string, std::vector<std::
 
 		std::cout << "Set reverse mode:" << this->reverseMode << std::endl;
 	}
+}
+
+
+void LinkageController::reset4Hand()
+{
+	// Set Linkage parameter.
+	this->limbMode         = limbModes[HAND];     // Set limb mode.
+	this->linkageObjName   = this->linkageObjName4Hand;
+	this->distance4Releasejudge  = this->distance4ReleaseJudgeOnHand;
+
+	this->rightLink = this->rightLink4Hand;
+	this->leftLink  = this->leftLink4Hand;
+
+	this->minOfLinkageObj.x(-10000.0);                          // No limit.
+	this->minOfLinkageObj.y(this->linkageObjIniPos4Hand.y());   // Same as initial position.
+	this->minOfLinkageObj.z(this->linkageObjIniPos4Hand.z()-8); // -8 is fixed value.
+
+	this->maxOfLinkageObj.x(+10000.0);                          // No limit.
+	this->maxOfLinkageObj.y(+10000.0);                          // No limit.
+	this->maxOfLinkageObj.z(this->linkageObjIniPos4Hand.z()+8); // +8 is fixed value.
+
+	// Set table position.
+	SimObj *table = getObj(this->tableName.c_str());
+	table->setPosition(this->tableIniPos);
+
+	// Set linkageObj4Hand position.
+	SimObj *linkageObj4Hand = getObj(this->linkageObjName4Hand.c_str());
+	linkageObj4Hand->setPosition(this->linkageObjIniPos4Hand);
+
+	// Shift linkageObj4Foot position.
+	SimObj *linkageObj4Foot = getObj(this->linkageObjName4Foot.c_str());
+	linkageObj4Foot->setPosition(this->linkageObjIniPos4Foot.x(), this->linkageObjIniPos4Foot.y(), this->linkageObjIniPos4Foot.z()+this->shiftDistanceForChangingLimb);
+}
+
+void LinkageController::reset4Foot()
+{
+	// Set Linkage parameter.
+	this->limbMode         = limbModes[FOOT];     // Set limb mode.
+	this->linkageObjName   = this->linkageObjName4Foot;
+	this->distance4Releasejudge  = this->distance4ReleaseJudgeOnFoot;
+
+	this->rightLink = this->rightLink4Foot;
+	this->leftLink  = this->leftLink4Foot;
+
+	this->minOfLinkageObj.x(-10000.0);                          // No limit.
+	this->minOfLinkageObj.y(this->linkageObjIniPos4Foot.y());   // Same as initial position.
+	this->minOfLinkageObj.z(this->linkageObjIniPos4Foot.z()-8); // -8 is fixed value.
+
+	this->maxOfLinkageObj.x(+10000.0);                          // No limit.
+	this->maxOfLinkageObj.y(+10000.0);                          // No limit.
+	this->maxOfLinkageObj.z(this->linkageObjIniPos4Foot.z()+8); // +8 is fixed value.
+
+	// Shift table position.
+	SimObj *table = getObj(this->tableName.c_str());
+	table->setPosition(this->tableIniPos.x(), this->tableIniPos.y(), this->tableIniPos.z()+this->shiftDistanceForChangingLimb);
+
+	// Shift linkageObj4Hand position.
+	SimObj *linkageObj4Hand = getObj(this->linkageObjName4Hand.c_str());
+	linkageObj4Hand->setPosition(this->linkageObjIniPos4Hand.x(), this->linkageObjIniPos4Hand.y(), this->linkageObjIniPos4Hand.z()+this->shiftDistanceForChangingLimb);
+
+	// Set linkageObj4Foot position.
+	SimObj *linkageObj4Foot = getObj(this->linkageObjName4Foot.c_str());
+	linkageObj4Foot->setPosition(this->linkageObjIniPos4Foot);
 }
 
 
@@ -447,11 +505,32 @@ void LinkageController::onCollision(CollisionEvent &evt)
 			/* Get one's parts colliding. */
 			const std::vector<std::string> & myCollidedParts = evt.getMyParts();
 
-			if(std::find(myCollidedParts.begin(), myCollidedParts.end(), "LARM_LINK7")==myCollidedParts.end() &&
-			   std::find(myCollidedParts.begin(), myCollidedParts.end(), "RARM_LINK7")==myCollidedParts.end())
+			if(std::find(myCollidedParts.begin(), myCollidedParts.end(), this->rightLink)!=myCollidedParts.end())
+			{
+				this->myGraspingPartName = this->rightLink;
+			}
+			else if(std::find(myCollidedParts.begin(), myCollidedParts.end(), this->leftLink)!=myCollidedParts.end())
+			{
+				this->myGraspingPartName = this->leftLink;
+			}
+			else
 			{
 				return;
 			}
+
+			SimObj *myself = getObj(myname());
+			SimObj *target = getObj(this->linkageObjName.c_str());
+
+			if (!myself || !target){ return; }
+			if (myself->dynamics() || target->dynamics()){ return; }
+
+			Vector3d myPartsPos, targetPos;
+			target->getPosition(targetPos);
+			myself->getParts(this->myGraspingPartName.c_str())->getPosition(myPartsPos);
+
+			this->distanceAtGrasping.x(targetPos.x()-myPartsPos.x());
+			this->distanceAtGrasping.y(targetPos.y()-myPartsPos.y());
+			this->distanceAtGrasping.z(targetPos.z()-myPartsPos.z());
 
 			this->isGrasping = true;
 			this->elapsedTimeSinceRelease = 0.0;

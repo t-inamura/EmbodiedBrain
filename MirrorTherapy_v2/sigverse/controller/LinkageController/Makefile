@@ -37,7 +37,8 @@ OBJS2 := $(SRCS2:.cpp=.o)
 
 # -- compile rule --
 
-all: $(TARGET1) $(TARGET2)
+#all: $(TARGET1) $(TARGET2)
+all: $(TARGET1)
 
 # intermediate output file
 %.o: %.cpp
