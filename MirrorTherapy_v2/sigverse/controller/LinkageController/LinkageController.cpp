@@ -14,6 +14,7 @@
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <cmath>
+#include <algorithm>
 
 
 const std::string LinkageController::parameterFileName = "LinkageController.ini";
@@ -56,10 +57,10 @@ const double      LinkageController::shiftDistanceForChangingObj = 1000.0;
 
 
 
-LinkageController::~LinkageController()
-{
-//	this->thCheckService.join();
-}
+//LinkageController::~LinkageController()
+//{
+////	this->thCheckService.join();
+//}
 
 
 ///@brief Initialize this controller.
@@ -103,120 +104,152 @@ void LinkageController::onInit(InitEvent &evt)
 	/* Do not set true. it results bug caused by developing mode settings */
 	this->isGrasping = false;
 
+	this->elapsedTimeSinceRelease = 0.0;
+
+	this->usingOculus = false;
+
+	this->guiService = NULL;
+
 	std::thread thCheckService(&LinkageController::checkServiceForThread, this);
+	thCheckService.detach();
 }
 
 ///@brief Movement of the robot.
 double LinkageController::onAction(ActionEvent &evt)
 {
-	if (this->isGrasping == true)
+	const double interval = 0.1;
+
+	try
 	{
-		try
+		/* Keep grasping object*/
+		SimObj *myself = getObj(myname());
+		SimObj *target = getObj(this->linkageObjName.c_str());
+
+		if (!myself || !target){ return interval; }
+
+		if (myself->dynamics() || target->dynamics()){ return interval; }
+
+		Vector3d targetPos;
+		target->getPosition(targetPos);
+
+		if (this->isGrasping)
 		{
-			/* Keep grasping object*/
-			SimObj *myself = getObj(myname());
-			SimObj *target = getObj(this->linkageObjName.c_str());
+			/* Keep adjusting the position of object while grasping*/
+			CParts *myParts  = myself->getParts(myGraspingPart.c_str());
 
-			if (myself && target)
+			/* Get name and position of parts grasped */
+			Vector3d myPartsPos;
+			myParts->getPosition(myPartsPos);
+
+//			std::cout << "onAction 1:" << grasped_pos.y() << std::endl;
+
+			double distance = 2.0*std::fabs(myPartsPos.x());
+
+			if (targetPos.y() <= this->puttingHeight || distance > this->linkageObjWidth)
 			{
-				if (!myself->dynamics() && !target->dynamics())
+				this->isGrasping = false;
+
+				if(targetPos.y() > this->puttingHeight)
 				{
-					/* Keep adjusting the position of object while grasping*/
-					CParts *myParts  = myself->getParts(myGraspingPart.c_str());
-
-					/* Get name and position of parts grasped */
-					Vector3d myPartsPos;
-//					Vector3d targetPos;
-					myParts->getPosition(myPartsPos);
-//					target->getPosition(targetPos);
-
-//					std::cout << "onAction 1:" << grasped_pos.y() << std::endl;
-
-					double distance = 2.0*std::fabs(myPartsPos.x());
-
-					if (myPartsPos.y() <= this->puttingHeight && distance > this->linkageObjWidth)
-					{
-						this->isGrasping = false;
-
-//						/* Move released object to initial position*/
-//						SimObj *target = getObj(graspObjectName.c_str());
-//						Vector3d target_pos;
-//						target->getPosition(target_pos);
-//
-						/* Set position as its height when it is below the prescribed height(e.g. the case arm pulled down fast) */
-//						target->setPosition(target_pos.x(), LIMIT_Y, target_pos.z());
-						target->setPosition(this->linkageObjIniPos.x(), this->puttingHeight, myPartsPos.z());
-
-						LOG_MSG(("%s release %s", myname(), linkageObjName.c_str()));
-					}
-					else
-					{
-//						std::cout << "onAction 21" << std::endl;
-//
-						/* Adjust position as it is grasped. */
-						/* Move object about only y axis direction (-5: adustment of hand size) */
-						target->setPosition(this->linkageObjIniPos.x(), myPartsPos.y(), myPartsPos.z());
-					}
+					this->elapsedTimeSinceRelease+=interval;
+					double gravity = -980.665;
+					double distanceOfFreeFall = interval*gravity*(2.0*this->elapsedTimeSinceRelease-interval)/2.0;
+					target->setPosition(targetPos.x(), targetPos.y()+distanceOfFreeFall, targetPos.z());
 				}
+				else
+				{
+					/* Set position as its height when it is below the prescribed height(e.g. the case arm pulled down fast) */
+//						target->setPosition(target_pos.x(), LIMIT_Y, target_pos.z());
+					target->setPosition(targetPos.x(), this->puttingHeight, targetPos.z());
+				}
+
+				LOG_MSG(("%s release %s", myname(), linkageObjName.c_str()));
+			}
+			else
+			{
+//				std::cout << "onAction 21" << std::endl;
+//
+				/* Adjust position as it is grasped. */
+				/* Move object about only y axis direction (-5: adustment of hand size) */
+				target->setPosition(targetPos.x(), myPartsPos.y(), myPartsPos.z());
 			}
 		}
-		catch(SimObj::NoAttributeException &err)
+		else
 		{
-			LOG_MSG(("NoAttributeException: %s", err.msg()));
-		}
-		catch(SimObj::AttributeReadOnlyException &err)
-		{
-			LOG_MSG(("AttributeReadOnlyException: %s", err.msg()));
-		}
-		catch(SimObj::Exception &err)
-		{
-			LOG_MSG(("Exception: %s", err.msg()));
+			if(targetPos.y() > this->puttingHeight)
+			{
+				this->elapsedTimeSinceRelease+=interval;
+				double gravity = -980.665;
+				double distanceOfFreeFall = interval*gravity*(2.0*this->elapsedTimeSinceRelease-interval)/2.0;
+				target->setPosition(targetPos.x(), targetPos.y()+distanceOfFreeFall, targetPos.z());
+			}
 		}
 	}
+	catch(SimObj::NoAttributeException &err)
+	{
+		LOG_MSG(("NoAttributeException: %s", err.msg()));
+	}
+	catch(SimObj::AttributeReadOnlyException &err)
+	{
+		LOG_MSG(("AttributeReadOnlyException: %s", err.msg()));
+	}
+	catch(SimObj::Exception &err)
+	{
+		LOG_MSG(("Exception: %s", err.msg()));
+	}
 
-	return 0.1;
+	return interval;
 }
 
 
 void LinkageController::checkServiceForThread()
 {
-	while(true)
+	LOG_MSG(("Start checkServiceForThread method."));
+
+	try
 	{
-		bool kinectV2Available = checkService(this->kinectV2DeviceManager.serviceName);
-
-		if (kinectV2Available && this->kinectV2DeviceManager.service == NULL)
+		while(true)
 		{
-			this->kinectV2DeviceManager.service = connectToService(this->kinectV2DeviceManager.serviceName);
-		}
-		else if (!kinectV2Available && this->kinectV2DeviceManager.service != NULL)
-		{
-			this->kinectV2DeviceManager.service = NULL;
-		}
+			bool kinectV2Available = checkService(this->kinectV2DeviceManager.serviceName);
 
-		bool oculusDK1Available = checkService(this->oculusDK1DeviceManager.serviceName);
+			if (kinectV2Available && this->kinectV2DeviceManager.service == NULL)
+			{
+				this->kinectV2DeviceManager.service = connectToService(this->kinectV2DeviceManager.serviceName);
+			}
+			else if (!kinectV2Available && this->kinectV2DeviceManager.service != NULL)
+			{
+				this->kinectV2DeviceManager.service = NULL;
+			}
 
-		if (oculusDK1Available && this->oculusDK1DeviceManager.service == NULL)
-		{
-			this->oculusDK1DeviceManager.service = connectToService(this->oculusDK1DeviceManager.serviceName);
-		}
-		else if (!oculusDK1Available && this->oculusDK1DeviceManager.service != NULL)
-		{
-			this->oculusDK1DeviceManager.service = NULL;
-		}
+			bool oculusDK1Available = checkService(this->oculusDK1DeviceManager.serviceName);
 
-		bool guiAvailable = checkService(this->guiServiceName);
+			if (oculusDK1Available && this->oculusDK1DeviceManager.service == NULL)
+			{
+				this->oculusDK1DeviceManager.service = connectToService(this->oculusDK1DeviceManager.serviceName);
+			}
+			else if (!oculusDK1Available && this->oculusDK1DeviceManager.service != NULL)
+			{
+				this->oculusDK1DeviceManager.service = NULL;
+			}
 
-		if (guiAvailable && this->guiService == NULL)
-		{
-			this->guiService = connectToService(this->guiServiceName);
-		}
-		else if (!guiAvailable && this->guiService != NULL)
-		{
-			this->guiService = NULL;
-		}
+			bool guiAvailable = checkService(this->guiServiceName);
 
-		//sleep 3 sec.
-		sleep(3);
+			if (guiAvailable && this->guiService == NULL)
+			{
+				this->guiService = connectToService(this->guiServiceName);
+			}
+			else if (!guiAvailable && this->guiService != NULL)
+			{
+				this->guiService = NULL;
+			}
+
+			//sleep 3 sec.
+			sleep(3);
+		}
+	}
+	catch(...)
+	{
+		LOG_MSG(("Exception occurred in checkServiceForThread."));
 	}
 }
 
@@ -260,6 +293,10 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt)
 					posture.joint[ManNiiPosture::HEAD_JOINT0].quaternion.setQuaternion(0.0, 0.0, 0.0, 0.0);
 					posture.joint[ManNiiPosture::HEAD_JOINT1].quaternion.setQuaternion(0.0, 0.0, 0.0, 0.0);
 				}
+
+				// Invalidate body rotation.
+				posture.joint[ManNiiPosture::ROOT_JOINT0].quaternion.setQuaternion(0.0, 0.0, 0.0, 0.0);
+				posture.joint[ManNiiPosture::WAIST_JOINT1].quaternion.setQuaternion(0.0, 0.0, 0.0, 0.0);
 
 				this->makeInvertPosture(posture);
 
@@ -389,6 +426,50 @@ void LinkageController::changeMode(const std::map<std::string, std::vector<std::
 		this->reverseMode = it->second[0];
 
 		std::cout << "Set reverse mode:" << this->reverseMode << std::endl;
+	}
+}
+
+
+/*!
+ * @brief Grasp LinkageObject when left hand touches it
+ */
+void LinkageController::onCollision(CollisionEvent &evt)
+{
+	try
+	{
+		if (isGrasping == false)
+		{
+			/* Get the name grasping object */
+			const std::vector<std::string> & collidedObj = evt.getWith();
+
+			if(std::find(collidedObj.begin(), collidedObj.end(), this->linkageObjName)==collidedObj.end()){ return; }
+
+			/* Get one's parts colliding. */
+			const std::vector<std::string> & myCollidedParts = evt.getMyParts();
+
+			if(std::find(myCollidedParts.begin(), myCollidedParts.end(), "LARM_LINK7")==myCollidedParts.end() &&
+			   std::find(myCollidedParts.begin(), myCollidedParts.end(), "RARM_LINK7")==myCollidedParts.end())
+			{
+				return;
+			}
+
+			this->isGrasping = true;
+			this->elapsedTimeSinceRelease = 0.0;
+
+			LOG_MSG(("Grasped the %s.", this->linkageObjName.c_str()));
+		}
+	}
+	catch(SimObj::NoAttributeException &err)
+	{
+		LOG_MSG(("NoAttributeException: %s", err.msg()));
+	}
+	catch(SimObj::AttributeReadOnlyException &err)
+	{
+		LOG_MSG(("AttributeReadOnlyException: %s", err.msg()));
+	}
+	catch(SimObj::Exception &err)
+	{
+		LOG_MSG(("Exception: %s", err.msg()));
 	}
 }
 

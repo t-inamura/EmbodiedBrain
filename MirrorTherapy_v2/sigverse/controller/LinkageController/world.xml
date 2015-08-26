@@ -16,7 +16,7 @@
 		<set-attr-value name="dynamics" value="false"/>
 		<set-attr-value name="x" value="0.0"/>
 		<set-attr-value name="y" value="45.0"/>
-		<set-attr-value name="z" value="40.0"/>
+		<set-attr-value name="z" value="0.0"/>
 		<set-attr-value name="collision" value="true"/>
 		<set-attr-value name="language" value="c++"/>
 		<set-attr-value name="implementation" value="./LinkageController.so"/>
@@ -25,12 +25,12 @@
 	</instanciate>
 
 	<!-- Chair for avatar to sit -->
-	<instanciate class="B2_chair.xml">
+	<instanciate class="seChair_B_c02.xml">
 		<set-attr-value name="name" value="chair"/>
 		<set-attr-value name="dynamics" value="false"/>
 		<set-attr-value name="x" value="0.0"/>
 		<set-attr-value name="y" value="45.0"/>
-		<set-attr-value name="z" value="30.0"/>
+		<set-attr-value name="z" value="-10.0"/>
 		<set-attr-value name="qw" value="0.0"/>
 		<set-attr-value name="qx" value="0.0"/>
 		<set-attr-value name="qy" value="1.0"/>
@@ -46,46 +46,49 @@
 		<set-attr-value name="dynamics" value="false"/>
 		<set-attr-value name="x" value="0.0"/>
 		<set-attr-value name="y" value="40.0"/>
-		<set-attr-value name="z" value="85.0"/>
+		<set-attr-value name="z" value="45.0"/>
 		<set-attr-value name="scalex" value="1.0"/>
 		<set-attr-value name="scaley" value="2.0"/>
 		<set-attr-value name="scalez" value="1.2"/>
 	</instanciate>
 
 	<!-- Linkage Object for Hand mode -->
-	<instanciate class="seTray.xml">
+	<instanciate class="seToy_D.xml">
 		<set-attr-value name="name" value="linkageObj4Hand"/>
 		<set-attr-value name="dynamics" value="false"/>
 		<set-attr-value name="x" value="0.0"/>
 		<set-attr-value name="y" value="63.0"/>
-		<set-attr-value name="z" value="70.0"/>
+		<set-attr-value name="z" value="30.0"/>
+		<!--
 		<set-attr-value name="language" value="c++"/>
 		<set-attr-value name="implementation" value="./LinkageObjectController.so"/>
+		-->
 		<set-attr-value name="collision" value="true"/>
-		<set-attr-value name="graspable" value="false"/>  
+		<set-attr-value name="graspable" value="false"/>
 		<set-attr-value name="graspRadius" value="12.0"/>
-		<set-attr-value name="scalex" value="0.5"/>  
-		<set-attr-value name="scaley" value="1.0"/>  
-		<set-attr-value name="scalez" value="1.0"/>    
+		<set-attr-value name="scalex" value="0.5"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
 	</instanciate>
-
+	
 	<!-- Linkage Object for Foot mode-->
-	<instanciate class="ball.xml">
+	<instanciate class="seToy_D.xml">
 		<set-attr-value name="name" value="linkageObj4Foot"/>
 		<set-attr-value name="dynamics" value="false"/>
 		<set-attr-value name="x" value="0.0"/>
 		<set-attr-value name="y" value="10.0"/>
-		<set-attr-value name="z" value="70.0"/>
+		<set-attr-value name="z" value="30.0"/>
+		<!--
 		<set-attr-value name="language" value="c++"/>
 		<set-attr-value name="implementation" value="./LinkageObjectController.so"/>
+		-->
 		<set-attr-value name="collision" value="true"/>
-		<set-attr-value name="graspable" value="false"/>  
+		<set-attr-value name="graspable" value="false"/>
 		<set-attr-value name="graspRadius" value="12.0"/>
-		<set-attr-value name="scalex" value="1.0"/>  
-		<set-attr-value name="scaley" value="1.0"/>  
-		<set-attr-value name="scalez" value="1.0"/>    
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
 	</instanciate>
-	
 	
 	<!-- 
 	  Set house, situation is in the house 0

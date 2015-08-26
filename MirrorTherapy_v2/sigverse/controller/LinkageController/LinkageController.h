@@ -78,7 +78,7 @@ public:
 
 	static const double shiftDistanceForChangingObj;
 
-	~LinkageController();
+//	~LinkageController();
 
 	///@brief Initialize this controller.
 	void onInit(InitEvent &evt);
@@ -88,6 +88,9 @@ public:
 
 	///@brief Message heard by the robot.
 	void onRecvMsg(RecvMsgEvent &evt);
+
+	///@brief Collision detection.
+	void onCollision(CollisionEvent &evt);
 
 	void readIniFileAndInitialize();
 
@@ -119,13 +122,15 @@ public:
 
 	std::string myGraspingPart;
 
-	bool usingOculus = false;
+	bool usingOculus;
 
 	BaseService *guiService;
 	std::string guiServiceName;
 
 	///@brief thread for check service.
 	std::thread thCheckService;
+
+	double elapsedTimeSinceRelease;
 };
 
 #endif // SIGVERSE_LINKAGE_CONTROLLER_H
