@@ -77,7 +77,7 @@ public:
 
 	// Message key string. This is used in onRecvMsg.
 	static const std::string msgKeyLimbMode;
-	static const std::string msgKeyReverse;
+	static const std::string msgKeyReverseMode;
 
 	// Limb mode string array list.
 	static const std::string limbModes[LimbMode_Count];
@@ -208,8 +208,8 @@ const std::string LinkageController::paramFileValLinkageGraspLimbModeDefault    
 const std::string LinkageController::paramFileKeyLinkageGraspReverseMode        = "LinkageGrasp.reverse_mode";
 const std::string LinkageController::paramFileValLinkageGraspReverseModeDefault = "RIGHT";
 
-const std::string LinkageController::msgKeyLimbMode = "LIMB_MODE";
-const std::string LinkageController::msgKeyReverse  = "REVERSE";
+const std::string LinkageController::msgKeyLimbMode    = "LIMB_MODE";
+const std::string LinkageController::msgKeyReverseMode = "REVERSE_MODE";
 
 const std::string LinkageController::limbModes[LimbMode_Count] = { "HAND", "FOOT" };
 const std::string LinkageController::reverseModes[ReverseMode_Count] = { "RIGHT", "LEFT" };

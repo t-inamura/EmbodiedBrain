@@ -435,9 +435,9 @@ void LinkageController::changeMode(const std::map<std::string, std::vector<std::
 	}
 
 	// Change Reverse mode.
-	if (map.find(msgKeyReverse) != map.end())
+	if (map.find(msgKeyReverseMode) != map.end())
 	{
-		std::map<std::string, std::vector<std::string> >::const_iterator it = map.find(msgKeyReverse);
+		std::map<std::string, std::vector<std::string> >::const_iterator it = map.find(msgKeyReverseMode);
 		this->reverseMode = it->second[0];
 
 		std::cout << "Set reverse mode:" << this->reverseMode << std::endl;
