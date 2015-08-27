@@ -1,5 +1,5 @@
-﻿#ifndef SIGVERSE_MIRROR_THERAPY_GUI_GUI_MAIN_FRAME
-#define SIGVERSE_MIRROR_THERAPY_GUI_GUI_MAIN_FRAME
+#ifndef SIGVERSE_LINKAGE_GRASP_GUI_MAIN_FRAME_H
+#define SIGVERSE_LINKAGE_GRASP_GUI_MAIN_FRAME_H
 
 /**
 @file
@@ -20,11 +20,9 @@ class LinkageGraspGUIMainFrame : public MainFrame
 	protected:
 		// Handlers for MainFrame events.
 		void OnMainFrameClose( wxCloseEvent& event );
-		void OnLinkageGraspClick( wxCommandEvent& event );
+		void OnLimbModeChoice( wxCommandEvent& event );
 		void OnReverseModeChoice( wxCommandEvent& event );
-		void OnLongArmClick( wxCommandEvent& event );
-		void OnShortArmClick( wxCommandEvent& event );
-		void OnRobotArmClick( wxCommandEvent& event );
+		void OnChangeClick( wxCommandEvent& event );
 
 		AvatarController avatarController;
 
@@ -35,4 +33,4 @@ class LinkageGraspGUIMainFrame : public MainFrame
 	
 };
 
-#endif // SIGVERSE_MIRROR_THERAPY_GUI_GUI_MAIN_FRAME
+#endif // SIGVERSE_LINKAGE_GRASP_GUI_MAIN_FRAME_H

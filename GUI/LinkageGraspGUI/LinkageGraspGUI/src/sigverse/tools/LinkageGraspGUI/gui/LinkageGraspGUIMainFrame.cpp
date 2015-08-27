@@ -1,9 +1,6 @@
-ï»¿#include <sigverse/tools/LinkageGraspGUI/Param.h>
+#include <sigverse/tools/LinkageGraspGUI/Param.h>
 #include <sigverse/tools/LinkageGraspGUI/gui/LinkageGraspGUIMainFrame.h>
 
-/*
- * constructor
- */
 LinkageGraspGUIMainFrame::LinkageGraspGUIMainFrame( wxWindow* parent, const int argc, const wxArrayString &argv )
 :
 MainFrame( parent )
@@ -12,65 +9,60 @@ MainFrame( parent )
 	int portNum = atoi(argv[2].ToStdString().c_str());
 
 	/*
-	 * ãƒ‘ãƒ©ãƒ¡ãƒ¼ã‚¿ãƒ•ã‚¡ã‚¤ãƒ«èª­ã¿å–ã‚Š
+	 * ƒpƒ‰ƒ[ƒ^ƒtƒ@ƒCƒ‹“Ç‚ÝŽæ‚è
 	 */
 	Param::readConfigFile();
 
 	/*
-	 * SIGServer ã¸ã®æŽ¥ç¶š
+	 * SIGServer ‚Ö‚ÌÚ‘±
 	 */
 	avatarController.connectSIGServer(ipAddress, portNum);
 
 	/*
-	 * SIGServiceã‹ã‚‰ã®ãƒ‡ãƒ¼ã‚¿ãƒã‚§ãƒƒã‚¯é–‹å§‹
+	 * SIGService‚©‚ç‚Ìƒf[ƒ^ƒ`ƒFƒbƒNŠJŽn
 	 */
 	avatarController.checkRecvSIGServiceData();
 }
 
-/*
- * ç”»é¢ãŒé–‰ã˜ã‚‰ã‚ŒãŸã¨ãã®å‡¦ç†
- */
-void LinkageGraspGUIMainFrame::OnMainFrameClose( wxCloseEvent &event )
+void LinkageGraspGUIMainFrame::OnMainFrameClose( wxCloseEvent& event )
 {
-	// æŽ¥ç¶šä¸­ã®å…¨ã‚³ãƒ³ãƒˆãƒ­ãƒ¼ãƒ©ã¨åˆ‡æ–­ã™ã‚‹
+	// Ú‘±’†‚Ì‘SƒRƒ“ƒgƒ[ƒ‰‚ÆØ’f‚·‚é
 	avatarController.disconnectFromAllController();
 
 	Destroy();
 }
 
-void LinkageGraspGUIMainFrame::OnLinkageGraspClick( wxCommandEvent& event )
+void LinkageGraspGUIMainFrame::OnLimbModeChoice( wxCommandEvent& event )
 {
+	// No process.
+}
+
+void LinkageGraspGUIMainFrame::OnReverseModeChoice( wxCommandEvent& event )
+{
+	// No process.
+}
+
+void LinkageGraspGUIMainFrame::OnChangeClick( wxCommandEvent& event )
+{
+	std::string limbModeStr;
+
+	int limbModeNo = m_choice_limb_mode->GetSelection();
+
+	switch (limbModeNo)
+	{
+		case 0 : { limbModeStr = "HAND"; break; }
+		case 1 : { limbModeStr = "FOOT"; break; }
+	}
+
 	std::string reverseModeStr;
 
 	int reverseModeNo = m_choice_reverse_mode->GetSelection();
 
 	switch (reverseModeNo)
 	{
-		case 0 : { reverseModeStr = "LEFTHAND";  break; }
-		case 1 : { reverseModeStr = "RIGHTHAND"; break; }
-		case 2 : { reverseModeStr = "NOREVERSE"; break; }
+		case 0 : { reverseModeStr = "LEFT";  break; }
+		case 1 : { reverseModeStr = "RIGHT"; break; }
 	}
-	std::string delayTimeStr = m_textCtrl_delay_time->GetValue();
 
-	avatarController.sendMessageToController("AVATAR:mirror_therapy_man;REVERSE:"+reverseModeStr+";DELAY:"+delayTimeStr+";");
-}
-
-void LinkageGraspGUIMainFrame::OnReverseModeChoice( wxCommandEvent& event )
-{
-// TODO: Implement OnReverseModeChoice
-}
-
-void LinkageGraspGUIMainFrame::OnLongArmClick( wxCommandEvent& event )
-{
-	avatarController.sendMessageToController("AVATAR:right_arm_long_man;");
-}
-
-void LinkageGraspGUIMainFrame::OnShortArmClick( wxCommandEvent& event )
-{
-	avatarController.sendMessageToController("AVATAR:right_arm_short_man;");
-}
-
-void LinkageGraspGUIMainFrame::OnRobotArmClick( wxCommandEvent& event )
-{
-	avatarController.sendMessageToController("AVATAR:right_arm_robot_man;");
+	avatarController.sendMessageToController("LIMB_MODE:"+limbModeStr+";REVERSE_MODE:"+reverseModeStr+";");
 }
