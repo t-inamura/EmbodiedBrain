@@ -17,15 +17,42 @@
 #include <sigverse/controller/common/ManNiiPosture.h>
 #include <sigverse/controller/MirrorTherapyController/MirrorTherapyController.h>
 
-#include <thread>
-
 class LinkageController : public ManNiiAvatarController
 {
 public:
-	///@brief Parameter file name.
+	/*
+	 * Limb mode.
+	 *   FOOT means that using foot in grasping.
+	 */
+	enum LimbModeType
+	{
+		HAND = 0,
+		FOOT = 1,
+		LimbMode_Count = (FOOT + 1)
+	};
+
+	/*
+	 * Reverse mode.
+	 *   RIGHT means that Left hand motion is copied to right hand.
+	 */
+	enum ReverseModeType
+	{
+		RIGHT     = 0,
+		LEFT      = 1,
+		ReverseMode_Count = (LEFT + 1)
+//		NOREVERSE = 2,
+//		ReverseMode_Count = (NOREVERSE + 1)
+	};
+
+	// Gravity value. (Unit of length is [cm].)
+	static const double gravity;
+	// Interval of checking service provider.
+	static const double intervalOfCheckingService;
+
+	// Parameter file name.
 	static const std::string parameterFileName;
 
-	//Parameter file key name.
+	// Parameter file key name and default value.
 	static const std::string paramFileKeyKinectV2ServiceName;
 	static const std::string paramFileKeyKinectV2Devicetype;
 	static const std::string paramFileKeyKinectV2DeviceUniqueID;
@@ -43,103 +70,164 @@ public:
 	static const std::string paramFileKeyChangeModeGUIServiceName;
 	static const std::string paramFileValChangeModeGUIServiceNameDefault;
 
-	//static param
+	static const std::string paramFileKeyLinkageLimbMode;
+	static const std::string paramFileValLinkageLimbModeDefault;
+	static const std::string paramFileKeyLinkageReverseMode;
+	static const std::string paramFileValLinkageReverseModeDefault;
+
+	// Message key string. This is used in onRecvMsg.
 	static const std::string msgKeyLimbMode;
 	static const std::string msgKeyReverse;
 
-	enum LimbModeType
-	{
-		HAND = 0,
-		FOOT = 1,
-		LimbMode_Count = (FOOT + 1)
-	};
-
-	enum ReverseModeType
-	{
-		RIGHT     = 0,
-		LEFT      = 1,
-		ReverseMode_Count = (LEFT + 1)
-//		NOREVERSE = 2,
-//		ReverseMode_Count = (NOREVERSE + 1)
-	};
-
+	// Limb mode string array list.
 	static const std::string limbModes[LimbMode_Count];
+	// Reverse mode string array list.
 	static const std::string reverseModes[ReverseMode_Count];
 
-	static const std::string chairName;
-	static const std::string tableName;
-	static const std::string linkageObjName4Hand;
-	static const std::string linkageObjName4Foot;
+	// Entity name in world file.
+	static const std::string chairName;            // Chair name
+	static const std::string tableName;            // Table name
+	static const std::string linkageObjName4Hand;  // Linkage object name for Hand mode.
+	static const std::string linkageObjName4Foot;  // Linkage object name for Foot mode.
 
-	static const std::string rightLink4Hand;
-	static const std::string leftLink4Hand;
-	static const std::string rightLink4Foot;
-	static const std::string leftLink4Foot;
+	// Link name in Avatar. It is used when grasping.
+	static const std::string rightLink4Hand; // Right hand. For example, RARM_LINK7
+	static const std::string leftLink4Hand;  // Left hand.  For example, LARM_LINK7
+	static const std::string rightLink4Foot; // Right foot. For example, RLEG_LINK6
+	static const std::string leftLink4Foot;  // Left foot.  For example, LLEG_LINK6
 
-	static const double distance4ReleaseJudgeOnHand;
-	static const double distance4ReleaseJudgeOnFoot;
+	// Distance for release judgement in Hand mode.
+	static const double distance4ReleaseJudgeInHand;
+	// Distance for release judgement in Foot mode.
+	static const double distance4ReleaseJudgeInFoot;
 
+	// The moving distance of unnecessary object. It is used at changing mode.
 	static const double shiftDistanceForChangingLimb;
 
-	///@brief Initialize this controller.
+
+	// Initialize this controller.
 	void onInit(InitEvent &evt);
 
-	///@brief Movement of the robot.
+	// Movement of the avatar.
 	double onAction(ActionEvent &evt);
 
-	///@brief Message heard by the robot.
+	// Receive message.
 	void onRecvMsg(RecvMsgEvent &evt);
 
-	///@brief Collision detection.
+	// Collision detection.
 	void onCollision(CollisionEvent &evt);
 
-	void readIniFileAndInitialize();
+	// Read parameter file and initialize.
+	void readParamFileAndInitialize();
 
-	void checkServiceForThread();
+	/*
+	 * Check service provider in onAction method.
+	 * Return a new interval of onAction.
+	 */
+	double checkServiceForOnAction(const double intervalOfOnAction);
 
+	// Make invert posture from current posture.
 	void makeInvertPosture(ManNiiPosture &posture);
 
+	// Change mode. (Limb mode or Reverse mode)
 	void changeMode(const std::map<std::string, std::vector<std::string> > &map);
 
-	void reset4Hand();
-	void reset4Foot();
+	// Reset variables for Hand mode.
+	void resetVariables4Hand();
+	// Reset variables for Foot mode.
+	void resetVariables4Foot();
 
 
-	KinectV2DeviceManager  kinectV2DeviceManager;
-	OculusDK1DeviceManager oculusDK1DeviceManager;
+	KinectV2DeviceManager  kinectV2DeviceManager;  // Kinect v2 device manager.
+	OculusDK1DeviceManager oculusDK1DeviceManager; // Oculus Rift DK1 device manager.
+	BaseService *guiService;    // GUI service.
+	std::string guiServiceName; // GUI service name.
 
-	Vector3d tableIniPos;
-	Vector3d linkageObjIniPos4Hand;
-	Vector3d linkageObjIniPos4Foot;
 
-	std::string rightLink;
-	std::string leftLink;
-
-	///@brief Whether grasping or not.
-	bool isGrasping;
-
-	std::string linkageObjName;
-	double      distance4Releasejudge;
-	Vector3d    minOfLinkageObj;
-	Vector3d    maxOfLinkageObj;
-
-	///@brief For Mirror therapy variables.
+	// Limb mode. Using hand or using foot.
 	std::string limbMode;
+	// Reverse mode. Right to Left or Left to Right.
 	std::string reverseMode;
 
+	Vector3d tableIniPos;           // Initial position of the table.
+	Vector3d linkageObjIniPos4Hand; // Initial position of the linkage object for Hand mode.
+	Vector3d linkageObjIniPos4Foot; // Initial position of the linkage object for Foot mode.
+
+	std::string rightLink; // Right link name in Avatar. It is used when grasping.
+	std::string leftLink;  // Left Link name in Avatar. It is used when grasping.
+
+	// Whether grasping or not.
+	bool isGrasping;
+
+	// Target object of grasping.
+	std::string linkageObjName;
+	// Distance for release judgement.
+	double      distance4Releasejudge;
+
+	Vector3d    minPosOfLinkageObj; // Minimum position of the linkage object.
+	Vector3d    maxPosOfLinkageObj; // Maximum position of the linkage object.
+
+	// The part name of avatar that is grasping object.
 	std::string myGraspingPartName;
 
+	// Whether using Oculus Rift or not.
 	bool usingOculus;
 
-	BaseService *guiService;
-	std::string guiServiceName;
+	// Elapsed time from the object is released.
+	double elapsedTimeFromReleased;
 
-	///@brief thread for check service.
-	std::thread thCheckService;
-
-	double elapsedTimeSinceRelease;
-
-	Vector3d distanceAtGrasping;
+	// Distance of the avatar and the grasped object.
+	Vector3d distanceOfAvatarAndGraspedObject;
 };
+
+
+const double LinkageController::gravity = -980.665;
+const double LinkageController::intervalOfCheckingService = 3.0;
+
+const std::string LinkageController::parameterFileName = "LinkageController.ini";
+
+const std::string LinkageController::paramFileKeyKinectV2ServiceName    = "KinectV2.service_name";
+const std::string LinkageController::paramFileKeyKinectV2Devicetype     = "KinectV2.device_type";
+const std::string LinkageController::paramFileKeyKinectV2DeviceUniqueID = "KinectV2.device_unique_id";
+
+const std::string LinkageController::paramFileKeyKinectV2SensorDataMode = "KinectV2.sensor_data_mode";
+const std::string LinkageController::paramFileKeyKinectV2ScaleRatio     = "KinectV2.scale_ratio";
+
+const std::string LinkageController::paramFileKeyOculusDK1ServiceName   = "OculusDK1.service_name";
+const std::string LinkageController::paramFileKeyOculusDK1Devicetype    = "OculusDK1.device_type";
+const std::string LinkageController::paramFileKeyOculusDK1DeviceUniqueID= "OculusDK1.device_unique_id";
+
+const std::string LinkageController::paramFileValKinectV2SensorDataModeDefault = "POSITION";
+const double      LinkageController::paramFileValKinectV2ScaleRatioDefault     = 10000.0;
+
+const std::string LinkageController::paramFileKeyChangeModeGUIServiceName        = "ChangeModeGUI.service_name";
+const std::string LinkageController::paramFileValChangeModeGUIServiceNameDefault = "SVC_CHANGE_MODE_GUI";
+
+const std::string LinkageController::paramFileKeyLinkageLimbMode           = "Linkage.limb_mode";
+const std::string LinkageController::paramFileValLinkageLimbModeDefault    = "HAND";
+const std::string LinkageController::paramFileKeyLinkageReverseMode        = "Linkage.reverse_mode";
+const std::string LinkageController::paramFileValLinkageReverseModeDefault = "RIGHT";
+
+const std::string LinkageController::msgKeyLimbMode = "LIMB_MODE";
+const std::string LinkageController::msgKeyReverse  = "REVERSE";
+
+const std::string LinkageController::limbModes[LimbMode_Count] = { "HAND", "FOOT" };
+const std::string LinkageController::reverseModes[ReverseMode_Count] = { "RIGHT", "LEFT" };
+//const std::string LinkageController::reverseModes[ReverseMode_Count] = { "RIGHT", "LEFT", "NOREVERSE" };
+
+const std::string LinkageController::rightLink4Hand = "RARM_LINK7";
+const std::string LinkageController::leftLink4Hand  = "LARM_LINK7";
+const std::string LinkageController::rightLink4Foot = "RLEG_LINK6";
+const std::string LinkageController::leftLink4Foot  = "LLEG_LINK6";
+
+const std::string LinkageController::chairName           = "chair";
+const std::string LinkageController::tableName           = "table";
+const std::string LinkageController::linkageObjName4Hand = "linkageObj4Hand";
+const std::string LinkageController::linkageObjName4Foot = "linkageObj4Foot";
+
+const double      LinkageController::distance4ReleaseJudgeInHand = 13.0; // 12.0+1.0
+const double      LinkageController::distance4ReleaseJudgeInFoot = 15.4; // 12.0*1.2+1.0
+
+const double      LinkageController::shiftDistanceForChangingLimb = 1000.0; //Long enough.
 
 #endif // SIGVERSE_LINKAGE_CONTROLLER_H

@@ -9,90 +9,53 @@
 #include <sigverse/controller/LinkageController/LinkageController.h>
 
 
-#include <sys/time.h>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <cmath>
+#include <ctime>
 #include <algorithm>
 
 
-const std::string LinkageController::parameterFileName = "LinkageController.ini";
-
-const std::string LinkageController::paramFileKeyKinectV2ServiceName    = "KinectV2.service_name";
-const std::string LinkageController::paramFileKeyKinectV2Devicetype     = "KinectV2.device_type";
-const std::string LinkageController::paramFileKeyKinectV2DeviceUniqueID = "KinectV2.device_unique_id";
-
-const std::string LinkageController::paramFileKeyKinectV2SensorDataMode = "KinectV2.sensor_data_mode";
-const std::string LinkageController::paramFileKeyKinectV2ScaleRatio     = "KinectV2.scale_ratio";
-
-const std::string LinkageController::paramFileKeyOculusDK1ServiceName   = "OculusDK1.service_name";
-const std::string LinkageController::paramFileKeyOculusDK1Devicetype    = "OculusDK1.device_type";
-const std::string LinkageController::paramFileKeyOculusDK1DeviceUniqueID= "OculusDK1.device_unique_id";
-
-const std::string LinkageController::paramFileValKinectV2SensorDataModeDefault = "QUATERNION";
-const double      LinkageController::paramFileValKinectV2ScaleRatioDefault     = 10000.0;
-
-const std::string LinkageController::paramFileKeyChangeModeGUIServiceName        = "ChangeModeGUI.service_name";
-const std::string LinkageController::paramFileValChangeModeGUIServiceNameDefault = "SVC_CHANGE_MODE_GUI";
-
-const std::string LinkageController::msgKeyLimbMode = "LIMB_MODE";
-const std::string LinkageController::msgKeyReverse  = "REVERSE";
-
-const std::string LinkageController::limbModes[LimbMode_Count] = { "HAND", "FOOT" };
-const std::string LinkageController::reverseModes[ReverseMode_Count] = { "RIGHT", "LEFT", "NOREVERSE" };
-
-const std::string LinkageController::rightLink4Hand = "RARM_LINK7";
-const std::string LinkageController::leftLink4Hand  = "LARM_LINK7";
-const std::string LinkageController::rightLink4Foot = "RLEG_LINK6";
-const std::string LinkageController::leftLink4Foot  = "LLEG_LINK6";
-
-const std::string LinkageController::chairName           = "chair";
-const std::string LinkageController::tableName           = "table";
-const std::string LinkageController::linkageObjName4Hand = "linkageObj4Hand";
-const std::string LinkageController::linkageObjName4Foot = "linkageObj4Foot";
-
-const double      LinkageController::distance4ReleaseJudgeOnHand = 12.0+1.0; // graspRadius + margin.
-const double      LinkageController::distance4ReleaseJudgeOnFoot = 12.0+1.0; // graspRadius + margin.
-
-const double      LinkageController::shiftDistanceForChangingLimb = 1000.0;
-
-
-
-///@brief Initialize this controller.
+/*
+ * Initialize this controller.
+ */
 void LinkageController::onInit(InitEvent &evt)
 {
-	this->readIniFileAndInitialize();
+	// Read parameter file and initialize.
+	this->readParamFileAndInitialize();
 
+	// Initialize Kinect v2 device manager.
 	SimObj *myself = getObj(myname());
 	this->kinectV2DeviceManager.initPositionAndRotation(myself);
 
+	// Save initial position of Table.
 	SimObj *table = getObj(this->tableName.c_str());
 	table->getPosition(this->tableIniPos);
 
+	// Save initial position of Linkage object for Hand mode.
 	SimObj *linkageObj4Hand = getObj(this->linkageObjName4Hand.c_str());
 	linkageObj4Hand->getPosition(this->linkageObjIniPos4Hand);
 
+	// Save initial position of Linkage object for Foot mode.
 	SimObj *linkageObj4Foot = getObj(this->linkageObjName4Foot.c_str());
 	linkageObj4Foot->getPosition(this->linkageObjIniPos4Foot);
 
-	this->reverseMode = this->reverseModes[RIGHT]; // Set reverse mode.
+	if(this->limbMode==this->limbModes[HAND])
+	{
+		// Set variables for Hand mode.
+		this->resetVariables4Hand();
+	}
+	else
+	{
+		// Set variables for Foot mode.
+		this->resetVariables4Foot();
+	}
 
-	reset4Hand();
-
-//	/* Adjustment of knee angles to sit on the chair */
-//	/* Root of both legs */
-//	myself->setJointAngle("RLEG_JOINT2", DEG2RAD(-90));
-//	myself->setJointAngle("LLEG_JOINT2", DEG2RAD(-90));
-//	/* Both knee */
-//	myself->setJointAngle("RLEG_JOINT4", DEG2RAD( 90));
-//	myself->setJointAngle("LLEG_JOINT4", DEG2RAD( 90));
-
-	/* At the first, the robot does not grasp anything. */
-	/* Do not set true. it results bug caused by developing mode settings */
+	// At the first, the robot does not grasp anything.
 	this->isGrasping = false;
 
-	this->elapsedTimeSinceRelease = 0.0;
+	this->elapsedTimeFromReleased = 0.0;
 
 	this->usingOculus = false;
 
@@ -100,77 +63,85 @@ void LinkageController::onInit(InitEvent &evt)
 
 	this->myGraspingPartName = "";
 
-	this->distanceAtGrasping.x(0.0);
-	this->distanceAtGrasping.y(0.0);
-	this->distanceAtGrasping.z(0.0);
-
-	std::thread thCheckService(&LinkageController::checkServiceForThread, this);
-	thCheckService.detach();
+	this->distanceOfAvatarAndGraspedObject.x(1000.0); // Long enough.
+	this->distanceOfAvatarAndGraspedObject.y(1000.0); // Long enough.
+	this->distanceOfAvatarAndGraspedObject.z(1000.0); // Long enough.
 }
 
-///@brief Movement of the robot.
+
+/*
+ * Movement of the avatar.
+ */
 double LinkageController::onAction(ActionEvent &evt)
 {
-	const double interval = 0.1;
+	const double interval = 0.1; // 0.1[s]
 
 	try
 	{
-		/* Keep grasping object*/
 		SimObj *myself = getObj(myname());
 		SimObj *target = getObj(this->linkageObjName.c_str());
 
 		if (!myself || !target){ return interval; }
-
 		if (myself->dynamics() || target->dynamics()){ return interval; }
 
 		Vector3d targetPos;
 		target->getPosition(targetPos);
 
+		// When the avatar is grasping object.
 		if (this->isGrasping)
 		{
-			/* Keep adjusting the position of object while grasping*/
+			/*
+			 * Calculate position of grasped object. And set position of grasped object.
+			 */
 			CParts *myParts  = myself->getParts(this->myGraspingPartName.c_str());
 
-			/* Get name and position of parts grasped */
 			Vector3d myPartsPos;
 			myParts->getPosition(myPartsPos);
 
 			Vector3d newTargetPos;
 			newTargetPos.x(targetPos.x());
-			newTargetPos.y(myPartsPos.y()+this->distanceAtGrasping.y());
-			newTargetPos.z(myPartsPos.z()+this->distanceAtGrasping.z());
+			newTargetPos.y(myPartsPos.y()+this->distanceOfAvatarAndGraspedObject.y());
+			newTargetPos.z(myPartsPos.z()+this->distanceOfAvatarAndGraspedObject.z());
 
-			//Reposition after landing.
-			if(newTargetPos.y() < this->minOfLinkageObj.y())
+			// Reposition after landing.
+			if(newTargetPos.y() < this->minPosOfLinkageObj.y())
 			{
-				newTargetPos.y(this->minOfLinkageObj.y());
-				if(newTargetPos.z() < this->minOfLinkageObj.z()){ newTargetPos.z(this->minOfLinkageObj.z()); }
-				if(newTargetPos.z() > this->maxOfLinkageObj.z()){ newTargetPos.z(this->maxOfLinkageObj.z()); }
+				newTargetPos.y(this->minPosOfLinkageObj.y());
+				if(newTargetPos.z() < this->minPosOfLinkageObj.z()){ newTargetPos.z(this->minPosOfLinkageObj.z()); }
+				if(newTargetPos.z() > this->maxPosOfLinkageObj.z()){ newTargetPos.z(this->maxPosOfLinkageObj.z()); }
 			}
-//			std::cout << "onAction 1:" << grasped_pos.y() << std::endl;
-
-			//Recalc.
-			this->distanceAtGrasping.x(newTargetPos.x()-myPartsPos.x());
-			this->distanceAtGrasping.y(newTargetPos.y()-myPartsPos.y());
-			this->distanceAtGrasping.z(newTargetPos.z()-myPartsPos.z());
 
 			target->setPosition(newTargetPos);
 
-			if (this->distanceAtGrasping.length() > this->distance4Releasejudge)
+			/*
+			 * Calculate distance of avatar and grasped object.
+			 */
+			this->distanceOfAvatarAndGraspedObject.x(newTargetPos.x()-myPartsPos.x());
+			this->distanceOfAvatarAndGraspedObject.y(newTargetPos.y()-myPartsPos.y());
+			this->distanceOfAvatarAndGraspedObject.z(newTargetPos.z()-myPartsPos.z());
+
+			/*
+			 * Release object if distance is long.
+			 */
+			if (this->distanceOfAvatarAndGraspedObject.length() > this->distance4Releasejudge)
 			{
 				this->isGrasping = false;
-				this->elapsedTimeSinceRelease = 0.0;
+				this->elapsedTimeFromReleased = 0.0;
 
 				LOG_MSG(("Release %s.", linkageObjName.c_str()));
 			}
 		}
+		// When the avatar is not grasping object.
 		else
 		{
-			if(targetPos.y() > this->minOfLinkageObj.y())
+			// If the object is in free fall.
+			if(targetPos.y() > this->minPosOfLinkageObj.y())
 			{
-				this->elapsedTimeSinceRelease+=interval;
-				double gravity = -980.665;
-				double distanceOfFreeFall = interval*gravity*(2.0*this->elapsedTimeSinceRelease-interval)/2.0;
+				/*
+				 * Calculate position of object. And set position of object.
+				 */
+				this->elapsedTimeFromReleased+=interval;
+				double distanceOfFreeFall = interval*this->gravity*(2.0*this->elapsedTimeFromReleased-interval)/2.0; // free fall.
 				double newYpos = targetPos.y()+distanceOfFreeFall;
 
 				Vector3d newTargetPos;
@@ -179,11 +150,11 @@ double LinkageController::onAction(ActionEvent &evt)
 				newTargetPos.z(targetPos.z());
 
 				//Reposition after landing.
-				if(newTargetPos.y() < this->minOfLinkageObj.y())
+				if(newTargetPos.y() < this->minPosOfLinkageObj.y())
 				{
-					newTargetPos.y(this->minOfLinkageObj.y());
-					if(newTargetPos.z() < this->minOfLinkageObj.z()){ newTargetPos.z(this->minOfLinkageObj.z()); }
-					if(newTargetPos.z() > this->maxOfLinkageObj.z()){ newTargetPos.z(this->maxOfLinkageObj.z()); }
+					newTargetPos.y(this->minPosOfLinkageObj.y());
+					if(newTargetPos.z() < this->minPosOfLinkageObj.z()){ newTargetPos.z(this->minPosOfLinkageObj.z()); }
+					if(newTargetPos.z() > this->maxPosOfLinkageObj.z()){ newTargetPos.z(this->maxPosOfLinkageObj.z()); }
 				}
 
 				target->setPosition(newTargetPos);
@@ -203,18 +174,45 @@ double LinkageController::onAction(ActionEvent &evt)
 		LOG_MSG(("Exception: %s", err.msg()));
 	}
 
-	return interval;
+	return checkServiceForOnAction(interval);
 }
 
 
-void LinkageController::checkServiceForThread()
+/*
+ * Check service provider in onAction method.
+ *
+ * Return a new interval of onAction.
+ */
+double LinkageController::checkServiceForOnAction(const double intervalOfOnAction)
 {
-	LOG_MSG(("Start checkServiceForThread method."));
-
 	try
 	{
-		while(true)
+		static time_t startTime = 0;
+		time_t now;
+
+		// Only the first time.
+		if(startTime==0)
 		{
+			std::time( &startTime );
+
+			if(this->intervalOfCheckingService < intervalOfOnAction)
+			{
+				LOG_MSG(("A checking service interval is shorter than onAction interval. So repeat onAction using a checking service interval."));
+			}
+		}
+
+		std::time( &now );
+
+		// Get elapsed time from last checking.
+		double elapsedTime = std::difftime( now, startTime );
+
+		// If enough time has elapsed, check service provider.
+		if(elapsedTime > this->intervalOfCheckingService)
+		{
+			// Reset startTime;
+			startTime = now;
+
+			// Check Kinect v2 service provider.
 			bool kinectV2Available = checkService(this->kinectV2DeviceManager.serviceName);
 
 			if (kinectV2Available && this->kinectV2DeviceManager.service == NULL)
@@ -226,6 +224,7 @@ void LinkageController::checkServiceForThread()
 				this->kinectV2DeviceManager.service = NULL;
 			}
 
+			// Check Oculus Rift DK1 service provider.
 			bool oculusDK1Available = checkService(this->oculusDK1DeviceManager.serviceName);
 
 			if (oculusDK1Available && this->oculusDK1DeviceManager.service == NULL)
@@ -237,6 +236,7 @@ void LinkageController::checkServiceForThread()
 				this->oculusDK1DeviceManager.service = NULL;
 			}
 
+			// Check GUI service provider.
 			bool guiAvailable = checkService(this->guiServiceName);
 
 			if (guiAvailable && this->guiService == NULL)
@@ -247,23 +247,29 @@ void LinkageController::checkServiceForThread()
 			{
 				this->guiService = NULL;
 			}
-
-			//sleep 3 sec.
-			sleep(3);
 		}
 	}
 	catch(...)
 	{
 		LOG_MSG(("Exception occurred in checkServiceForThread."));
 	}
+
+	// Change interval of onAction in interval of checking service.
+	if(this->intervalOfCheckingService < intervalOfOnAction)
+	{
+		return this->intervalOfCheckingService;
+	}
+
+	return intervalOfOnAction;
 }
 
-///@brief Message from device.
+/*
+ * Receive message.
+ */
 void LinkageController::onRecvMsg(RecvMsgEvent &evt)
 {
 	try
 	{
-		// Receive message.
 		const std::string allMsg = evt.getMsg();
 
 //		std::cout << "msg=" << allMsg << std::endl;
@@ -291,28 +297,30 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt)
 				// Convert kinect v2 quaternions(orientations) to man-nii posture(sigverse quaternion format).
 				ManNiiPosture posture = KinectV2DeviceManager::convertSensorData2ManNiiPosture(sensorData);
 
-				// If using oculus, set invalid head quaternion.
-				//   (When all values are zero, head quaternion will be invalid.)
+				// When using oculus, set invalid head quaternion. (When all values are zero, it means invalid.)
 				if (this->usingOculus)
 				{
 					posture.joint[ManNiiPosture::HEAD_JOINT0].quaternion.setQuaternion(0.0, 0.0, 0.0, 0.0);
 					posture.joint[ManNiiPosture::HEAD_JOINT1].quaternion.setQuaternion(0.0, 0.0, 0.0, 0.0);
 				}
 
-				// Invalidate body rotation.
+				// Invalidate body rotation. (When all values are zero, it means invalid.)
 				posture.joint[ManNiiPosture::ROOT_JOINT0].quaternion.setQuaternion(0.0, 0.0, 0.0, 0.0);
 				posture.joint[ManNiiPosture::WAIST_JOINT1].quaternion.setQuaternion(0.0, 0.0, 0.0, 0.0);
 
+				// Invert posture.
 				this->makeInvertPosture(posture);
 
 				// Set SIGVerse quaternions and positions.
 				SimObj *obj = getObj(myname());
+
 				//this->kinectV2DeviceManager.setRootPosition(obj, sensorData.rootPosition); // Don't move.
+
 				// Set joint quaternions to avatar.
 				KinectV2DeviceManager::setJointQuaternions2ManNii(obj, posture, sensorData);
 			}
 			/*
-			 * Oculus DK1
+			 * Oculus Rift DK1
 			 */
 			else if (deviceTypeValue == this->oculusDK1DeviceManager.deviceType && deviceUniqueId ==  this->oculusDK1DeviceManager.deviceUniqueID)
 			{
@@ -340,6 +348,9 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt)
 }
 
 
+/*
+ * Make invert posture from current posture.
+ */
 void LinkageController::makeInvertPosture(ManNiiPosture &posture)
 {
 	// Left hand motion affects right hand.
@@ -350,7 +361,7 @@ void LinkageController::makeInvertPosture(ManNiiPosture &posture)
 		posture.joint[ManNiiPosture::LARM_JOINT2].quaternion.getQuaternion(w2, x2, y2, z2);
 		posture.joint[ManNiiPosture::LARM_JOINT3].quaternion.getQuaternion(w3, x3, y3, z3);
 
-		// Set reverse quaternions.
+		// Set a reversed quaternions.
 		posture.joint[ManNiiPosture::RARM_JOINT2].quaternion.setQuaternion(w2, x2, -y2, -z2);
 		posture.joint[ManNiiPosture::RARM_JOINT3].quaternion.setQuaternion(w3, x3, -y3, -z3);
 	}
@@ -362,7 +373,7 @@ void LinkageController::makeInvertPosture(ManNiiPosture &posture)
 		posture.joint[ManNiiPosture::RARM_JOINT2].quaternion.getQuaternion(w2, x2, y2, z2);
 		posture.joint[ManNiiPosture::RARM_JOINT3].quaternion.getQuaternion(w3, x3, y3, z3);
 
-		// Set reverse quaternions.
+		// Set a reversed quaternions.
 		posture.joint[ManNiiPosture::LARM_JOINT2].quaternion.setQuaternion(w2, x2, -y2, -z2);
 		posture.joint[ManNiiPosture::LARM_JOINT3].quaternion.setQuaternion(w3, x3, -y3, -z3);
 	}
@@ -374,7 +385,7 @@ void LinkageController::makeInvertPosture(ManNiiPosture &posture)
 		posture.joint[ManNiiPosture::LLEG_JOINT2].quaternion.getQuaternion(w2, x2, y2, z2);
 		posture.joint[ManNiiPosture::LLEG_JOINT4].quaternion.getQuaternion(w4, x4, y4, z4);
 
-		// Set reverse quaternions.
+		// Set a reversed quaternions.
 		posture.joint[ManNiiPosture::RLEG_JOINT2].quaternion.setQuaternion(w2, x2, -y2, -z2);
 		posture.joint[ManNiiPosture::RLEG_JOINT4].quaternion.setQuaternion(w4, x4, -y4, -z4);
 	}
@@ -386,15 +397,19 @@ void LinkageController::makeInvertPosture(ManNiiPosture &posture)
 		posture.joint[ManNiiPosture::RLEG_JOINT2].quaternion.getQuaternion(w2, x2, y2, z2);
 		posture.joint[ManNiiPosture::RLEG_JOINT4].quaternion.getQuaternion(w4, x4, y4, z4);
 
-		// Set reverse quaternions.
+		// Set a reversed quaternions.
 		posture.joint[ManNiiPosture::LLEG_JOINT2].quaternion.setQuaternion(w2, x2, -y2, -z2);
 		posture.joint[ManNiiPosture::LLEG_JOINT4].quaternion.setQuaternion(w4, x4, -y4, -z4);
 	}
 }
 
 
+/*
+ * Change mode. (Limb mode or Reverse mode)
+ */
 void LinkageController::changeMode(const std::map<std::string, std::vector<std::string> > &map)
 {
+	// Change Limb mode.
 	if (map.find(msgKeyLimbMode) != map.end())
 	{
 		std::map<std::string, std::vector<std::string> >::const_iterator it = map.find(msgKeyLimbMode);
@@ -407,14 +422,15 @@ void LinkageController::changeMode(const std::map<std::string, std::vector<std::
 
 		if(it->second[0]==limbModes[HAND])
 		{
-			this->reset4Hand();
+			this->resetVariables4Hand();
 		}
 		else if(it->second[0]==limbModes[FOOT])
 		{
-			this->reset4Foot();
+			this->resetVariables4Foot();
 		}
 	}
 
+	// Change Reverse mode.
 	if (map.find(msgKeyReverse) != map.end())
 	{
 		std::map<std::string, std::vector<std::string> >::const_iterator it = map.find(msgKeyReverse);
@@ -425,84 +441,95 @@ void LinkageController::changeMode(const std::map<std::string, std::vector<std::
 }
 
 
-void LinkageController::reset4Hand()
+/*
+ * Reset variables for Hand mode.
+ */
+void LinkageController::resetVariables4Hand()
 {
-	// Set Linkage parameter.
-	this->limbMode         = limbModes[HAND];     // Set limb mode.
+	// Set some variables.
+	this->limbMode         = limbModes[HAND];
 	this->linkageObjName   = this->linkageObjName4Hand;
-	this->distance4Releasejudge  = this->distance4ReleaseJudgeOnHand;
+	this->distance4Releasejudge  = this->distance4ReleaseJudgeInHand;
 
 	this->rightLink = this->rightLink4Hand;
 	this->leftLink  = this->leftLink4Hand;
 
-	this->minOfLinkageObj.x(-10000.0);                          // No limit.
-	this->minOfLinkageObj.y(this->linkageObjIniPos4Hand.y());   // Same as initial position.
-	this->minOfLinkageObj.z(this->linkageObjIniPos4Hand.z()-8); // -8 is fixed value.
+	this->minPosOfLinkageObj.x(-10000.0);                          // No limit.
+	this->minPosOfLinkageObj.y(this->linkageObjIniPos4Hand.y());   // Same as initial position.
+	this->minPosOfLinkageObj.z(this->linkageObjIniPos4Hand.z()-8); // -8 is fixed value.
 
-	this->maxOfLinkageObj.x(+10000.0);                          // No limit.
-	this->maxOfLinkageObj.y(+10000.0);                          // No limit.
-	this->maxOfLinkageObj.z(this->linkageObjIniPos4Hand.z()+8); // +8 is fixed value.
+	this->maxPosOfLinkageObj.x(+10000.0);                          // No limit.
+	this->maxPosOfLinkageObj.y(+10000.0);                          // No limit.
+	this->maxPosOfLinkageObj.z(this->linkageObjIniPos4Hand.z()+8); // +8 is fixed value.
 
-	// Set table position.
+	// Reset position of the table.
 	SimObj *table = getObj(this->tableName.c_str());
 	table->setPosition(this->tableIniPos);
 
-	// Set linkageObj4Hand position.
+	// Reset position of linkageObj4Hand.
 	SimObj *linkageObj4Hand = getObj(this->linkageObjName4Hand.c_str());
 	linkageObj4Hand->setPosition(this->linkageObjIniPos4Hand);
 
-	// Shift linkageObj4Foot position.
+	// Shift position of linkageObj4Foot.
 	SimObj *linkageObj4Foot = getObj(this->linkageObjName4Foot.c_str());
 	linkageObj4Foot->setPosition(this->linkageObjIniPos4Foot.x(), this->linkageObjIniPos4Foot.y(), this->linkageObjIniPos4Foot.z()+this->shiftDistanceForChangingLimb);
 }
 
-void LinkageController::reset4Foot()
+/*
+ * Reset variables for Foot mode.
+ */
+void LinkageController::resetVariables4Foot()
 {
-	// Set Linkage parameter.
-	this->limbMode         = limbModes[FOOT];     // Set limb mode.
+	// Set some variables.
+	this->limbMode         = limbModes[FOOT];
 	this->linkageObjName   = this->linkageObjName4Foot;
-	this->distance4Releasejudge  = this->distance4ReleaseJudgeOnFoot;
+	this->distance4Releasejudge  = this->distance4ReleaseJudgeInFoot;
 
 	this->rightLink = this->rightLink4Foot;
 	this->leftLink  = this->leftLink4Foot;
 
-	this->minOfLinkageObj.x(-10000.0);                          // No limit.
-	this->minOfLinkageObj.y(this->linkageObjIniPos4Foot.y());   // Same as initial position.
-	this->minOfLinkageObj.z(this->linkageObjIniPos4Foot.z()-8); // -8 is fixed value.
+	this->minPosOfLinkageObj.x(-10000.0);                          // No limit.
+	this->minPosOfLinkageObj.y(this->linkageObjIniPos4Foot.y());   // Same as initial position.
+	this->minPosOfLinkageObj.z(this->linkageObjIniPos4Foot.z()-8); // -8 is fixed value.
 
-	this->maxOfLinkageObj.x(+10000.0);                          // No limit.
-	this->maxOfLinkageObj.y(+10000.0);                          // No limit.
-	this->maxOfLinkageObj.z(this->linkageObjIniPos4Foot.z()+8); // +8 is fixed value.
+	this->maxPosOfLinkageObj.x(+10000.0);                          // No limit.
+	this->maxPosOfLinkageObj.y(+10000.0);                          // No limit.
+	this->maxPosOfLinkageObj.z(this->linkageObjIniPos4Foot.z()+8); // +8 is fixed value.
 
-	// Shift table position.
+	// Shift position of the table.
 	SimObj *table = getObj(this->tableName.c_str());
 	table->setPosition(this->tableIniPos.x(), this->tableIniPos.y(), this->tableIniPos.z()+this->shiftDistanceForChangingLimb);
 
-	// Shift linkageObj4Hand position.
+	// Shift position of linkageObj4Hand.
 	SimObj *linkageObj4Hand = getObj(this->linkageObjName4Hand.c_str());
 	linkageObj4Hand->setPosition(this->linkageObjIniPos4Hand.x(), this->linkageObjIniPos4Hand.y(), this->linkageObjIniPos4Hand.z()+this->shiftDistanceForChangingLimb);
 
-	// Set linkageObj4Foot position.
+	// Reset position of linkageObj4Foot.
 	SimObj *linkageObj4Foot = getObj(this->linkageObjName4Foot.c_str());
 	linkageObj4Foot->setPosition(this->linkageObjIniPos4Foot);
 }
 
 
-/*!
- * @brief Grasp LinkageObject when left hand touches it
+/*
+ * Collision detection.
  */
 void LinkageController::onCollision(CollisionEvent &evt)
 {
 	try
 	{
+		// When the avatar is not grasping object.
 		if (isGrasping == false)
 		{
-			/* Get the name grasping object */
+			/*
+			 * Check collision with the linkage object.
+			 */
 			const std::vector<std::string> & collidedObj = evt.getWith();
 
 			if(std::find(collidedObj.begin(), collidedObj.end(), this->linkageObjName)==collidedObj.end()){ return; }
 
-			/* Get one's parts colliding. */
+			/*
+			 * Check collided part. And save part name.
+			 */
 			const std::vector<std::string> & myCollidedParts = evt.getMyParts();
 
 			if(std::find(myCollidedParts.begin(), myCollidedParts.end(), this->rightLink)!=myCollidedParts.end())
@@ -518,6 +545,10 @@ void LinkageController::onCollision(CollisionEvent &evt)
 				return;
 			}
 
+			/*
+			 * Calculate distance of avatar and grasped object.
+			 * And set the grasping state.
+			 */
 			SimObj *myself = getObj(myname());
 			SimObj *target = getObj(this->linkageObjName.c_str());
 
@@ -528,12 +559,12 @@ void LinkageController::onCollision(CollisionEvent &evt)
 			target->getPosition(targetPos);
 			myself->getParts(this->myGraspingPartName.c_str())->getPosition(myPartsPos);
 
-			this->distanceAtGrasping.x(targetPos.x()-myPartsPos.x());
-			this->distanceAtGrasping.y(targetPos.y()-myPartsPos.y());
-			this->distanceAtGrasping.z(targetPos.z()-myPartsPos.z());
+			this->distanceOfAvatarAndGraspedObject.x(targetPos.x()-myPartsPos.x());
+			this->distanceOfAvatarAndGraspedObject.y(targetPos.y()-myPartsPos.y());
+			this->distanceOfAvatarAndGraspedObject.z(targetPos.z()-myPartsPos.z());
 
 			this->isGrasping = true;
-			this->elapsedTimeSinceRelease = 0.0;
+			this->elapsedTimeFromReleased = 0.0;
 
 			LOG_MSG(("Grasped the %s.", this->linkageObjName.c_str()));
 		}
@@ -553,9 +584,10 @@ void LinkageController::onCollision(CollisionEvent &evt)
 }
 
 
-///@brief Read parameter file.
-///@return When couldn't read parameter file, return false;
-void LinkageController::readIniFileAndInitialize()
+/*
+ * Read parameter file and initialize.
+ */
+void LinkageController::readParamFileAndInitialize()
 {
 	std::ifstream ifs(parameterFileName.c_str());
 
@@ -569,9 +601,10 @@ void LinkageController::readIniFileAndInitialize()
 	std::string oculusDK1DeviceType;
 	std::string oculusDK1DeviceUniqueID;
 
-	// Parameter file is "not" exists.
+	// If parameter file is "not" exists.
 	if (ifs.fail())
 	{
+		// Set a default parameter.
 		std::cout << "Not exist : " << parameterFileName << std::endl;
 		std::cout << "Use default parameter." << std::endl;
 
@@ -587,10 +620,14 @@ void LinkageController::readIniFileAndInitialize()
 		oculusDK1DeviceUniqueID = DEV_UNIQUE_ID_0;
 
 		this->guiServiceName = paramFileValChangeModeGUIServiceNameDefault;
+
+		this->limbMode    = paramFileValLinkageLimbModeDefault;
+		this->reverseMode = paramFileValLinkageReverseModeDefault;
 	}
-	// Parameter file is exists.
+	// if parameter file is exists.
 	else
 	{
+		// Get a parameter from parameter file, then set.
 		try
 		{
 			std::cout << "Read " << parameterFileName << std::endl;
@@ -609,6 +646,9 @@ void LinkageController::readIniFileAndInitialize()
 			oculusDK1DeviceUniqueID = pt.get<std::string>(paramFileKeyOculusDK1DeviceUniqueID);
 
 			this->guiServiceName = pt.get<std::string>(paramFileKeyChangeModeGUIServiceName);
+
+			this->limbMode     = pt.get<std::string>(paramFileKeyLinkageLimbMode);
+			this->reverseMode  = pt.get<std::string>(paramFileKeyLinkageReverseMode);
 		}
 		catch (boost::exception &ex)
 		{
@@ -616,6 +656,7 @@ void LinkageController::readIniFileAndInitialize()
 		}
 	}
 
+	// Print the initialized parameter.
 	std::cout << paramFileKeyKinectV2ServiceName    << ":" << kinectV2ServiceName    << std::endl;
 	std::cout << paramFileKeyKinectV2Devicetype     << ":" << kinectV2DeviceType     << std::endl;
 	std::cout << paramFileKeyKinectV2DeviceUniqueID << ":" << kinectV2DeviceUniqueID << std::endl;
@@ -629,17 +670,22 @@ void LinkageController::readIniFileAndInitialize()
 
 	std::cout << paramFileKeyChangeModeGUIServiceName << ":" << this->guiServiceName << std::endl;
 
+	std::cout << paramFileKeyLinkageLimbMode     << ":" << this->limbMode     << std::endl;
+	std::cout << paramFileKeyLinkageReverseMode  << ":" << this->reverseMode  << std::endl;
+
 
 	this->kinectV2DeviceManager = KinectV2DeviceManager(kinectV2ServiceName, kinectV2DeviceType, kinectV2DeviceUniqueID, scaleRatio);
 
-	// Set sensor data mode.
+	// Set a sensor data mode of Kinect v2.
 	KinectV2SensorData::setSensorDataMode(sensorDataModeStr);
 
 	this->oculusDK1DeviceManager = OculusDK1DeviceManager(oculusDK1ServiceName, oculusDK1DeviceType, oculusDK1DeviceUniqueID);
 }
 
 
-
+/*
+ * Create and return instance of this controller.
+ */
 extern "C" Controller * createController()
 {
 	return new LinkageController;
