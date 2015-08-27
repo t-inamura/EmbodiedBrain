@@ -619,10 +619,10 @@ void LinkageController::readParamFileAndInitialize()
 		oculusDK1DeviceType     = DEV_TYPE_OCULUS_DK1;
 		oculusDK1DeviceUniqueID = DEV_UNIQUE_ID_0;
 
-		this->guiServiceName = paramFileValChangeModeGUIServiceNameDefault;
+		this->guiServiceName = paramFileValLinkageGraspGUIServiceNameDefault;
 
-		this->limbMode    = paramFileValLinkageLimbModeDefault;
-		this->reverseMode = paramFileValLinkageReverseModeDefault;
+		this->limbMode    = paramFileValLinkageGraspLimbModeDefault;
+		this->reverseMode = paramFileValLinkageGraspReverseModeDefault;
 	}
 	// if parameter file is exists.
 	else
@@ -645,10 +645,10 @@ void LinkageController::readParamFileAndInitialize()
 			oculusDK1DeviceType     = pt.get<std::string>(paramFileKeyOculusDK1Devicetype);
 			oculusDK1DeviceUniqueID = pt.get<std::string>(paramFileKeyOculusDK1DeviceUniqueID);
 
-			this->guiServiceName = pt.get<std::string>(paramFileKeyChangeModeGUIServiceName);
+			this->guiServiceName = pt.get<std::string>(paramFileKeyLinkageGraspGUIServiceName);
 
-			this->limbMode     = pt.get<std::string>(paramFileKeyLinkageLimbMode);
-			this->reverseMode  = pt.get<std::string>(paramFileKeyLinkageReverseMode);
+			this->limbMode     = pt.get<std::string>(paramFileKeyLinkageGraspLimbMode);
+			this->reverseMode  = pt.get<std::string>(paramFileKeyLinkageGraspReverseMode);
 		}
 		catch (boost::exception &ex)
 		{
@@ -668,10 +668,10 @@ void LinkageController::readParamFileAndInitialize()
 	std::cout << paramFileKeyOculusDK1Devicetype     << ":" << oculusDK1DeviceType     << std::endl;
 	std::cout << paramFileKeyOculusDK1DeviceUniqueID << ":" << oculusDK1DeviceUniqueID << std::endl;
 
-	std::cout << paramFileKeyChangeModeGUIServiceName << ":" << this->guiServiceName << std::endl;
+	std::cout << paramFileKeyLinkageGraspGUIServiceName << ":" << this->guiServiceName << std::endl;
 
-	std::cout << paramFileKeyLinkageLimbMode     << ":" << this->limbMode     << std::endl;
-	std::cout << paramFileKeyLinkageReverseMode  << ":" << this->reverseMode  << std::endl;
+	std::cout << paramFileKeyLinkageGraspLimbMode     << ":" << this->limbMode     << std::endl;
+	std::cout << paramFileKeyLinkageGraspReverseMode  << ":" << this->reverseMode  << std::endl;
 
 
 	this->kinectV2DeviceManager = KinectV2DeviceManager(kinectV2ServiceName, kinectV2DeviceType, kinectV2DeviceUniqueID, scaleRatio);

@@ -67,13 +67,13 @@ public:
 	static const std::string paramFileValKinectV2SensorDataModeDefault;
 	static const double      paramFileValKinectV2ScaleRatioDefault;
 
-	static const std::string paramFileKeyChangeModeGUIServiceName;
-	static const std::string paramFileValChangeModeGUIServiceNameDefault;
+	static const std::string paramFileKeyLinkageGraspGUIServiceName;
+	static const std::string paramFileValLinkageGraspGUIServiceNameDefault;
 
-	static const std::string paramFileKeyLinkageLimbMode;
-	static const std::string paramFileValLinkageLimbModeDefault;
-	static const std::string paramFileKeyLinkageReverseMode;
-	static const std::string paramFileValLinkageReverseModeDefault;
+	static const std::string paramFileKeyLinkageGraspLimbMode;
+	static const std::string paramFileValLinkageGraspLimbModeDefault;
+	static const std::string paramFileKeyLinkageGraspReverseMode;
+	static const std::string paramFileValLinkageGraspReverseModeDefault;
 
 	// Message key string. This is used in onRecvMsg.
 	static const std::string msgKeyLimbMode;
@@ -200,13 +200,13 @@ const std::string LinkageController::paramFileKeyOculusDK1DeviceUniqueID= "Oculu
 const std::string LinkageController::paramFileValKinectV2SensorDataModeDefault = "POSITION";
 const double      LinkageController::paramFileValKinectV2ScaleRatioDefault     = 10000.0;
 
-const std::string LinkageController::paramFileKeyChangeModeGUIServiceName        = "ChangeModeGUI.service_name";
-const std::string LinkageController::paramFileValChangeModeGUIServiceNameDefault = "SVC_CHANGE_MODE_GUI";
+const std::string LinkageController::paramFileKeyLinkageGraspGUIServiceName        = "LinkageGraspGUI.service_name";
+const std::string LinkageController::paramFileValLinkageGraspGUIServiceNameDefault = "SVC_LINKAGE_GRASP_GUI";
 
-const std::string LinkageController::paramFileKeyLinkageLimbMode           = "Linkage.limb_mode";
-const std::string LinkageController::paramFileValLinkageLimbModeDefault    = "HAND";
-const std::string LinkageController::paramFileKeyLinkageReverseMode        = "Linkage.reverse_mode";
-const std::string LinkageController::paramFileValLinkageReverseModeDefault = "RIGHT";
+const std::string LinkageController::paramFileKeyLinkageGraspLimbMode           = "LinkageGrasp.limb_mode";
+const std::string LinkageController::paramFileValLinkageGraspLimbModeDefault    = "HAND";
+const std::string LinkageController::paramFileKeyLinkageGraspReverseMode        = "LinkageGrasp.reverse_mode";
+const std::string LinkageController::paramFileValLinkageGraspReverseModeDefault = "RIGHT";
 
 const std::string LinkageController::msgKeyLimbMode = "LIMB_MODE";
 const std::string LinkageController::msgKeyReverse  = "REVERSE";
