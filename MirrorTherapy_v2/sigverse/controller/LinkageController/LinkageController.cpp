@@ -141,7 +141,11 @@ double LinkageController::onAction(ActionEvent &evt)
 				 * Calculate position of object. And set position of object.
 				 */
 				this->elapsedTimeFromReleased+=interval;
-				double distanceOfFreeFall = interval*this->gravity*(2.0*this->elapsedTimeFromReleased-interval)/2.0; // free fall.
+
+				//Calculate distance of free fall.
+				//  distance = 1/2gt^2-1/2g(t-a)^2 = ag(2t-a)/2
+				double distanceOfFreeFall = interval*this->gravity*(2.0*this->elapsedTimeFromReleased-interval)/2.0;
+
 				double newYpos = targetPos.y()+distanceOfFreeFall;
 
 				Vector3d newTargetPos;
