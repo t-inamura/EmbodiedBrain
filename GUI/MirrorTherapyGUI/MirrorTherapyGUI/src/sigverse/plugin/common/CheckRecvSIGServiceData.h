@@ -3,8 +3,8 @@
 
 #include <SIGService/SIGService.h>
 
-/*
- * SIGServiceデータ受信チェッククラス
+/**
+ * @brief checking received SIGService data class
  */
 class CheckRecvSIGServiceData
 {
@@ -14,4 +14,4 @@ public:
 	void run(sigverse::SIGService *m_srv);
 };
 
-#endif // SIGVERSE_CHECK_RECV_SIGSERVICE_DATA_H
+#endif //SIGVERSE_CHECK_RECV_SIGSERVICE_DATA_H

@@ -17,38 +17,38 @@
 
 
 /*
- * SIGServerへの接続
+ * Connect to SIGServer.
  */
 void AvatarController::connectSIGServer(const std::string ipAddress, const int portNum)
 {
 	this->m_srv = new sigverse::SIGService(Param::getSigServiceName());
 	
 	this->m_srv->connect(ipAddress, portNum);
+
+	//The following commands are for automatically shutdown at QuitSimulation.
 	this->m_srv->connectToViewer();
 	this->m_srv->setAutoExitProc(true);
 }
 
 /*
- * SIGServerからの切断
+ * Disconnect from all controllers.
  */
 void AvatarController::disconnectFromAllController()
 {
-	// 接続中の全コントローラと切断する
-	this->m_srv->disconnectFromAllController();
+//	this->m_srv->disconnectFromAllController();
 
-	// SIGVerseサーバディスコネクト
 	this->m_srv->disconnect();
 }
 
 
 /*
- * SIGServiceからのデータチェックを行う
+ * Start checking received data from SIGService.
  */
 void AvatarController::checkRecvSIGServiceData()
 {
-	//データチェックは別スレッドで行う
 	CheckRecvSIGServiceData checkRecvSIGServiceData;
 
+	// Execute in another thread.
 	boost::thread thCheckRecvData(boost::bind(&CheckRecvSIGServiceData::run, &checkRecvSIGServiceData, this->m_srv));
 }
 
