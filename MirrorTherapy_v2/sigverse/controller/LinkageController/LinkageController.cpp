@@ -414,6 +414,17 @@ void LinkageController::makeInvertPosture(ManNiiPosture &posture)
 void LinkageController::changeMode(const std::map<std::string, std::vector<std::string> > &map)
 {
 	// Change Limb mode.
+	this->changeLimbMode(map);
+
+	// Change Reverse mode.
+	this->changeReverseMode(map);
+}
+
+/*
+ * Change Limb mode.
+ */
+void LinkageController::changeLimbMode(const std::map<std::string, std::vector<std::string> > &map)
+{
 	if (map.find(msgKeyLimbMode) != map.end())
 	{
 		std::map<std::string, std::vector<std::string> >::const_iterator it = map.find(msgKeyLimbMode);
@@ -432,12 +443,41 @@ void LinkageController::changeMode(const std::map<std::string, std::vector<std::
 		{
 			this->resetVariables4Foot();
 		}
-	}
+		else
+		{
+			std::cout << "It is invalid value. LIMB_MODE=" << it->second[0] << std::endl;
+			return;
+		}
 
-	// Change Reverse mode.
+		std::cout << "Set limb mode:" << this->limbMode << std::endl;
+	}
+}
+
+/*
+ * Change Reverse mode.
+ */
+void LinkageController::changeReverseMode(const std::map<std::string, std::vector<std::string> > &map)
+{
 	if (map.find(msgKeyReverseMode) != map.end())
 	{
 		std::map<std::string, std::vector<std::string> >::const_iterator it = map.find(msgKeyReverseMode);
+
+		if(this->reverseMode == it->second[0])
+		{
+			std::cout << "It is already " << this->reverseMode << " mode." << std::endl;
+			return;
+		}
+
+		if(it->second[0]==reverseModes[RIGHT] || it->second[0]==reverseModes[LEFT])
+		{
+			this->reverseMode = it->second[0];
+		}
+		else
+		{
+			std::cout << "It is invalid value. REVERSE_MODE=" << it->second[0] << std::endl;
+			return;
+		}
+
 		this->reverseMode = it->second[0];
 
 		std::cout << "Set reverse mode:" << this->reverseMode << std::endl;

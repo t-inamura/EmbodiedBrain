@@ -29,7 +29,7 @@ SIG_SRC = $(SIGVERSE_PATH)/include
 CXX = g++
 
 # compile option
-CFLAGS = -std=c++11 -pthread -DCONTROLLER -DNDEBUG -DUSE_ODE -DdDOUBLE -I$(SIG_SRC) -I$(SIGVERSE_BUILD_PATH) -fPIC -shared
+CFLAGS = -std=c++11 -DCONTROLLER -DNDEBUG -DUSE_ODE -DdDOUBLE -I$(SIG_SRC) -I$(SIGVERSE_BUILD_PATH) -fPIC -shared
 
 # generate intermediate object file from sources.
 OBJS1 := $(SRCS1:.cpp=.o)

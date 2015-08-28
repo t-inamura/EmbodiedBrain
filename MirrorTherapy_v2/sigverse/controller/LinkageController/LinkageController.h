@@ -131,6 +131,10 @@ public:
 
 	// Change mode. (Limb mode or Reverse mode)
 	void changeMode(const std::map<std::string, std::vector<std::string> > &map);
+	// Change Limb mode.
+	void changeLimbMode(const std::map<std::string, std::vector<std::string> > &map);
+	// Change Reverse mode.
+	void changeReverseMode(const std::map<std::string, std::vector<std::string> > &map);
 
 	// Reset variables for Hand mode.
 	void resetVariables4Hand();
