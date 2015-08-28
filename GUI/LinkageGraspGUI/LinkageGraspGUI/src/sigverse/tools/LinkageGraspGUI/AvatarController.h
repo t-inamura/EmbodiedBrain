@@ -1,5 +1,5 @@
-﻿#ifndef SIGVERSE_MIRROR_THERAPY_GUI_AVATAR_CONTROLLER_H
-#define SIGVERSE_MIRROR_THERAPY_GUI_AVATAR_CONTROLLER_H
+﻿#ifndef SIGVERSE_LINKAGE_GRASP_GUI_AVATAR_CONTROLLER_H
+#define SIGVERSE_LINKAGE_GRASP_GUI_AVATAR_CONTROLLER_H
 
 #include <list>
 #include <map>
@@ -8,7 +8,7 @@
 
 
 /*
- * アバター操作クラス
+ * Controlling Avatar of SIGVerse.
  */
 class AvatarController
 {
@@ -26,7 +26,7 @@ public:
 	void sendMessageToController(std::string msg);
 };
 
-#endif // SIGVERSE_MIRROR_THERAPY_GUI_AVATAR_CONTROLLER_H
+#endif // SIGVERSE_LINKAGE_GRASP_GUI_AVATAR_CONTROLLER_H
 
 
 

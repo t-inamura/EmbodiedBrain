@@ -1,19 +1,22 @@
 ﻿/*
- * SIGServiceデータ受信チェッククラス
+ * checking received SIGService data class
  */
 #include <SIGService/SIGService.h>
 #include <sigverse/plugin/common/CheckRecvSIGServiceData.h>
 
-/*
- * 定期的にSIGServiceデータの受信チェックを行う
+/**
+ * @brief checking received SIGService data at regular intervals.
  */
 void CheckRecvSIGServiceData::run(sigverse::SIGService *m_srv)
 {
 	while(true)
 	{
-		m_srv->checkRecvData(1);
-
-		//sleep 1 second
+		if(!m_srv->checkRecvData(1))
+		{
+			std::cout << "SIGService::chkRecvData ERR." << std::endl;
+		}
+		
+		//sleep 1 sec.
 		Sleep(1000);
 	}
 };

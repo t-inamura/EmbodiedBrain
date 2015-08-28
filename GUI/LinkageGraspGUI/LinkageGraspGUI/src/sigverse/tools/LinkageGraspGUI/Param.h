@@ -1,5 +1,5 @@
-﻿#ifndef SIGVERSE_MIRROR_THERAPY_GUI_PARAM_H
-#define SIGVERSE_MIRROR_THERAPY_GUI_PARAM_H
+﻿#ifndef SIGVERSE_LINKAGE_GRASP_GUI_PARAM_H
+#define SIGVERSE_LINKAGE_GRASP_GUI_PARAM_H
 
 #include <iostream>
 #include <string>
@@ -7,12 +7,11 @@
 #include <boost/property_tree/ini_parser.hpp>
 
 /*
- * パラメータクラス
+ * Manage parameter file.
  */
 class Param
 {
 private:
-	//パラメータファイル名
 	static const std::string PARAM_FILE_NAME;
 
 	static std::string sigServiceName;
@@ -24,4 +23,4 @@ public:
 	static void readConfigFile();
 };
 
-#endif // SIGVERSE_MIRROR_THERAPY_GUI_PARAM_H
+#endif // SIGVERSE_LINKAGE_GRASP_GUI_PARAM_H

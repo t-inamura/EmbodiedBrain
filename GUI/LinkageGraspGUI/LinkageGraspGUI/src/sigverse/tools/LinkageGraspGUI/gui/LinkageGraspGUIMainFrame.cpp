@@ -1,4 +1,4 @@
-#include <sigverse/tools/LinkageGraspGUI/Param.h>
+ï»¿#include <sigverse/tools/LinkageGraspGUI/Param.h>
 #include <sigverse/tools/LinkageGraspGUI/gui/LinkageGraspGUIMainFrame.h>
 
 LinkageGraspGUIMainFrame::LinkageGraspGUIMainFrame( wxWindow* parent, const int argc, const wxArrayString &argv )
@@ -9,24 +9,24 @@ MainFrame( parent )
 	int portNum = atoi(argv[2].ToStdString().c_str());
 
 	/*
-	 * ƒpƒ‰ƒ[ƒ^ƒtƒ@ƒCƒ‹“Ç‚İæ‚è
+	 * Read parameter from configuration file.
 	 */
 	Param::readConfigFile();
 
 	/*
-	 * SIGServer ‚Ö‚ÌÚ‘±
+	 * Connect to SIGServer.
 	 */
 	avatarController.connectSIGServer(ipAddress, portNum);
 
 	/*
-	 * SIGService‚©‚ç‚Ìƒf[ƒ^ƒ`ƒFƒbƒNŠJn
+	 * Start checking received data from SIGService.
 	 */
 	avatarController.checkRecvSIGServiceData();
 }
 
 void LinkageGraspGUIMainFrame::OnMainFrameClose( wxCloseEvent& event )
 {
-	// Ú‘±’†‚Ì‘SƒRƒ“ƒgƒ[ƒ‰‚ÆØ’f‚·‚é
+	// Disconnect from all controllers.
 	avatarController.disconnectFromAllController();
 
 	Destroy();
@@ -64,5 +64,6 @@ void LinkageGraspGUIMainFrame::OnChangeClick( wxCommandEvent& event )
 		case 1 : { reverseModeStr = "RIGHT"; break; }
 	}
 
+	//Send message to SIGVerse controller.
 	avatarController.sendMessageToController("LIMB_MODE:"+limbModeStr+";REVERSE_MODE:"+reverseModeStr+";");
 }
