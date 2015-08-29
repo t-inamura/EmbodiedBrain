@@ -15,21 +15,14 @@
 #include <sigverse/common/device/OculusRiftDK1SensorData.h>
 #include <sigverse/controller/common/AvatarController.h>
 #include <sigverse/controller/common/ManNiiPosture.h>
-#include <sigverse/controller/MirrorTherapyController/MirrorTherapyController.h>
+#include <sigverse/controller/LinkageController/LinkageCommon.h>
 
 class LinkageController : public ManNiiAvatarController
 {
 public:
-	/*
-	 * Limb mode.
-	 *   FOOT means that using foot in grasping.
-	 */
-	enum LimbModeType
-	{
-		HAND = 0,
-		FOOT = 1,
-		LimbMode_Count = (FOOT + 1)
-	};
+	typedef LinkageCommon::limbModes          limbModes;
+	typedef LinkageCommon::LimbModeType::HAND HAND;
+	typedef LinkageCommon::LimbModeType::FOOT FOOT;
 
 	/*
 	 * Reverse mode.
@@ -39,13 +32,10 @@ public:
 	{
 		RIGHT     = 0,
 		LEFT      = 1,
-		ReverseMode_Count = (LEFT + 1)
-//		NOREVERSE = 2,
-//		ReverseMode_Count = (NOREVERSE + 1)
+		NOREVERSE = 2,
+		ReverseMode_Count = (NOREVERSE + 1)
 	};
 
-	// Gravity value. (Unit of length is [cm].)
-	static const double gravity;
 	// Interval of checking service provider.
 	static const double intervalOfCheckingService;
 
@@ -74,13 +64,16 @@ public:
 	static const std::string paramFileValLinkageGraspLimbModeDefault;
 	static const std::string paramFileKeyLinkageGraspReverseMode;
 	static const std::string paramFileValLinkageGraspReverseModeDefault;
+	static const std::string paramFileKeyLinkageGraspGraspWithBoth;
+	static const std::string paramFileValLinkageGraspGraspWithBothDefault;
+
+	static const std::string paramFileKeyLinkageGraspIsWaistFixed;
+	static const bool        paramFileValLinkageGraspIsWaistFixedDefault;
 
 	// Message key string. This is used in onRecvMsg.
 	static const std::string msgKeyLimbMode;
 	static const std::string msgKeyReverseMode;
 
-	// Limb mode string array list.
-	static const std::string limbModes[LimbMode_Count];
 	// Reverse mode string array list.
 	static const std::string reverseModes[ReverseMode_Count];
 
@@ -101,9 +94,8 @@ public:
 	// Distance for release judgement in Foot mode.
 	static const double distance4ReleaseJudgeInFoot;
 
-	// The moving distance of unnecessary object. It is used at changing mode.
-	static const double shiftDistanceForChangingLimb;
-
+	// This controller is fixed position.
+	static const bool isPositionFixed;
 
 	// Initialize this controller.
 	void onInit(InitEvent &evt);
@@ -154,8 +146,6 @@ public:
 	std::string reverseMode;
 
 	Vector3d tableIniPos;           // Initial position of the table.
-	Vector3d linkageObjIniPos4Hand; // Initial position of the linkage object for Hand mode.
-	Vector3d linkageObjIniPos4Foot; // Initial position of the linkage object for Foot mode.
 
 	std::string rightLink; // Right link name in Avatar. It is used when grasping.
 	std::string leftLink;  // Left Link name in Avatar. It is used when grasping.
@@ -168,24 +158,23 @@ public:
 	// Distance for release judgement.
 	double      distance4Releasejudge;
 
-	Vector3d    minPosOfLinkageObj; // Minimum position of the linkage object.
-	Vector3d    maxPosOfLinkageObj; // Maximum position of the linkage object.
-
 	// The part name of avatar that is grasping object.
 	std::string myGraspingPartName;
 
 	// Whether using Oculus Rift or not.
 	bool usingOculus;
 
-	// Elapsed time from the object is released.
-	double elapsedTimeFromReleased;
-
 	// Distance of the avatar and the grasped object.
 	Vector3d distanceOfAvatarAndGraspedObject;
+
+	// If true, ROOT_JOINT and WAIST_JOINT are Fixed.
+	bool isWaistFixed;
+
+	// If false, Avatar grasps with one hand. If true, Avatar grasps with both hands.
+	bool graspWithBoth;
 };
 
 
-const double LinkageController::gravity = -980.665;
 const double LinkageController::intervalOfCheckingService = 3.0;
 
 const std::string LinkageController::parameterFileName = "LinkageController.ini";
@@ -212,12 +201,15 @@ const std::string LinkageController::paramFileValLinkageGraspLimbModeDefault    
 const std::string LinkageController::paramFileKeyLinkageGraspReverseMode        = "LinkageGrasp.reverse_mode";
 const std::string LinkageController::paramFileValLinkageGraspReverseModeDefault = "RIGHT";
 
+const std::string LinkageController::paramFileKeyLinkageGraspGraspWithBoth        = "LinkageGrasp.grasp_with_both";
+const bool        LinkageController::paramFileValLinkageGraspGraspWithBothDefault = false;
+const std::string LinkageController::paramFileKeyLinkageGraspIsWaistFixed         = "LinkageGrasp.is_waist_fixed";
+const bool        LinkageController::paramFileValLinkageGraspIsWaistFixedDefault  = false;
+
 const std::string LinkageController::msgKeyLimbMode    = "LIMB_MODE";
 const std::string LinkageController::msgKeyReverseMode = "REVERSE_MODE";
 
-const std::string LinkageController::limbModes[LimbMode_Count] = { "HAND", "FOOT" };
-const std::string LinkageController::reverseModes[ReverseMode_Count] = { "RIGHT", "LEFT" };
-//const std::string LinkageController::reverseModes[ReverseMode_Count] = { "RIGHT", "LEFT", "NOREVERSE" };
+const std::string LinkageController::reverseModes[ReverseMode_Count] = { "RIGHT", "LEFT", "NOREVERSE" };
 
 const std::string LinkageController::rightLink4Hand = "RARM_LINK7";
 const std::string LinkageController::leftLink4Hand  = "LARM_LINK7";
@@ -232,6 +224,6 @@ const std::string LinkageController::linkageObjName4Foot = "linkageObj4Foot";
 const double      LinkageController::distance4ReleaseJudgeInHand = 13.0; // 12.0+1.0
 const double      LinkageController::distance4ReleaseJudgeInFoot = 15.4; // 12.0*1.2+1.0
 
-const double      LinkageController::shiftDistanceForChangingLimb = 1000.0; //Long enough.
+const bool        LinkageController::isPositionFixed = true;
 
 #endif // SIGVERSE_LINKAGE_CONTROLLER_H

@@ -55,12 +55,10 @@
 		<set-attr-value name="y" value="67.0"/>
 		<set-attr-value name="z" value="30.0"/>
 		<set-attr-value name="collision" value="true"/>
-		<!--
 		<set-attr-value name="language" value="c++"/>
 		<set-attr-value name="implementation" value="./LinkageObjectController.so"/>
-		<set-attr-value name="graspable" value="false"/>
+		<set-attr-value name="graspable" value="true"/>
 		<set-attr-value name="graspRadius" value="12.0"/>
-		-->
 		<set-attr-value name="scalex" value="1.0"/>
 		<set-attr-value name="scaley" value="1.0"/>
 		<set-attr-value name="scalez" value="1.0"/>
@@ -74,12 +72,10 @@
 		<set-attr-value name="y" value="13.0"/>
 		<set-attr-value name="z" value="30.0"/>
 		<set-attr-value name="collision" value="true"/>
-		<!--
 		<set-attr-value name="language" value="c++"/>
 		<set-attr-value name="implementation" value="./LinkageObjectController.so"/>
-		<set-attr-value name="graspable" value="false"/>
-		<set-attr-value name="graspRadius" value="12.0"/>
-		-->
+		<set-attr-value name="graspable" value="true"/>
+		<set-attr-value name="graspRadius" value="14.4"/>
 		<set-attr-value name="scalex" value="1.2"/>
 		<set-attr-value name="scaley" value="1.2"/>
 		<set-attr-value name="scalez" value="1.2"/>
