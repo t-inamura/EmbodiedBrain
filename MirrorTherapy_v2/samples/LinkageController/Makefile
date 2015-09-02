@@ -1,8 +1,9 @@
 # target file (.so)
-TARGET = ./MirrorTherapyController.so
+TARGET1 = ./LinkageController.so
+TARGET2 = ./LinkageObjectController.so
 
 # sources
-SRCS =\
+SRCS1 =\
 	$(SIGVERSE_BUILD_PATH)/sigverse/common/SigCmn.cpp \
 	$(SIGVERSE_BUILD_PATH)/sigverse/common/Quaternion.cpp \
 	$(SIGVERSE_BUILD_PATH)/sigverse/common/device/SensorData.cpp \
@@ -14,7 +15,12 @@ SRCS =\
 	$(SIGVERSE_BUILD_PATH)/sigverse/controller/common/ManNiiAvatarController.cpp \
 	$(SIGVERSE_BUILD_PATH)/sigverse/controller/common/device/KinectV2DeviceManager.cpp \
 	$(SIGVERSE_BUILD_PATH)/sigverse/controller/common/device/OculusDK1DeviceManager.cpp \
-	$(SIGVERSE_BUILD_PATH)/sigverse/controller/MirrorTherapyController/MirrorTherapyController.cpp \
+	LinkageController.cpp \
+
+SRCS2 =\
+	$(SIGVERSE_BUILD_PATH)/sigverse/common/SigCmn.cpp \
+	$(SIGVERSE_BUILD_PATH)/sigverse/common/Quaternion.cpp \
+	LinkageObjectController.cpp \
 
 # sigverse path
 SIG_SRC = $(SIGVERSE_PATH)/include
@@ -26,21 +32,27 @@ CXX = g++
 CFLAGS = -std=c++11 -DCONTROLLER -DNDEBUG -DUSE_ODE -DdDOUBLE -I$(SIG_SRC) -I$(SIGVERSE_BUILD_PATH) -fPIC -shared
 
 # generate intermediate object file from sources.
-OBJS := $(SRCS:.cpp=.o)
+OBJS1 := $(SRCS1:.cpp=.o)
+OBJS2 := $(SRCS2:.cpp=.o)
 
 # -- compile rule --
 
-all: $(TARGET)
+all: $(TARGET1) $(TARGET2) 
 
 # intermediate output file
 %.o: %.cpp
 	$(CXX) $(CFLAGS) -o $@ -c $<
 
 # target file(.so)
-$(TARGET): $(OBJS) $(SRCS)
-	$(CXX) $(CFLAGS) -o $@ $(OBJS) # Link object files.
-	rm -f $(OBJS) # Remove intermediate files.
+$(TARGET1): $(OBJS1) $(SRCS1)
+	$(CXX) $(CFLAGS) -o $@ $(OBJS1)
+#	rm -f $(OBJS1) # Remove intermediate files.
+
+$(TARGET2): $(OBJS2) $(SRCS2)
+	$(CXX) $(CFLAGS) -o $@ $(OBJS2)
+#	rm -f $(OBJS2) # Remove intermediate files.
 
 # remove object file
 clean:
-	rm -f $(TARGET) $(OBJS)
+	rm -f $(TARGET1) $(OBJS1)
+	rm -f $(TARGET2) $(OBJS2)

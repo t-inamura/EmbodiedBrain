@@ -8,7 +8,7 @@
  * @par    1.0.0
  * ==========================================================================================
  */
-#include <sigverse/controller/LinkageController/LinkageObjectController.h>
+#include "LinkageObjectController.h"
 
 #include <vector>
 #include <boost/algorithm/string/split.hpp>
@@ -34,8 +34,18 @@ void LinkageObjectController::onInit(InitEvent &evt)
 		// Save initial position.
 		myself->getPosition(this->iniPos);
 
-		if(iniPos.y())
-		this->limbModeType = LinkageCommon::LimbModeType::HAND;
+		// Shift position of the table.
+		SimObj *table = getObj(LinkageCommon::tableName.c_str());
+		table->getPosition(this->tableIniPos);
+
+		if(iniPos.y() > this->tableIniPos.y())
+		{
+			this->limbModeType = LinkageCommon::LimbModeType::HAND;
+		}
+		else
+		{
+			this->limbModeType = LinkageCommon::LimbModeType::FOOT;
+		}
 
 		this->minPos.x(-10000.0);           // No limit.
 		this->minPos.y(this->iniPos.y());   // Same as initial position.
@@ -70,7 +80,8 @@ double LinkageObjectController::onAction(ActionEvent &evt)
 		}
 
 		// When the avatar is not grasped.
-		if(!myself->getIsGrasped())
+//		if(!myself->getIsGrasped())
+		if(!this->isGrasped)
 		{
 			Vector3d myPos;
 			myself->getPosition(myPos);
@@ -95,9 +106,9 @@ double LinkageObjectController::onAction(ActionEvent &evt)
 				newTargetPos.z(myPos.z());
 
 				//Reposition after landing.
-				if(newTargetPos.y() < this->iniPos.y())
+				if(newTargetPos.y() <= this->iniPos.y())
 				{
-					newTargetPos.y(this->iniPos.y());
+					if(newTargetPos.y() < this->minPos.y()){ newTargetPos.y(this->minPos.y()); }
 					if(newTargetPos.z() < this->minPos.z()){ newTargetPos.z(this->minPos.z()); }
 					if(newTargetPos.z() > this->maxPos.z()){ newTargetPos.z(this->maxPos.z()); }
 				}
@@ -132,11 +143,19 @@ void LinkageObjectController::onRecvMsg(RecvMsgEvent &evt)
 
 	std::string msgType = msgItems[0];
 
-	if(msgType=="RESTART")
+	if(msgType=="GRASP")
+	{
+		this->isGrasped = true;
+	}
+	else if(msgType=="RELEASE")
+	{
+		this->isGrasped = false;
+	}
+	else if(msgType=="RESTART")
 	{
 		if(msgItems.size()!=2)
 		{
-			LOG_MSG(("Illegal message: %s", msg));
+			LOG_MSG(("Illegal message: %s", msg.c_str()));
 			return;
 		}
 
@@ -163,7 +182,7 @@ void LinkageObjectController::onRecvMsg(RecvMsgEvent &evt)
 	{
 		if(msgItems.size()!=4)
 		{
-			LOG_MSG(("Illegal message: %s", msg));
+			LOG_MSG(("Illegal message: %s", msg.c_str()));
 			return;
 		}
 

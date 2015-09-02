@@ -5,7 +5,7 @@
  *      Author: Yamada@tome
  */
 
-#include <sigverse/controller/RHIBallController/RHIBallController.h>
+#include "RHIBallController.h"
 
 #include <sys/time.h>
 #include <boost/exception/diagnostic_information.hpp>

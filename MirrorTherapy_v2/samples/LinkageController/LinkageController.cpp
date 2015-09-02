@@ -6,7 +6,7 @@
  */
 
 #include <sigverse/common/device/SensorData.h>
-#include <sigverse/controller/LinkageController/LinkageController.h>
+#include "LinkageController.h"
 
 
 #include <boost/property_tree/ptree.hpp>
@@ -30,10 +30,10 @@ void LinkageController::onInit(InitEvent &evt)
 	this->kinectV2DeviceManager.initPositionAndRotation(myself);
 
 	// Save initial position of Table.
-	SimObj *table = getObj(this->tableName.c_str());
+	SimObj *table = getObj(Cmn::tableName.c_str());
 	table->getPosition(this->tableIniPos);
 
-	if(this->limbMode==this->limbModes[HAND])
+	if(this->limbMode==Cmn::limbModes[CmnLMT::HAND])
 	{
 		// Set variables for Hand mode.
 		this->resetVariables4Hand();
@@ -53,9 +53,11 @@ void LinkageController::onInit(InitEvent &evt)
 
 	this->myGraspingPartName = "";
 
-	this->distanceOfAvatarAndGraspedObject.x(1000.0); // Long enough.
-	this->distanceOfAvatarAndGraspedObject.y(1000.0); // Long enough.
-	this->distanceOfAvatarAndGraspedObject.z(1000.0); // Long enough.
+	this->diffAvatarAndGraspedObject.x(1000.0); // Long enough.
+	this->diffAvatarAndGraspedObject.y(1000.0); // Long enough.
+	this->diffAvatarAndGraspedObject.z(1000.0); // Long enough.
+
+	this->distanceBetweenBoth = 1000.0;
 }
 
 
@@ -77,6 +79,13 @@ double LinkageController::onAction(ActionEvent &evt)
 		Vector3d targetPos;
 		target->getPosition(targetPos);
 
+		Vector3d rightPos, leftPos, distanceBetweenBothNow;
+		myself->getParts(this->rightLink.c_str())->getPosition(rightPos);
+		myself->getParts(this->leftLink .c_str())->getPosition(leftPos);
+		distanceBetweenBothNow.x(rightPos.x() - leftPos.x());
+		distanceBetweenBothNow.y(rightPos.y() - leftPos.y());
+		distanceBetweenBothNow.z(rightPos.z() - leftPos.z());
+
 		// When the avatar is grasping object.
 		if (this->isGrasping)
 		{
@@ -91,27 +100,75 @@ double LinkageController::onAction(ActionEvent &evt)
 			/*
 			 * Calculate distance of avatar and grasped object.
 			 */
-			this->distanceOfAvatarAndGraspedObject.x(targetPos.x()-myPartsPos.x());
-			this->distanceOfAvatarAndGraspedObject.y(targetPos.y()-myPartsPos.y());
-			this->distanceOfAvatarAndGraspedObject.z(targetPos.z()-myPartsPos.z());
+			Vector3d diff;
+			diff.x(targetPos.x()-myPartsPos.x());
+			diff.y(targetPos.y()-myPartsPos.y());
+			diff.z(targetPos.z()-myPartsPos.z());
+
+			double graspRadius = target->getAttr("graspRadius").getDouble();
 
 			/*
 			 * Release object if distance is long.
 			 */
-			if (this->distanceOfAvatarAndGraspedObject.length() > this->distance4Releasejudge)
+			if (diff.length() > graspRadius || distanceBetweenBothNow.length() > 2.0*graspRadius)
 			{
 				this->isGrasping = false;
-				myParts->releaseObj();
+				this->sendMsg(this->linkageObjName, "RELEASE");
+//				myParts->releaseObj();
 
 				LOG_MSG(("Release %s.", linkageObjName.c_str()));
 			}
+			else
+			{
+				Vector3d newTargetPos;
+				newTargetPos.x(myPartsPos.x() + diffAvatarAndGraspedObject.x());
+				newTargetPos.y(myPartsPos.y() + diffAvatarAndGraspedObject.y());
+				newTargetPos.z(myPartsPos.z() + diffAvatarAndGraspedObject.z());
 
-			Vector3d newTargetPos = myPartsPos + distanceOfAvatarAndGraspedObject;
+				if(this->isWaistFixed)
+				{
+					newTargetPos.x(0.0);
+				}
 
-			std::stringstream msgStr;
-			msgStr << "SET_POSITION:" << newTargetPos.x() << ":" << newTargetPos.y() << ":" << newTargetPos.z();
-			this->sendMsg(this->linkageObjName, msgStr.str());
+				std::stringstream msgSS;
+				msgSS << "SET_POSITION:" << newTargetPos.x() << ":" << newTargetPos.y() << ":" << newTargetPos.z();
+				this->sendMsg(this->linkageObjName, msgSS.str());
+
+//				std::cout << "setpos:" << myPartsPos.x() << ", dis:"<< diffAvatarAndGraspedObject.x() << std::endl;
+			}
 		}
+		else
+		{
+			if(this->graspWithBoth)
+			{
+				double graspRadius = target->getAttr("graspRadius").getDouble();
+
+				if(distanceBetweenBothNow.length() < 2.0*graspRadius && this->distanceBetweenBoth > 2.0*graspRadius)
+				{
+					this->myGraspingPartName = this->rightLink;
+
+					/*
+					 * Calculate distance of avatar and grasped object.
+					 * And set the grasping state.
+					 */
+					CParts *cparts = myself->getParts(this->myGraspingPartName.c_str());
+					Vector3d myPartsPos;
+					cparts->getPosition(myPartsPos);
+//					cparts->graspObj(this->linkageObjName);
+					this->sendMsg(this->linkageObjName, "GRASP");
+
+					this->diffAvatarAndGraspedObject.x(targetPos.x()-myPartsPos.x());
+					this->diffAvatarAndGraspedObject.y(targetPos.y()-myPartsPos.y());
+					this->diffAvatarAndGraspedObject.z(targetPos.z()-myPartsPos.z());
+
+					this->isGrasping = true;
+
+					LOG_MSG(("Grasped the %s.", this->linkageObjName.c_str()));
+				}
+			}
+		}
+
+		this->distanceBetweenBoth = distanceBetweenBothNow.length();
 	}
 	catch(SimObj::NoAttributeException &err)
 	{
@@ -264,7 +321,10 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt)
 				}
 
 				// Invert posture.
-				this->makeInvertPosture(posture);
+				if(this->reverseMode != reverseModes[NOREVERSE])
+				{
+					this->makeInvertPosture(posture);
+				}
 
 				// Set SIGVerse quaternions and positions.
 				SimObj *obj = getObj(myname());
@@ -309,7 +369,7 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt)
 void LinkageController::makeInvertPosture(ManNiiPosture &posture)
 {
 	// Left hand motion affects right hand.
-	if (this->limbMode ==limbModes[HAND] && this->reverseMode == reverseModes[RIGHT])
+	if (this->limbMode ==Cmn::limbModes[CmnLMT::HAND] && this->reverseMode == reverseModes[RIGHT])
 	{
 		// Get original quaternions.
 		double w2, x2, y2, z2, w3, x3, y3, z3;
@@ -321,7 +381,7 @@ void LinkageController::makeInvertPosture(ManNiiPosture &posture)
 		posture.joint[ManNiiPosture::RARM_JOINT3].quaternion.setQuaternion(w3, x3, -y3, -z3);
 	}
 	// Right hand motion affects left hand.
-	else if (this->limbMode ==limbModes[HAND] && this->reverseMode == reverseModes[LEFT])
+	else if (this->limbMode ==Cmn::limbModes[CmnLMT::HAND] && this->reverseMode == reverseModes[LEFT])
 	{
 		// Get original quaternions.
 		double w2, x2, y2, z2, w3, x3, y3, z3;
@@ -333,7 +393,7 @@ void LinkageController::makeInvertPosture(ManNiiPosture &posture)
 		posture.joint[ManNiiPosture::LARM_JOINT3].quaternion.setQuaternion(w3, x3, -y3, -z3);
 	}
 	// Left foot motion affects right foot.
-	else if (this->limbMode ==limbModes[FOOT] && this->reverseMode == reverseModes[RIGHT])
+	else if (this->limbMode ==Cmn::limbModes[CmnLMT::FOOT] && this->reverseMode == reverseModes[RIGHT])
 	{
 		// Get original quaternions.
 		double w2, x2, y2, z2, w4, x4, y4, z4;
@@ -345,7 +405,7 @@ void LinkageController::makeInvertPosture(ManNiiPosture &posture)
 		posture.joint[ManNiiPosture::RLEG_JOINT4].quaternion.setQuaternion(w4, x4, -y4, -z4);
 	}
 	// Right foot motion affects left foot.
-	else if (this->limbMode ==limbModes[FOOT] && this->reverseMode == reverseModes[LEFT])
+	else if (this->limbMode ==Cmn::limbModes[CmnLMT::FOOT] && this->reverseMode == reverseModes[LEFT])
 	{
 		// Get original quaternions.
 		double w2, x2, y2, z2, w4, x4, y4, z4;
@@ -386,11 +446,11 @@ void LinkageController::changeLimbMode(const std::map<std::string, std::vector<s
 			return;
 		}
 
-		if(it->second[0]==limbModes[HAND])
+		if(it->second[0]==Cmn::limbModes[CmnLMT::HAND])
 		{
 			this->resetVariables4Hand();
 		}
-		else if(it->second[0]==limbModes[FOOT])
+		else if(it->second[0]==Cmn::limbModes[CmnLMT::FOOT])
 		{
 			this->resetVariables4Foot();
 		}
@@ -442,18 +502,17 @@ void LinkageController::changeReverseMode(const std::map<std::string, std::vecto
 void LinkageController::resetVariables4Hand()
 {
 	// Set some variables.
-	this->limbMode         = limbModes[HAND];
+	this->limbMode         = Cmn::limbModes[CmnLMT::HAND];
 	this->linkageObjName   = this->linkageObjName4Hand;
-	this->distance4Releasejudge  = this->distance4ReleaseJudgeInHand;
 
 	this->rightLink = this->rightLink4Hand;
 	this->leftLink  = this->leftLink4Hand;
 
 	// Reset position of the table.
-	SimObj *table = getObj(this->tableName.c_str());
+	SimObj *table = getObj(Cmn::tableName.c_str());
 	table->setPosition(this->tableIniPos);
 
-	this->sendMsg(this->linkageObjName, "RESTART:FOOT");
+	this->sendMsg(this->linkageObjName, "RESTART:"+this->limbMode);
 }
 
 /*
@@ -462,18 +521,17 @@ void LinkageController::resetVariables4Hand()
 void LinkageController::resetVariables4Foot()
 {
 	// Set some variables.
-	this->limbMode         = limbModes[FOOT];
+	this->limbMode         = Cmn::limbModes[CmnLMT::FOOT];
 	this->linkageObjName   = this->linkageObjName4Foot;
-	this->distance4Releasejudge  = this->distance4ReleaseJudgeInFoot;
 
 	this->rightLink = this->rightLink4Foot;
 	this->leftLink  = this->leftLink4Foot;
 
 	// Shift position of the table.
-	SimObj *table = getObj(this->tableName.c_str());
+	SimObj *table = getObj(Cmn::tableName.c_str());
 	table->setPosition(this->tableIniPos.x(), this->tableIniPos.y(), this->tableIniPos.z()+1000.0); // Long enough shift.
 
-	this->sendMsg(this->linkageObjName, "RESTART:FOOT");
+	this->sendMsg(this->linkageObjName, "RESTART:"+this->limbMode);
 }
 
 
@@ -482,73 +540,74 @@ void LinkageController::resetVariables4Foot()
  */
 void LinkageController::onCollision(CollisionEvent &evt)
 {
-	try
-	{
-		// When the avatar is not grasping object.
-		if (isGrasping == false)
-		{
-			/*
-			 * Check collision with the linkage object.
-			 */
-			const std::vector<std::string> & collidedObj = evt.getWith();
-
-			if(std::find(collidedObj.begin(), collidedObj.end(), this->linkageObjName)==collidedObj.end()){ return; }
-
-			/*
-			 * Check collided part. And save part name.
-			 */
-			const std::vector<std::string> & myCollidedParts = evt.getMyParts();
-
-			if(std::find(myCollidedParts.begin(), myCollidedParts.end(), this->rightLink)!=myCollidedParts.end())
-			{
-				this->myGraspingPartName = this->rightLink;
-			}
-			else if(std::find(myCollidedParts.begin(), myCollidedParts.end(), this->leftLink)!=myCollidedParts.end())
-			{
-				this->myGraspingPartName = this->leftLink;
-			}
-			else
-			{
-				return;
-			}
-
-			/*
-			 * Calculate distance of avatar and grasped object.
-			 * And set the grasping state.
-			 */
-			SimObj *myself = getObj(myname());
-			SimObj *target = getObj(this->linkageObjName.c_str());
-
-			if (!myself || !target){ return; }
-			if (myself->dynamics() || target->dynamics()){ return; }
-
-			Vector3d myPartsPos, targetPos;
-			target->getPosition(targetPos);
-			CParts *cparts = myself->getParts(this->myGraspingPartName.c_str());
-			cparts->getPosition(myPartsPos);
-			cparts->graspObj(this->linkageObjName);
-
-			this->distanceOfAvatarAndGraspedObject.x(targetPos.x()-myPartsPos.x());
-			this->distanceOfAvatarAndGraspedObject.y(targetPos.y()-myPartsPos.y());
-			this->distanceOfAvatarAndGraspedObject.z(targetPos.z()-myPartsPos.z());
-
-			this->isGrasping = true;
-
-			LOG_MSG(("Grasped the %s.", this->linkageObjName.c_str()));
-		}
-	}
-	catch(SimObj::NoAttributeException &err)
-	{
-		LOG_MSG(("NoAttributeException: %s", err.msg()));
-	}
-	catch(SimObj::AttributeReadOnlyException &err)
-	{
-		LOG_MSG(("AttributeReadOnlyException: %s", err.msg()));
-	}
-	catch(SimObj::Exception &err)
-	{
-		LOG_MSG(("Exception: %s", err.msg()));
-	}
+//	try
+//	{
+//		// When the avatar is not grasping object.
+//		if (isGrasping == false)
+//		{
+//			/*
+//			 * Check collision with the linkage object.
+//			 */
+//			const std::vector<std::string> & collidedObj = evt.getWith();
+//
+//			if(std::find(collidedObj.begin(), collidedObj.end(), this->linkageObjName)==collidedObj.end()){ return; }
+//
+//			/*
+//			 * Check collided part. And save part name.
+//			 */
+//			const std::vector<std::string> & myCollidedParts = evt.getMyParts();
+//
+//			if(std::find(myCollidedParts.begin(), myCollidedParts.end(), this->rightLink)!=myCollidedParts.end())
+//			{
+//				this->myGraspingPartName = this->rightLink;
+//			}
+//			else if(std::find(myCollidedParts.begin(), myCollidedParts.end(), this->leftLink)!=myCollidedParts.end())
+//			{
+//				this->myGraspingPartName = this->leftLink;
+//			}
+//			else
+//			{
+//				return;
+//			}
+//
+//			/*
+//			 * Calculate distance of avatar and grasped object.
+//			 * And set the grasping state.
+//			 */
+//			SimObj *myself = getObj(myname());
+//			SimObj *target = getObj(this->linkageObjName.c_str());
+//
+//			if (!myself || !target){ return; }
+//			if (myself->dynamics() || target->dynamics()){ return; }
+//
+//			Vector3d myPartsPos, targetPos;
+//			target->getPosition(targetPos);
+//			CParts *cparts = myself->getParts(this->myGraspingPartName.c_str());
+//			cparts->getPosition(myPartsPos);
+////			cparts->graspObj(this->linkageObjName);
+//			this->sendMsg(this->linkageObjName, "GRASP");
+//
+//			this->diffAvatarAndGraspedObject.x(targetPos.x()-myPartsPos.x());
+//			this->diffAvatarAndGraspedObject.y(targetPos.y()-myPartsPos.y());
+//			this->diffAvatarAndGraspedObject.z(targetPos.z()-myPartsPos.z());
+//
+//			this->isGrasping = true;
+//
+//			LOG_MSG(("Grasped the %s.", this->linkageObjName.c_str()));
+//		}
+//	}
+//	catch(SimObj::NoAttributeException &err)
+//	{
+//		LOG_MSG(("NoAttributeException: %s", err.msg()));
+//	}
+//	catch(SimObj::AttributeReadOnlyException &err)
+//	{
+//		LOG_MSG(("AttributeReadOnlyException: %s", err.msg()));
+//	}
+//	catch(SimObj::Exception &err)
+//	{
+//		LOG_MSG(("Exception: %s", err.msg()));
+//	}
 }
 
 

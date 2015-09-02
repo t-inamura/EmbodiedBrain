@@ -4,7 +4,7 @@ TARGET = ./RHIBallController.so
 # sources
 SRCS =\
 	$(SIGVERSE_BUILD_PATH)/sigverse/common/SigCmn.cpp \
-	$(SIGVERSE_BUILD_PATH)/sigverse/controller/RHIBallController/RHIBallController.cpp \
+	RHIBallController.cpp \
 
 # sigverse path
 SIG_SRC = $(SIGVERSE_PATH)/include

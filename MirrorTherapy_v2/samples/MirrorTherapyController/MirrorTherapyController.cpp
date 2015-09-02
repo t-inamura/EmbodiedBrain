@@ -4,7 +4,7 @@
  *  Created on: 2015/03/25
  *      Author: Nozaki
  */
-#include <sigverse/controller/MirrorTherapyController/MirrorTherapyController.h>
+#include "MirrorTherapyController.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>

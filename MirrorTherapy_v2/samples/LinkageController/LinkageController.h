@@ -15,14 +15,16 @@
 #include <sigverse/common/device/OculusRiftDK1SensorData.h>
 #include <sigverse/controller/common/AvatarController.h>
 #include <sigverse/controller/common/ManNiiPosture.h>
-#include <sigverse/controller/LinkageController/LinkageCommon.h>
+#include <sigverse/controller/common/ManNiiAvatarController.h>
+#include <sigverse/controller/common/device/KinectV2DeviceManager.h>
+#include <sigverse/controller/common/device/OculusDK1DeviceManager.h>
+#include "LinkageController/LinkageCommon.h"
 
 class LinkageController : public ManNiiAvatarController
 {
 public:
-	typedef LinkageCommon::limbModes          limbModes;
-	typedef LinkageCommon::LimbModeType::HAND HAND;
-	typedef LinkageCommon::LimbModeType::FOOT FOOT;
+	typedef LinkageCommon               Cmn;
+	typedef LinkageCommon::LimbModeType CmnLMT;
 
 	/*
 	 * Reverse mode.
@@ -65,7 +67,7 @@ public:
 	static const std::string paramFileKeyLinkageGraspReverseMode;
 	static const std::string paramFileValLinkageGraspReverseModeDefault;
 	static const std::string paramFileKeyLinkageGraspGraspWithBoth;
-	static const std::string paramFileValLinkageGraspGraspWithBothDefault;
+	static const bool        paramFileValLinkageGraspGraspWithBothDefault;
 
 	static const std::string paramFileKeyLinkageGraspIsWaistFixed;
 	static const bool        paramFileValLinkageGraspIsWaistFixedDefault;
@@ -79,7 +81,6 @@ public:
 
 	// Entity name in world file.
 	static const std::string chairName;            // Chair name
-	static const std::string tableName;            // Table name
 	static const std::string linkageObjName4Hand;  // Linkage object name for Hand mode.
 	static const std::string linkageObjName4Foot;  // Linkage object name for Foot mode.
 
@@ -88,11 +89,6 @@ public:
 	static const std::string leftLink4Hand;  // Left hand.  For example, LARM_LINK7
 	static const std::string rightLink4Foot; // Right foot. For example, RLEG_LINK6
 	static const std::string leftLink4Foot;  // Left foot.  For example, LLEG_LINK6
-
-	// Distance for release judgement in Hand mode.
-	static const double distance4ReleaseJudgeInHand;
-	// Distance for release judgement in Foot mode.
-	static const double distance4ReleaseJudgeInFoot;
 
 	// This controller is fixed position.
 	static const bool isPositionFixed;
@@ -155,8 +151,6 @@ public:
 
 	// Target object of grasping.
 	std::string linkageObjName;
-	// Distance for release judgement.
-	double      distance4Releasejudge;
 
 	// The part name of avatar that is grasping object.
 	std::string myGraspingPartName;
@@ -165,13 +159,15 @@ public:
 	bool usingOculus;
 
 	// Distance of the avatar and the grasped object.
-	Vector3d distanceOfAvatarAndGraspedObject;
+	Vector3d diffAvatarAndGraspedObject;
 
 	// If true, ROOT_JOINT and WAIST_JOINT are Fixed.
 	bool isWaistFixed;
 
 	// If false, Avatar grasps with one hand. If true, Avatar grasps with both hands.
 	bool graspWithBoth;
+
+	double distanceBetweenBoth;
 };
 
 
@@ -217,12 +213,8 @@ const std::string LinkageController::rightLink4Foot = "RLEG_LINK6";
 const std::string LinkageController::leftLink4Foot  = "LLEG_LINK6";
 
 const std::string LinkageController::chairName           = "chair";
-const std::string LinkageController::tableName           = "table";
 const std::string LinkageController::linkageObjName4Hand = "linkageObj4Hand";
 const std::string LinkageController::linkageObjName4Foot = "linkageObj4Foot";
-
-const double      LinkageController::distance4ReleaseJudgeInHand = 13.0; // 12.0+1.0
-const double      LinkageController::distance4ReleaseJudgeInFoot = 15.4; // 12.0*1.2+1.0
 
 const bool        LinkageController::isPositionFixed = true;
 

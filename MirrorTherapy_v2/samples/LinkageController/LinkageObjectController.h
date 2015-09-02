@@ -12,7 +12,11 @@
 #ifndef SIGVERSE_LINKAGE_OBJECT_CONTROLLER_H
 #define SIGVERSE_LINKAGE_OBJECT_CONTROLLER_H
 
-#include <sigverse/controller/LinkageController/LinkageCommon.h>
+#include <sigverse/Controller.h>
+#include <sigverse/ControllerEvent.h>
+#include <sigverse/comm/controller/Controller.h>
+
+#include "LinkageCommon.h"
 
 class LinkageObjectController : public Controller
 {
@@ -54,11 +58,15 @@ private:
 	Vector3d minPos; // Minimum position.
 	Vector3d maxPos; // Maximum position.
 
+	Vector3d tableIniPos;           // Initial position of the table.
+
 	// Elapsed time from the object is released.
 	double elapsedTimeFromReleased;
+
+	bool isGrasped;
 };
 
 const double LinkageObjectController::gravity = -980.665;
 
-#endif SIGVERSE_LINKAGE_OBJECT_CONTROLLER_H
+#endif // SIGVERSE_LINKAGE_OBJECT_CONTROLLER_H
 

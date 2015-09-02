@@ -6,7 +6,7 @@
  */
 
 #include <sigverse/common/device/SensorData.h>
-#include <sigverse/controller/OpenHouse2015Controller/OpenHouse2015Controller.h>
+#include "OpenHouse2015Controller.h"
 
 
 #include <sys/time.h>

@@ -15,7 +15,7 @@
 #include <sigverse/common/device/OculusRiftDK1SensorData.h>
 #include <sigverse/controller/common/AvatarController.h>
 #include <sigverse/controller/common/ManNiiPosture.h>
-#include <sigverse/controller/MirrorTherapyController/MirrorTherapyController.h>
+#include "MirrorTherapyController.h"
 
 
 class OpenHouse2015Controller : public ManNiiAvatarController

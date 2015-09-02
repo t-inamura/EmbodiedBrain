@@ -12,6 +12,8 @@
 #ifndef SIGVERSE_LINKAGE_COMMON_H
 #define SIGVERSE_LINKAGE_COMMON_H
 
+#include <string>
+
 class LinkageCommon
 {
 public:
@@ -28,9 +30,13 @@ public:
 
 	// Limb mode string array list.
 	static const std::string limbModes[LimbMode_Count];
+
+	static const std::string tableName;            // Table name
 };
 
 const std::string LinkageCommon::limbModes[LimbMode_Count] = { "HAND", "FOOT" };
 
-#endif SIGVERSE_LINKAGE_COMMON_H
+const std::string LinkageCommon::tableName           = "table";
+
+#endif // SIGVERSE_LINKAGE_COMMON_H
 
