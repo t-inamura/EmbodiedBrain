@@ -7,6 +7,8 @@
 #ifndef SIGVERSE_LINKAGE_CONTROLLER_H
 #define SIGVERSE_LINKAGE_CONTROLLER_H
 
+#include <string>
+#include <mutex>
 #include <sigverse/Controller.h>
 #include <sigverse/ControllerEvent.h>
 #include <sigverse/comm/controller/Controller.h>
@@ -18,7 +20,10 @@
 #include <sigverse/controller/common/ManNiiAvatarController.h>
 #include <sigverse/controller/common/device/KinectV2DeviceManager.h>
 #include <sigverse/controller/common/device/OculusDK1DeviceManager.h>
-#include "LinkageController/LinkageCommon.h"
+#include "LinkageCommon.h"
+
+// Mutex for Hand state.
+std::mutex mtxForHandState;
 
 class LinkageController : public ManNiiAvatarController
 {
@@ -27,15 +32,28 @@ public:
 	typedef LinkageCommon::LimbModeType CmnLMT;
 
 	/*
+	 * Grasp mode.
+	 *   GRASP means that the avatar grasps with one hand.
+	 *   SANDWICH means that the avatar sandwiches with both hands.
+	 */
+	enum GraspModeType
+	{
+		SANDWICH    = 0,
+		GRASP_RIGHT = 1,
+		GRASP_LEFT  = 2,
+		GraspMode_Count = (GRASP_LEFT + 1)
+	};
+
+	/*
 	 * Reverse mode.
 	 *   RIGHT means that Left hand motion is copied to right hand.
 	 */
 	enum ReverseModeType
 	{
-		RIGHT     = 0,
-		LEFT      = 1,
-		NOREVERSE = 2,
-		ReverseMode_Count = (NOREVERSE + 1)
+		RIGHT       = 0,
+		LEFT        = 1,
+		NOT_REVERSE = 2,
+		ReverseMode_Count = (NOT_REVERSE + 1)
 	};
 
 	// Interval of checking service provider.
@@ -64,17 +82,21 @@ public:
 
 	static const std::string paramFileKeyLinkageGraspLimbMode;
 	static const std::string paramFileValLinkageGraspLimbModeDefault;
+	static const std::string paramFileKeyLinkageGraspGraspMode;
+	static const std::string paramFileValLinkageGraspGraspModeDefault;
 	static const std::string paramFileKeyLinkageGraspReverseMode;
 	static const std::string paramFileValLinkageGraspReverseModeDefault;
-	static const std::string paramFileKeyLinkageGraspGraspWithBoth;
-	static const bool        paramFileValLinkageGraspGraspWithBothDefault;
 
 	static const std::string paramFileKeyLinkageGraspIsWaistFixed;
 	static const bool        paramFileValLinkageGraspIsWaistFixedDefault;
 
 	// Message key string. This is used in onRecvMsg.
 	static const std::string msgKeyLimbMode;
+	static const std::string msgKeyGraspMode;
 	static const std::string msgKeyReverseMode;
+
+	// Grasp mode string array list.
+	static const std::string graspModes[GraspMode_Count];
 
 	// Reverse mode string array list.
 	static const std::string reverseModes[ReverseMode_Count];
@@ -92,6 +114,11 @@ public:
 
 	// This controller is fixed position.
 	static const bool isPositionFixed;
+
+	// Number of Hand state history. This is for GRASP. GRASP is one of the grasp mode.
+	static const int numOfHandStateHistory = 10;
+	// Threshold number of judging hand state. This is for GRASP. GRASP is one of the grasp mode.
+	static const int thresholdNumOfJudgingHandState = 5;
 
 	// Initialize this controller.
 	void onInit(InitEvent &evt);
@@ -114,6 +141,14 @@ public:
 	 */
 	double checkServiceForOnAction(const double intervalOfOnAction);
 
+	// Check grasping for GRASP. GRASP is one of the grasp mode.
+	void checkGrasping4Grasp(GraspModeType graspModeType);
+	// Check grasping for SANDWICH. SANDWICH is one of the grasp mode.
+	void checkGrasping4Sandwich();
+
+	//Checking Hand state. Closed or not.
+	bool isHandClosed(std::list<KinectV2SensorData::HandState> handStateHistory);
+
 	// Make invert posture from current posture.
 	void makeInvertPosture(ManNiiPosture &posture);
 
@@ -121,6 +156,8 @@ public:
 	void changeMode(const std::map<std::string, std::vector<std::string> > &map);
 	// Change Limb mode.
 	void changeLimbMode(const std::map<std::string, std::vector<std::string> > &map);
+	// Change Grasp mode.
+	void changeGraspMode(const std::map<std::string, std::vector<std::string> > &map);
 	// Change Reverse mode.
 	void changeReverseMode(const std::map<std::string, std::vector<std::string> > &map);
 
@@ -138,6 +175,8 @@ public:
 
 	// Limb mode. Using hand or using foot.
 	std::string limbMode;
+	// Grasp mode. Grasping or Sandwiching.
+	std::string graspMode;
 	// Reverse mode. Right to Left or Left to Right.
 	std::string reverseMode;
 
@@ -159,15 +198,23 @@ public:
 	bool usingOculus;
 
 	// Distance of the avatar and the grasped object.
-	Vector3d diffAvatarAndGraspedObject;
+	Vector3d distanceOfAvatarAndGraspedObject;
 
 	// If true, ROOT_JOINT and WAIST_JOINT are Fixed.
 	bool isWaistFixed;
 
-	// If false, Avatar grasps with one hand. If true, Avatar grasps with both hands.
-	bool graspWithBoth;
-
+	// Distance of both hands for SANDWICH. SANDWICH is one of the grasp mode.
 	double distanceBetweenBoth;
+
+	// History of Left hand state.
+	std::list<KinectV2SensorData::HandState> leftHandStateHistory;
+	// History of Left hand state.
+	std::list<KinectV2SensorData::HandState> rightHandStateHistory;
+
+	// List of flag. Left hand is closed or not.
+	bool isLeftHandClosed;
+	// List of flag. Right hand is closed or not.
+	bool isRightHandClosed;
 };
 
 
@@ -194,17 +241,19 @@ const std::string LinkageController::paramFileValLinkageGraspGUIServiceNameDefau
 
 const std::string LinkageController::paramFileKeyLinkageGraspLimbMode           = "LinkageGrasp.limb_mode";
 const std::string LinkageController::paramFileValLinkageGraspLimbModeDefault    = "HAND";
+const std::string LinkageController::paramFileKeyLinkageGraspGraspMode          = "LinkageGrasp.grasp_mode";
+const std::string LinkageController::paramFileValLinkageGraspGraspModeDefault   = "SANDWICH";
 const std::string LinkageController::paramFileKeyLinkageGraspReverseMode        = "LinkageGrasp.reverse_mode";
 const std::string LinkageController::paramFileValLinkageGraspReverseModeDefault = "RIGHT";
 
-const std::string LinkageController::paramFileKeyLinkageGraspGraspWithBoth        = "LinkageGrasp.grasp_with_both";
-const bool        LinkageController::paramFileValLinkageGraspGraspWithBothDefault = false;
 const std::string LinkageController::paramFileKeyLinkageGraspIsWaistFixed         = "LinkageGrasp.is_waist_fixed";
 const bool        LinkageController::paramFileValLinkageGraspIsWaistFixedDefault  = false;
 
 const std::string LinkageController::msgKeyLimbMode    = "LIMB_MODE";
+const std::string LinkageController::msgKeyGraspMode   = "GRASP_MODE";
 const std::string LinkageController::msgKeyReverseMode = "REVERSE_MODE";
 
+const std::string LinkageController::graspModes[GraspMode_Count]     = { "SANDWICH", "GRASP_RIGHT", "GRASP_LEFT" };
 const std::string LinkageController::reverseModes[ReverseMode_Count] = { "RIGHT", "LEFT", "NOREVERSE" };
 
 const std::string LinkageController::rightLink4Hand = "RARM_LINK7";
