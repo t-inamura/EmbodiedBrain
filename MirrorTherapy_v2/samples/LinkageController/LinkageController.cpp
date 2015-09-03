@@ -44,6 +44,8 @@ void LinkageController::onInit(InitEvent &evt)
 		this->resetVariables4Foot();
 	}
 
+	this->resetVariables4GraspMode(this->graspMode);
+
 	// At the first, the robot does not grasp anything.
 	this->isGrasping = false;
 
@@ -51,7 +53,6 @@ void LinkageController::onInit(InitEvent &evt)
 
 	this->guiService = NULL;
 
-	this->myGraspingPartName = "";
 
 	this->distanceOfAvatarAndGraspedObject.x(1000.0); // Long enough.
 	this->distanceOfAvatarAndGraspedObject.y(1000.0); // Long enough.
@@ -74,15 +75,11 @@ double LinkageController::onAction(ActionEvent &evt)
 	{
 		if(this->graspMode==graspModes[SANDWICH])
 		{
-			this->checkGrasping4Sandwich();
+			this->checkGraspStatus4Sandwich();
 		}
-		else if(this->graspMode==graspModes[GRASP_RIGHT])
+		else if(this->graspMode==graspModes[GRASP_RIGHT] || this->graspMode==graspModes[GRASP_LEFT])
 		{
-			this->checkGrasping4Grasp(GraspModeType::GRASP_RIGHT);
-		}
-		else if(this->graspMode==graspModes[GRASP_LEFT])
-		{
-			this->checkGrasping4Grasp(GraspModeType::GRASP_LEFT);
+			this->checkGraspStatus4Grasp();
 		}
 	}
 	catch(SimObj::NoAttributeException &err)
@@ -191,122 +188,11 @@ double LinkageController::checkServiceForOnAction(const double intervalOfOnActio
 	return intervalOfOnAction;
 }
 
-/*
- * Check to grasp object.
- */
-void LinkageController::checkGrasping4Grasp(GraspModeType graspModeType)
-{
-	SimObj *myself = getObj(myname());
-	SimObj *target = getObj(this->linkageObjName.c_str());
-
-	if (!myself || !target){ return; }
-	if (myself->dynamics() || target->dynamics()){ return; }
-
-	Vector3d targetPos;
-	target->getPosition(targetPos);
-
-//	std::lock_guard<std::mutex> lock(::mtxForHandState);
-//	::mtxForHandState.lock();
-	bool isLeftHandClosedNew  = isHandClosed(this->leftHandStateHistory);
-	bool isRightHandClosedNew = isHandClosed(this->rightHandStateHistory);
-//	::mtxForHandState.unlock();
-
-	/*
-	 * Calculate position of grasped object. And set position of grasped object.
-	 */
-	CParts *myParts  = myself->getParts(this->myGraspingPartName.c_str());
-
-	Vector3d myPartsPos;
-	myParts->getPosition(myPartsPos);
-
-	/*
-	 * Calculate distance of avatar and grasped object.
-	 */
-	Vector3d diff;
-	diff.x(targetPos.x()-myPartsPos.x());
-	diff.y(targetPos.y()-myPartsPos.y());
-	diff.z(targetPos.z()-myPartsPos.z());
-
-	double graspRadius = target->getAttr("graspRadius").getDouble();
-
-	// When the avatar is grasping object.
-	if (this->isGrasping)
-	{
-		/*
-		 * Release object if distance is long.
-		 */
-		if (diff.length() > graspRadius ||
-		   (graspModeType==GraspModeType::GRASP_RIGHT && !isRightHandClosedNew) ||
-		   (graspModeType==GraspModeType::GRASP_LEFT && !isLeftHandClosedNew))
-		{
-			this->isGrasping = false;
-			this->sendMsg(this->linkageObjName, "RELEASE");
-//				myParts->releaseObj();
-
-			LOG_MSG(("Release %s.", linkageObjName.c_str()));
-		}
-		else
-		{
-			Vector3d newTargetPos;
-			newTargetPos.x(myPartsPos.x() + distanceOfAvatarAndGraspedObject.x());
-			newTargetPos.y(myPartsPos.y() + distanceOfAvatarAndGraspedObject.y());
-			newTargetPos.z(myPartsPos.z() + distanceOfAvatarAndGraspedObject.z());
-
-//			if(this->isWaistFixed){ newTargetPos.x(0.0); }
-
-			std::stringstream msgSS;
-			msgSS << "SET_POSITION:" << newTargetPos.x() << ":" << newTargetPos.y() << ":" << newTargetPos.z();
-			this->sendMsg(this->linkageObjName, msgSS.str());
-
-//			std::cout << "setpos:" << myPartsPos.x() << ", dis:"<< diffAvatarAndGraspedObject.x() << std::endl;
-		}
-	}
-	else
-	{
-		this->myGraspingPartName = "";
-
-		if(diff.length() < graspRadius)
-		{
-			if(graspModeType==GraspModeType::GRASP_RIGHT && !this->isRightHandClosed && isRightHandClosedNew)
-			{
-				this->myGraspingPartName = this->rightLink;
-			}
-			else if(graspModeType==GraspModeType::GRASP_LEFT && !this->isLeftHandClosed && isLeftHandClosedNew)
-			{
-				this->myGraspingPartName = this->leftLink;
-			}
-		}
-
-		if(this->myGraspingPartName!="")
-		{
-			/*
-			 * Calculate distance of avatar and grasped object.
-			 * And set the grasping state.
-			 */
-			CParts *cparts = myself->getParts(this->myGraspingPartName.c_str());
-			Vector3d myPartsPos;
-			cparts->getPosition(myPartsPos);
-//			cparts->graspObj(this->linkageObjName);
-			this->sendMsg(this->linkageObjName, "GRASP");
-
-			this->distanceOfAvatarAndGraspedObject.x(targetPos.x()-myPartsPos.x());
-			this->distanceOfAvatarAndGraspedObject.y(targetPos.y()-myPartsPos.y());
-			this->distanceOfAvatarAndGraspedObject.z(targetPos.z()-myPartsPos.z());
-
-			this->isGrasping = true;
-
-			LOG_MSG(("Grasped the %s.", this->linkageObjName.c_str()));
-		}
-	}
-
-	this->isLeftHandClosed  = isLeftHandClosedNew;
-	this->isRightHandClosed = isRightHandClosedNew;
-}
 
 /*
- * Check to release object.
+ * CCheck grasp status for SANDWICH. SANDWICH is one of the grasp mode.
  */
-void LinkageController::checkGrasping4Sandwich()
+void LinkageController::checkGraspStatus4Sandwich()
 {
 	SimObj *myself = getObj(myname());
 	SimObj *target = getObj(this->linkageObjName.c_str());
@@ -352,7 +238,6 @@ void LinkageController::checkGrasping4Sandwich()
 		{
 			this->isGrasping = false;
 			this->sendMsg(this->linkageObjName, "RELEASE");
-//				myParts->releaseObj();
 
 			LOG_MSG(("Release %s.", linkageObjName.c_str()));
 		}
@@ -376,16 +261,10 @@ void LinkageController::checkGrasping4Sandwich()
 	{
 		if(diff.length() < graspRadius && distanceBetweenBothNow.length() < 2.0*graspRadius && this->distanceBetweenBoth > 2.0*graspRadius)
 		{
-			this->myGraspingPartName = this->rightLink;
-
 			/*
 			 * Calculate distance of avatar and grasped object.
 			 * And set the grasping state.
 			 */
-			CParts *cparts = myself->getParts(this->myGraspingPartName.c_str());
-			Vector3d myPartsPos;
-			cparts->getPosition(myPartsPos);
-//			cparts->graspObj(this->linkageObjName);
 			this->sendMsg(this->linkageObjName, "GRASP");
 
 			this->distanceOfAvatarAndGraspedObject.x(targetPos.x()-myPartsPos.x());
@@ -402,6 +281,126 @@ void LinkageController::checkGrasping4Sandwich()
 }
 
 
+/*
+ * Check grasp status for GRASP_RIGHT and GRASP_LEFT. GRASP_RIGHT and GRASP_LEFT are one of the grasp mode.
+ */
+void LinkageController::checkGraspStatus4Grasp()
+{
+	SimObj *myself = getObj(myname());
+	SimObj *target = getObj(this->linkageObjName.c_str());
+
+	if (!myself || !target){ return; }
+	if (myself->dynamics() || target->dynamics()){ return; }
+
+	Vector3d targetPos;
+	target->getPosition(targetPos);
+
+//	std::lock_guard<std::mutex> lock(::mtxForHandState);
+//	::mtxForHandState.lock();
+	bool isLeftHandClosedNew  = isHandClosed(this->leftHandStateHistory);
+	bool isRightHandClosedNew = isHandClosed(this->rightHandStateHistory);
+
+//	if(graspModeType==GraspModeType::GRASP_RIGHT)
+//	::mtxForHandState.unlock();
+
+	/*
+	 * Calculate position of grasped object. And set position of grasped object.
+	 */
+	CParts *myParts  = myself->getParts(this->myGraspingPartName.c_str());
+
+	Vector3d myPartsPos;
+	myParts->getPosition(myPartsPos);
+
+	/*
+	 * Calculate distance of avatar and grasped object.
+	 */
+	Vector3d diff;
+	diff.x(targetPos.x()-myPartsPos.x());
+	diff.y(targetPos.y()-myPartsPos.y());
+	diff.z(targetPos.z()-myPartsPos.z());
+
+	double graspRadius = target->getAttr("graspRadius").getDouble();
+
+	// When the avatar is grasping object.
+	if (this->isGrasping)
+	{
+		/*
+		 * Release object if distance is long.
+		 */
+		if (diff.length() > graspRadius ||
+		   (this->graspMode==graspModes[GRASP_RIGHT] && !isRightHandClosedNew) ||
+		   (this->graspMode==graspModes[GRASP_LEFT] && !isLeftHandClosedNew))
+		{
+			this->isGrasping = false;
+			this->sendMsg(this->linkageObjName, "RELEASE");
+
+			LOG_MSG(("Release %s.", linkageObjName.c_str()));
+		}
+		else
+		{
+			Vector3d newTargetPos;
+			newTargetPos.x(myPartsPos.x() + distanceOfAvatarAndGraspedObject.x());
+			newTargetPos.y(myPartsPos.y() + distanceOfAvatarAndGraspedObject.y());
+			newTargetPos.z(myPartsPos.z() + distanceOfAvatarAndGraspedObject.z());
+
+//			if(this->isWaistFixed){ newTargetPos.x(0.0); }
+
+			std::stringstream msgSS;
+			msgSS << "SET_POSITION:" << newTargetPos.x() << ":" << newTargetPos.y() << ":" << newTargetPos.z();
+			this->sendMsg(this->linkageObjName, msgSS.str());
+
+//			std::cout << "setpos:" << myPartsPos.x() << ", dis:"<< diffAvatarAndGraspedObject.x() << std::endl;
+		}
+	}
+	else
+	{
+//		std::cout << "diff.length():" << diff.length() << ", checkTrying:" << this->checkTrying2Grasp4Grasp(isRightHandClosedNew, isLeftHandClosedNew) << std::endl;
+
+		if(diff.length() < graspRadius && this->checkTrying2Grasp4Grasp(isRightHandClosedNew, isLeftHandClosedNew))
+		{
+			/*
+			 * Calculate distance of avatar and grasped object.
+			 * And set the grasping state.
+			 */
+			this->sendMsg(this->linkageObjName, "GRASP");
+
+			this->distanceOfAvatarAndGraspedObject.x(targetPos.x()-myPartsPos.x());
+			this->distanceOfAvatarAndGraspedObject.y(targetPos.y()-myPartsPos.y());
+			this->distanceOfAvatarAndGraspedObject.z(targetPos.z()-myPartsPos.z());
+
+			this->isGrasping = true;
+
+			LOG_MSG(("Grasped the %s.", this->linkageObjName.c_str()));
+		}
+	}
+
+	this->isLeftHandClosed  = isLeftHandClosedNew;
+	this->isRightHandClosed = isRightHandClosedNew;
+}
+
+/*
+ * Check trying to grasp for GRASP_RIGHT and GRASP_LEFT. GRASP_RIGHT and GRASP_LEFT are one of the grasp mode.
+ */
+bool LinkageController::checkTrying2Grasp4Grasp(const bool isRightHandClosedNew, const bool isLeftHandClosedNew) const
+{
+//	std::cout << "revMode:" << this->reverseMode << ", graspMode:" << this->graspMode << ", rightOld:" << this->isRightHandClosed << ", rightNew:" << isRightHandClosedNew << std::endl;
+
+	if(this->reverseMode==reverseModes[NOT_REVERSE])
+	{
+		if(this->graspMode==graspModes[GRASP_RIGHT] && !this->isRightHandClosed && isRightHandClosedNew){ return true; }
+		if(this->graspMode==graspModes[GRASP_LEFT]  && !this->isLeftHandClosed  && isLeftHandClosedNew) { return true; }
+	}
+	else if(this->reverseMode==reverseModes[RIGHT])
+	{
+		if(!this->isLeftHandClosed && isLeftHandClosedNew){ return true; }
+	}
+	else if(this->reverseMode==reverseModes[LEFT])
+	{
+		if(!this->isRightHandClosed && isRightHandClosedNew){ return true; }
+	}
+
+	return false;
+}
 
 
 /*
@@ -633,6 +632,47 @@ void LinkageController::changeLimbMode(const std::map<std::string, std::vector<s
 }
 
 /*
+ * Reset variables for Hand state in Limb mode.
+ */
+void LinkageController::resetVariables4Hand()
+{
+	// Set some variables.
+	this->limbMode         = Cmn::limbModes[CmnLMT::HAND];
+	this->linkageObjName   = this->linkageObjName4Hand;
+
+	this->rightLink = this->rightLink4Hand;
+	this->leftLink  = this->leftLink4Hand;
+
+	// Reset position of the table.
+	SimObj *table = getObj(Cmn::tableName.c_str());
+	table->setPosition(this->tableIniPos);
+
+	this->sendMsg(this->linkageObjName4Hand, "RESTART:"+this->limbMode);
+	this->sendMsg(this->linkageObjName4Foot, "RESTART:"+this->limbMode);
+}
+
+/*
+ * Reset variables for Foot state in Limb mode.
+ */
+void LinkageController::resetVariables4Foot()
+{
+	// Set some variables.
+	this->limbMode         = Cmn::limbModes[CmnLMT::FOOT];
+	this->linkageObjName   = this->linkageObjName4Foot;
+
+	this->rightLink = this->rightLink4Foot;
+	this->leftLink  = this->leftLink4Foot;
+
+	// Shift position of the table.
+	SimObj *table = getObj(Cmn::tableName.c_str());
+	table->setPosition(this->tableIniPos.x(), this->tableIniPos.y(), this->tableIniPos.z()+1000.0); // Long enough shift.
+
+	this->sendMsg(this->linkageObjName4Hand, "RESTART:"+this->limbMode);
+	this->sendMsg(this->linkageObjName4Foot, "RESTART:"+this->limbMode);
+}
+
+
+/*
  * Change grasp mode.
  */
 void LinkageController::changeGraspMode(const std::map<std::string, std::vector<std::string> > &map)
@@ -649,11 +689,7 @@ void LinkageController::changeGraspMode(const std::map<std::string, std::vector<
 
 		if(it->second[0]==this->graspModes[GRASP_RIGHT] || it->second[0]==this->graspModes[GRASP_LEFT] || it->second[0]==this->graspModes[SANDWICH])
 		{
-			this->graspMode = it->second[0];
-			this->isGrasping = false;
-			this->distanceBetweenBoth = 1000.0;
-			this->isRightHandClosed = false;
-			this->isLeftHandClosed = false;
+			this->resetVariables4GraspMode(it->second[0]);
 		}
 		else
 		{
@@ -664,6 +700,28 @@ void LinkageController::changeGraspMode(const std::map<std::string, std::vector<
 		std::cout << "Set grasp mode:" << this->graspMode << std::endl;
 	}
 }
+
+/*
+ * Reset variables for Grasp mode.
+ */
+void LinkageController::resetVariables4GraspMode(std::string graspMode)
+{
+	this->graspMode = graspMode;
+	this->isGrasping = false;
+	this->distanceBetweenBoth = 1000.0;
+	this->isRightHandClosed = false;
+	this->isLeftHandClosed = false;
+
+	if(this->graspMode==this->graspModes[GRASP_RIGHT] || this->graspMode==this->graspModes[SANDWICH])
+	{
+		this->myGraspingPartName = this->rightLink;
+	}
+	else
+	{
+		this->myGraspingPartName = this->leftLink;
+	}
+}
+
 
 /*
  * Change Reverse mode.
@@ -694,45 +752,6 @@ void LinkageController::changeReverseMode(const std::map<std::string, std::vecto
 
 		std::cout << "Set reverse mode:" << this->reverseMode << std::endl;
 	}
-}
-
-
-/*
- * Reset variables for Hand mode.
- */
-void LinkageController::resetVariables4Hand()
-{
-	// Set some variables.
-	this->limbMode         = Cmn::limbModes[CmnLMT::HAND];
-	this->linkageObjName   = this->linkageObjName4Hand;
-
-	this->rightLink = this->rightLink4Hand;
-	this->leftLink  = this->leftLink4Hand;
-
-	// Reset position of the table.
-	SimObj *table = getObj(Cmn::tableName.c_str());
-	table->setPosition(this->tableIniPos);
-
-	this->sendMsg(this->linkageObjName, "RESTART:"+this->limbMode);
-}
-
-/*
- * Reset variables for Foot mode.
- */
-void LinkageController::resetVariables4Foot()
-{
-	// Set some variables.
-	this->limbMode         = Cmn::limbModes[CmnLMT::FOOT];
-	this->linkageObjName   = this->linkageObjName4Foot;
-
-	this->rightLink = this->rightLink4Foot;
-	this->leftLink  = this->leftLink4Foot;
-
-	// Shift position of the table.
-	SimObj *table = getObj(Cmn::tableName.c_str());
-	table->setPosition(this->tableIniPos.x(), this->tableIniPos.y(), this->tableIniPos.z()+1000.0); // Long enough shift.
-
-	this->sendMsg(this->linkageObjName, "RESTART:"+this->limbMode);
 }
 
 

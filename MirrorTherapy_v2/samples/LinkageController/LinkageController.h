@@ -141,10 +141,12 @@ public:
 	 */
 	double checkServiceForOnAction(const double intervalOfOnAction);
 
-	// Check grasping for GRASP. GRASP is one of the grasp mode.
-	void checkGrasping4Grasp(GraspModeType graspModeType);
-	// Check grasping for SANDWICH. SANDWICH is one of the grasp mode.
-	void checkGrasping4Sandwich();
+	// Check grasp status for SANDWICH. SANDWICH is one of the grasp mode.
+	void checkGraspStatus4Sandwich();
+	// Check grasp status for GRASP_RIGHT and GRASP_LEFT. GRASP_RIGHT and GRASP_LEFT are one of the grasp mode.
+	void checkGraspStatus4Grasp();
+	// Check trying to grasp for GRASP_RIGHT and GRASP_LEFT. GRASP_RIGHT and GRASP_LEFT are one of the grasp mode.
+	bool checkTrying2Grasp4Grasp(const bool isRightHandClosedNew, const bool isLeftHandClosedNew) const;
 
 	//Checking Hand state. Closed or not.
 	bool isHandClosed(std::list<KinectV2SensorData::HandState> handStateHistory);
@@ -161,11 +163,12 @@ public:
 	// Change Reverse mode.
 	void changeReverseMode(const std::map<std::string, std::vector<std::string> > &map);
 
-	// Reset variables for Hand mode.
+	// Reset variables for Hand state in Limb mode.
 	void resetVariables4Hand();
-	// Reset variables for Foot mode.
+	// Reset variables for Foot state in Limb mode.
 	void resetVariables4Foot();
-
+	// Reset variables for Grasp mode.
+	void resetVariables4GraspMode(std::string graspMode);
 
 	KinectV2DeviceManager  kinectV2DeviceManager;  // Kinect v2 device manager.
 	OculusDK1DeviceManager oculusDK1DeviceManager; // Oculus Rift DK1 device manager.
@@ -254,7 +257,7 @@ const std::string LinkageController::msgKeyGraspMode   = "GRASP_MODE";
 const std::string LinkageController::msgKeyReverseMode = "REVERSE_MODE";
 
 const std::string LinkageController::graspModes[GraspMode_Count]     = { "SANDWICH", "GRASP_RIGHT", "GRASP_LEFT" };
-const std::string LinkageController::reverseModes[ReverseMode_Count] = { "RIGHT", "LEFT", "NOREVERSE" };
+const std::string LinkageController::reverseModes[ReverseMode_Count] = { "RIGHT", "LEFT", "NOT_REVERSE" };
 
 const std::string LinkageController::rightLink4Hand = "RARM_LINK7";
 const std::string LinkageController::leftLink4Hand  = "LARM_LINK7";
