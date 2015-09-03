@@ -37,6 +37,11 @@ void LinkageGraspGUIMainFrame::OnLimbModeChoice( wxCommandEvent& event )
 	// No process.
 }
 
+void LinkageGraspGUIMainFrame::OnGraspModeChoice( wxCommandEvent& event )
+{
+	// No process.
+}
+
 void LinkageGraspGUIMainFrame::OnReverseModeChoice( wxCommandEvent& event )
 {
 	// No process.
@@ -54,16 +59,28 @@ void LinkageGraspGUIMainFrame::OnChangeClick( wxCommandEvent& event )
 		case 1 : { limbModeStr = "FOOT"; break; }
 	}
 
+	std::string graspModeStr;
+
+	int graspModeNo = m_choice_grasp_mode->GetSelection();
+
+	switch (graspModeNo)
+	{
+		case 0 : { graspModeStr = "SANDWICH";   break; }
+		case 1 : { graspModeStr = "GRASP_RIGHT"; break; }
+		case 2 : { graspModeStr = "GRASP_LEFT";  break; }
+	}
+
 	std::string reverseModeStr;
 
 	int reverseModeNo = m_choice_reverse_mode->GetSelection();
 
 	switch (reverseModeNo)
 	{
-		case 0 : { reverseModeStr = "LEFT";  break; }
-		case 1 : { reverseModeStr = "RIGHT"; break; }
+		case 0 : { reverseModeStr = "LEFT";        break; }
+		case 1 : { reverseModeStr = "RIGHT";       break; }
+		case 2 : { reverseModeStr = "NOT_REVERSE"; break; }
 	}
 
 	//Send message to SIGVerse controller.
-	avatarController.sendMessageToController("LIMB_MODE:"+limbModeStr+";REVERSE_MODE:"+reverseModeStr+";");
+	avatarController.sendMessageToController("LIMB_MODE:"+limbModeStr+";GRASP_MODE:"+graspModeStr+";REVERSE_MODE:"+reverseModeStr+";");
 }

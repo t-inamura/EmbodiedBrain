@@ -5,7 +5,7 @@
 // PLEASE DO "NOT" EDIT THIS FILE!
 ///////////////////////////////////////////////////////////////////////////
 
-#include <sigverse/tools/LinkageGraspGUI/gui/LinkageGraspGUIFrame.h>
+#include "LinkageGraspGUIFrame.h"
 
 ///////////////////////////////////////////////////////////////////////////
 
@@ -41,11 +41,21 @@ MainFrame::MainFrame( wxWindow* parent, wxWindowID id, const wxString& title, co
 	m_choice_limb_mode->SetSelection( 0 );
 	fgSizer111->Add( m_choice_limb_mode, 0, wxALL, 5 );
 	
+	m_staticText_grasp_mode = new wxStaticText( this, wxID_ANY, wxT("Grasp Mode"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText_grasp_mode->Wrap( -1 );
+	fgSizer111->Add( m_staticText_grasp_mode, 0, wxALL, 5 );
+	
+	wxString m_choice_grasp_modeChoices[] = { wxT("SANDWICH"), wxT("GRASP_RIGHT"), wxT("GRASP_LEFT") };
+	int m_choice_grasp_modeNChoices = sizeof( m_choice_grasp_modeChoices ) / sizeof( wxString );
+	m_choice_grasp_mode = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_choice_grasp_modeNChoices, m_choice_grasp_modeChoices, 0 );
+	m_choice_grasp_mode->SetSelection( 0 );
+	fgSizer111->Add( m_choice_grasp_mode, 0, wxALL, 5 );
+	
 	m_staticText_reverse_mode = new wxStaticText( this, wxID_ANY, wxT("Reverse Mode"), wxDefaultPosition, wxDefaultSize, 0 );
 	m_staticText_reverse_mode->Wrap( -1 );
 	fgSizer111->Add( m_staticText_reverse_mode, 0, wxALL, 5 );
 	
-	wxString m_choice_reverse_modeChoices[] = { wxT("Right to Left"), wxT("Left to Right") };
+	wxString m_choice_reverse_modeChoices[] = { wxT("Right to Left"), wxT("Left to Right"), wxT("Not reverse") };
 	int m_choice_reverse_modeNChoices = sizeof( m_choice_reverse_modeChoices ) / sizeof( wxString );
 	m_choice_reverse_mode = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_choice_reverse_modeNChoices, m_choice_reverse_modeChoices, 0 );
 	m_choice_reverse_mode->SetSelection( 0 );
@@ -69,6 +79,7 @@ MainFrame::MainFrame( wxWindow* parent, wxWindowID id, const wxString& title, co
 	// Connect Events
 	this->Connect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( MainFrame::OnMainFrameClose ) );
 	m_choice_limb_mode->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( MainFrame::OnLimbModeChoice ), NULL, this );
+	m_choice_grasp_mode->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( MainFrame::OnGraspModeChoice ), NULL, this );
 	m_choice_reverse_mode->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( MainFrame::OnReverseModeChoice ), NULL, this );
 	m_button_change->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MainFrame::OnChangeClick ), NULL, this );
 }
@@ -78,6 +89,7 @@ MainFrame::~MainFrame()
 	// Disconnect Events
 	this->Disconnect( wxEVT_CLOSE_WINDOW, wxCloseEventHandler( MainFrame::OnMainFrameClose ) );
 	m_choice_limb_mode->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( MainFrame::OnLimbModeChoice ), NULL, this );
+	m_choice_grasp_mode->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( MainFrame::OnGraspModeChoice ), NULL, this );
 	m_choice_reverse_mode->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( MainFrame::OnReverseModeChoice ), NULL, this );
 	m_button_change->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MainFrame::OnChangeClick ), NULL, this );
 	
