@@ -26,6 +26,8 @@ void LinkageController::onInit(InitEvent &evt)
 	SimObj *myself = getObj(myname());
 	this->kinectV2DeviceManager.initPositionAndRotation(myself);
 
+	this->guiService = NULL;
+
 	// Save initial position of Table.
 	SimObj *table = getObj(Cmn::tableName.c_str());
 	table->getPosition(this->tableIniPos);
@@ -41,23 +43,21 @@ void LinkageController::onInit(InitEvent &evt)
 		this->resetVariables4Foot();
 	}
 
+	// Set variables for grasp mode.
 	this->resetVariables4GraspMode(this->graspMode);
-
-	// At the first, the robot does not grasp anything.
-	this->isGrasping = false;
-
-	this->usingOculus = false;
-
-	this->guiService = NULL;
-
 
 	this->distanceOfAvatarAndGraspedObject.x(1000.0); // Long enough.
 	this->distanceOfAvatarAndGraspedObject.y(1000.0); // Long enough.
 	this->distanceOfAvatarAndGraspedObject.z(1000.0); // Long enough.
 
-	this->distanceBetweenBoth = 1000.0;
+	this->distanceBetweenBothLinks = 1000.0;
 	this->isRightHandClosed = false;
-	this->isLeftHandClosed = false;
+	this->isLeftHandClosed  = false;
+
+	// At the first, the robot does not grasp anything.
+	this->isGrasping = false;
+
+	this->usingOculus = false;
 }
 
 
@@ -81,7 +81,9 @@ void LinkageController::readParamFileAndInitialize()
 	std::string linkObjNameList4HandTmp;
 	std::string linkObjNameList4FootTmp;
 
-	// If parameter file is "not" exists.
+	/*
+	 * If parameter file is "not" exists.
+	 */
 	if (ifs.fail())
 	{
 		// Set a default parameter.
@@ -113,7 +115,9 @@ void LinkageController::readParamFileAndInitialize()
 		this->isWaistFixed    = paramFileValLinkageGraspFixedWaistDefault;
 		this->correctionAngle = paramFileValLinkageGraspCorrectionAngleDefault;
 	}
-	// if parameter file is exists.
+	/*
+	 * If parameter file is exists.
+	 */
 	else
 	{
 		// Get a parameter from parameter file, then set.
@@ -155,7 +159,9 @@ void LinkageController::readParamFileAndInitialize()
 		}
 	}
 
-	// Print the initialized parameter.
+	/*
+	 * Print the initialized parameter.
+	 */
 	std::cout << paramFileKeyKinectV2ServiceName    << ":" << kinectV2ServiceName    << std::endl;
 	std::cout << paramFileKeyKinectV2Devicetype     << ":" << kinectV2DeviceType     << std::endl;
 	std::cout << paramFileKeyKinectV2DeviceUniqueID << ":" << kinectV2DeviceUniqueID << std::endl;
@@ -204,10 +210,12 @@ void LinkageController::resetVariables4Hand()
 	SimObj *table = getObj(Cmn::tableName.c_str());
 	table->setPosition(this->tableIniPos);
 
+	// Reset position of the object for HAND.
 	for(int i=0; i<this->linkObjNameList4Hand.size(); i++)
 	{
 		this->sendMsg(this->linkObjNameList4Hand[i], "RESTART:"+this->limbMode);
 	}
+	// Reset position of the object for FOOT.
 	for(int i=0; i<this->linkObjNameList4Foot.size(); i++)
 	{
 		this->sendMsg(this->linkObjNameList4Foot[i], "RESTART:"+this->limbMode);
@@ -230,10 +238,12 @@ void LinkageController::resetVariables4Foot()
 	SimObj *table = getObj(Cmn::tableName.c_str());
 	table->setPosition(this->tableIniPos.x(), this->tableIniPos.y(), this->tableIniPos.z()+1000.0); // Long enough shift.
 
+	// Reset position of the object for HAND.
 	for(int i=0; i<this->linkObjNameList4Hand.size(); i++)
 	{
 		this->sendMsg(this->linkObjNameList4Hand[i], "RESTART:"+this->limbMode);
 	}
+	// Reset position of the object for FOOT.
 	for(int i=0; i<this->linkObjNameList4Foot.size(); i++)
 	{
 		this->sendMsg(this->linkObjNameList4Foot[i], "RESTART:"+this->limbMode);
@@ -248,17 +258,8 @@ void LinkageController::resetVariables4GraspMode(std::string graspMode)
 {
 	this->graspMode = graspMode;
 	this->isGrasping = false;
-	this->distanceBetweenBoth = 1000.0;
+	this->distanceBetweenBothLinks = 1000.0;
 	this->isRightHandClosed = false;
 	this->isLeftHandClosed = false;
-
-	if(this->graspMode==this->graspModes[GRASP_RIGHT] || this->graspMode==this->graspModes[SANDWICH])
-	{
-		this->myGraspingPartName = this->rightLink;
-	}
-	else
-	{
-		this->myGraspingPartName = this->leftLink;
-	}
 }
 

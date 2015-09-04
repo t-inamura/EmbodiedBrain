@@ -58,11 +58,12 @@ private:
 	Vector3d minPos; // Minimum position.
 	Vector3d maxPos; // Maximum position.
 
-	Vector3d tableIniPos;           // Initial position of the table.
+	Vector3d tableIniPos; // Initial position of the table.
 
 	// Elapsed time from the object is released.
 	double elapsedTimeFromReleased;
 
+	// This object is grasped or not.
 	bool isGrasped;
 };
 

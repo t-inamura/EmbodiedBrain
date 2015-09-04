@@ -15,7 +15,7 @@
 #include <boost/algorithm/string.hpp>
 
 const std::string LinkageCommon::limbModes[LimbMode_Count] = { "HAND", "FOOT" };
-const std::string LinkageCommon::tableName           = "table";
+const std::string LinkageCommon::tableName  = "table";
 
 const double LinkageObjectController::gravity = -980.665;
 
@@ -86,7 +86,6 @@ double LinkageObjectController::onAction(ActionEvent &evt)
 		}
 
 		// When the avatar is not grasped.
-//		if(!myself->getIsGrasped())
 		if(!this->isGrasped)
 		{
 			Vector3d myPos;

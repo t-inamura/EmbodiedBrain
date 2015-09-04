@@ -8,7 +8,6 @@
 #define SIGVERSE_LINKAGE_CONTROLLER_H
 
 #include <string>
-#include <mutex>
 #include <sigverse/Controller.h>
 #include <sigverse/ControllerEvent.h>
 #include <sigverse/comm/controller/Controller.h>
@@ -106,22 +105,22 @@ public:
 	// Reverse mode string array list.
 	static const std::string reverseModes[ReverseMode_Count];
 
-	// Entity name in world file.
-	static const std::string chairName;            // Chair name
-
 	// Link name in Avatar. It is used when grasping.
 	static const std::string rightLink4Hand; // Right hand. For example, RARM_LINK7
 	static const std::string leftLink4Hand;  // Left hand.  For example, LARM_LINK7
 	static const std::string rightLink4Foot; // Right foot. For example, RLEG_LINK6
 	static const std::string leftLink4Foot;  // Left foot.  For example, LLEG_LINK6
 
+	// Entity name in world file.
+	static const std::string chairName;   // Chair name
+
 	// This controller is fixed position.
 	static const bool isPositionFixed;
-
 	// Number of Hand state history. This is for GRASP. GRASP is one of the grasp mode.
 	static const int numOfHandStateHistory = 10;
 	// Threshold number of judging hand state. This is for GRASP. GRASP is one of the grasp mode.
 	static const int thresholdNumOfJudgingHandState = 3;
+
 
 	// Initialize this controller.
 	void onInit(InitEvent &evt);
@@ -135,30 +134,36 @@ public:
 	// Collision detection.
 	void onCollision(CollisionEvent &evt);
 
+
 	// Read parameter file and initialize.
 	void readParamFileAndInitialize();
+	// Reset variables for Hand state in Limb mode.
+	void resetVariables4Hand();
+	// Reset variables for Foot state in Limb mode.
+	void resetVariables4Foot();
+	// Reset variables for Grasp mode.
+	void resetVariables4GraspMode(std::string graspMode);
+
 
 	/*
 	 * Check service provider in onAction method.
 	 * Return a new interval of onAction.
 	 */
 	double checkServiceForOnAction(const double intervalOfOnAction);
-
 	// Check grasp status for SANDWICH. SANDWICH is one of the grasp mode.
 	void checkGraspStatus4Sandwich();
 	// Check grasp status for GRASP_RIGHT and GRASP_LEFT. GRASP_RIGHT and GRASP_LEFT are one of the grasp mode.
 	void checkGraspStatus4Grasp();
-	// Get nearest target info through args.
+	// Get nearest target(linkage object) info through args.
 	double getNearestTargetInfo(SimObj **myself, Vector3d &myPartsPos, SimObj **target, Vector3d &targetPos, std::string &targetName);
+	//Checking Hand state. Closed or not.
+	bool isHandClosed(std::list<KinectV2SensorData::HandState> handStateHistory);
 	// Check trying to grasp for GRASP_RIGHT and GRASP_LEFT. GRASP_RIGHT and GRASP_LEFT are one of the grasp mode.
 	bool checkTrying2Grasp4Grasp(const bool isRightHandClosedNew, const bool isLeftHandClosedNew) const;
 
-	//Checking Hand state. Closed or not.
-	bool isHandClosed(std::list<KinectV2SensorData::HandState> handStateHistory);
 
 	// Make invert posture from current posture.
 	void makeInvertPosture(ManNiiPosture &posture);
-
 	// Change mode. (Limb mode or Reverse mode)
 	void changeMode(const std::map<std::string, std::vector<std::string> > &map);
 	// Change Limb mode.
@@ -170,18 +175,15 @@ public:
 	// Change Fixed Waist option.
 	void changeFixedWaist(const std::map<std::string, std::vector<std::string> > &map);
 
-	// Reset variables for Hand state in Limb mode.
-	void resetVariables4Hand();
-	// Reset variables for Foot state in Limb mode.
-	void resetVariables4Foot();
-	// Reset variables for Grasp mode.
-	void resetVariables4GraspMode(std::string graspMode);
 
-	KinectV2DeviceManager  kinectV2DeviceManager;  // Kinect v2 device manager.
-	OculusDK1DeviceManager oculusDK1DeviceManager; // Oculus Rift DK1 device manager.
-	BaseService *guiService;    // GUI service.
-	std::string guiServiceName; // GUI service name.
-
+	// Kinect v2 device manager.
+	KinectV2DeviceManager  kinectV2DeviceManager;
+	// Oculus Rift DK1 device manager.
+	OculusDK1DeviceManager oculusDK1DeviceManager;
+	// GUI service.
+	BaseService *guiService;
+	// GUI service name.
+	std::string guiServiceName;
 
 	// Limb mode. Using hand or using foot.
 	std::string limbMode;
@@ -190,29 +192,9 @@ public:
 	// Reverse mode. Right to Left or Left to Right.
 	std::string reverseMode;
 
-	Vector3d tableIniPos;           // Initial position of the table.
-
-	std::string rightLink; // Right link name in Avatar. It is used when grasping.
-	std::string leftLink;  // Left Link name in Avatar. It is used when grasping.
-
-	// Whether grasping or not.
-	bool isGrasping;
-
-	// Target object name list for Hand.
-	std::vector<std::string> linkObjNameList4Hand;
-	// Target object name list for Foot.
-	std::vector<std::string> linkObjNameList4Foot;
-	// Target object name list.
-	std::vector<std::string> linkObjNameList;
-
-	// The part name of avatar that is grasping object.
-	std::string myGraspingPartName;
-
-	// Whether using Oculus Rift or not.
-	bool usingOculus;
-
-	// Distance of the avatar and the grasped object.
-	Vector3d distanceOfAvatarAndGraspedObject;
+	std::vector<std::string> linkObjNameList4Hand; // Target object name list for Hand.
+	std::vector<std::string> linkObjNameList4Foot; // Target object name list for Foot.
+	std::vector<std::string> linkObjNameList;      // Target object name list.
 
 	// If true, ROOT_JOINT and WAIST_JOINT are Fixed.
 	bool isWaistFixed;
@@ -220,18 +202,29 @@ public:
 	// Correction angle of x-direction slope for human avatar. Unit is degree.
 	double correctionAngle;
 
-	// Distance of both hands for SANDWICH. SANDWICH is one of the grasp mode.
-	double distanceBetweenBoth;
 
-	// History of Left hand state.
-	std::list<KinectV2SensorData::HandState> leftHandStateHistory;
-	// History of Left hand state.
-	std::list<KinectV2SensorData::HandState> rightHandStateHistory;
+	Vector3d tableIniPos;  // Initial position of the table.
 
-	// List of flag. Left hand is closed or not.
-	bool isLeftHandClosed;
-	// List of flag. Right hand is closed or not.
-	bool isRightHandClosed;
+	std::string rightLink; // Right link name in Avatar. It is used when grasping.
+	std::string leftLink;  // Left  Link name in Avatar. It is used when grasping.
+
+	std::list<KinectV2SensorData::HandState> rightHandStateHistory; // History of Right hand state.
+	std::list<KinectV2SensorData::HandState> leftHandStateHistory;  // History of Left  hand state.
+
+	bool isLeftHandClosed;  // List of flag. Left hand is closed or not.
+	bool isRightHandClosed; // List of flag. Right hand is closed or not.
+
+	// Distance of both links for SANDWICH. SANDWICH is one of the grasp mode.
+	double distanceBetweenBothLinks;
+
+	// Distance of the avatar and the grasped object.
+	Vector3d distanceOfAvatarAndGraspedObject;
+
+	// Whether grasping or not.
+	bool isGrasping;
+
+	// Oculus rift is used or not.
+	bool usingOculus;
 };
 
 

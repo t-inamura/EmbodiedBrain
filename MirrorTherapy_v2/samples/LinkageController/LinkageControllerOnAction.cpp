@@ -19,10 +19,10 @@ double LinkageController::onAction(ActionEvent &evt)
 
 	try
 	{
-		struct timeval start_timeval, end_timeval;
-		double sec_timeofday;
-
-		gettimeofday( &start_timeval, NULL );
+//		struct timeval start_timeval, end_timeval;
+//		double sec_timeofday;
+//
+//		gettimeofday( &start_timeval, NULL );
 
 		if(this->graspMode==graspModes[SANDWICH])
 		{
@@ -33,8 +33,8 @@ double LinkageController::onAction(ActionEvent &evt)
 			this->checkGraspStatus4Grasp();
 		}
 
-		gettimeofday( &end_timeval, NULL );
-		sec_timeofday = (end_timeval.tv_sec - start_timeval.tv_sec) + (end_timeval.tv_usec - start_timeval.tv_usec) / 1000.0;
+//		gettimeofday( &end_timeval, NULL );
+//		sec_timeofday = (end_timeval.tv_sec - start_timeval.tv_sec) + (end_timeval.tv_usec - start_timeval.tv_usec) / 1000.0;
 //		std::cout << "onAction time is " << sec_timeofday << std::setfill('0') << 3 << "[ms]" << std::endl;
 	}
 	catch(SimObj::NoAttributeException &err)
@@ -145,7 +145,7 @@ double LinkageController::checkServiceForOnAction(const double intervalOfOnActio
 
 
 /*
- * CCheck grasp status for SANDWICH. SANDWICH is one of the grasp mode.
+ * Check grasp status for SANDWICH. SANDWICH is one of the grasp mode.
  */
 void LinkageController::checkGraspStatus4Sandwich()
 {
@@ -153,15 +153,16 @@ void LinkageController::checkGraspStatus4Sandwich()
 	Vector3d myPartsPos, targetPos;
 	std::string targetName;
 
+	// Get nearest target(linkage object) info.
 	double distance2target = this->getNearestTargetInfo(&myself, myPartsPos, &target, targetPos, targetName);
 
-	Vector3d rightPos, leftPos, distanceBetweenBothNow;
+	Vector3d rightPos, leftPos, distanceBetweenBothLinksNow;
 	myself->getParts(this->rightLink.c_str())->getPosition(rightPos);
 	myself->getParts(this->leftLink .c_str())->getPosition(leftPos);
 
-	distanceBetweenBothNow.x(rightPos.x() - leftPos.x());
-	distanceBetweenBothNow.y(rightPos.y() - leftPos.y());
-	distanceBetweenBothNow.z(rightPos.z() - leftPos.z());
+	distanceBetweenBothLinksNow.x(rightPos.x() - leftPos.x());
+	distanceBetweenBothLinksNow.y(rightPos.y() - leftPos.y());
+	distanceBetweenBothLinksNow.z(rightPos.z() - leftPos.z());
 
 	double graspRadius = target->getAttr("graspRadius").getDouble();
 
@@ -171,7 +172,7 @@ void LinkageController::checkGraspStatus4Sandwich()
 		/*
 		 * Release object if distance is long.
 		 */
-		if (distance2target > graspRadius+10 || distanceBetweenBothNow.length() > 2.0*graspRadius+10) // 10 is the play.
+		if (distance2target > graspRadius+10 || distanceBetweenBothLinksNow.length() > 2.0*graspRadius+10) // 10 is the play.
 		{
 			this->isGrasping = false;
 			this->sendMsg(targetName, "RELEASE");
@@ -196,7 +197,7 @@ void LinkageController::checkGraspStatus4Sandwich()
 	}
 	else
 	{
-		if(distance2target < graspRadius+3 && distanceBetweenBothNow.length() < 2.0*graspRadius && this->distanceBetweenBoth > 2.0*graspRadius) // 3 is the play.
+		if(distance2target < graspRadius+3 && distanceBetweenBothLinksNow.length() < 2.0*graspRadius && this->distanceBetweenBothLinks > 2.0*graspRadius) // 3 is the play.
 		{
 			/*
 			 * Calculate distance of avatar and grasped object.
@@ -214,7 +215,7 @@ void LinkageController::checkGraspStatus4Sandwich()
 		}
 	}
 
-	this->distanceBetweenBoth = distanceBetweenBothNow.length();
+	this->distanceBetweenBothLinks = distanceBetweenBothLinksNow.length();
 }
 
 
@@ -292,7 +293,7 @@ void LinkageController::checkGraspStatus4Grasp()
 }
 
 /*
- * Get nearest target info through args.
+ * Get nearest target(linkage object) info through args.
  */
 double LinkageController::getNearestTargetInfo(SimObj **myself, Vector3d &myPartsPos, SimObj **target, Vector3d &targetPos, std::string &targetName)
 {
@@ -308,9 +309,14 @@ double LinkageController::getNearestTargetInfo(SimObj **myself, Vector3d &myPart
 		myPartsPos.y((rightPos.y()+leftPos.y())/2.0);
 		myPartsPos.z((rightPos.z()+leftPos.z())/2.0);
 	}
-	else
+	else if(this->graspMode==graspModes[GRASP_RIGHT])
 	{
-		CParts *myParts  = (*myself)->getParts(this->myGraspingPartName.c_str());
+		CParts *myParts  = (*myself)->getParts(this->rightLink.c_str());
+		myParts->getPosition(myPartsPos);
+	}
+	else if(this->graspMode==graspModes[GRASP_LEFT])
+	{
+		CParts *myParts  = (*myself)->getParts(this->leftLink.c_str());
 		myParts->getPosition(myPartsPos);
 	}
 
