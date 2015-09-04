@@ -14,6 +14,12 @@
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string.hpp>
 
+const std::string LinkageCommon::limbModes[LimbMode_Count] = { "HAND", "FOOT" };
+const std::string LinkageCommon::tableName           = "table";
+
+const double LinkageObjectController::gravity = -980.665;
+
+
 /*
  * Initialize this controller.
  */

@@ -66,7 +66,5 @@ private:
 	bool isGrasped;
 };
 
-const double LinkageObjectController::gravity = -980.665;
-
 #endif // SIGVERSE_LINKAGE_OBJECT_CONTROLLER_H
 

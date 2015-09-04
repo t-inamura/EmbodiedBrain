@@ -16,6 +16,9 @@ SRCS1 =\
 	$(SIGVERSE_BUILD_PATH)/sigverse/controller/common/device/KinectV2DeviceManager.cpp \
 	$(SIGVERSE_BUILD_PATH)/sigverse/controller/common/device/OculusDK1DeviceManager.cpp \
 	LinkageController.cpp \
+	LinkageControllerOnInit.cpp \
+	LinkageControllerOnAction.cpp \
+	LinkageControllerOnRecvMsg.cpp \
 
 SRCS2 =\
 	$(SIGVERSE_BUILD_PATH)/sigverse/common/SigCmn.cpp \
