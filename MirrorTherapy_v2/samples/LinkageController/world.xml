@@ -48,17 +48,50 @@
 	</instanciate>
 
 	<!-- Linkage Object for Hand mode -->
+	
+	<instanciate class="seDoll_Rabbit.xml">
+		<set-attr-value name="name" value="seRabbit"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="-20.0"/>
+		<set-attr-value name="y" value="72.0"/>
+		<set-attr-value name="z" value="30.0"/>
+		<set-attr-value name="collision" value="false"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./LinkageObjectController.so"/>
+		<set-attr-value name="graspable" value="true"/>
+		<set-attr-value name="graspRadius" value="7.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+	
 	<instanciate class="seToy_D.xml">
-		<set-attr-value name="name" value="linkageObj4Hand"/>
+		<set-attr-value name="name" value="seToyD"/>
 		<set-attr-value name="dynamics" value="false"/>
 		<set-attr-value name="x" value="0.0"/>
 		<set-attr-value name="y" value="67.0"/>
 		<set-attr-value name="z" value="30.0"/>
-		<set-attr-value name="collision" value="true"/>
+		<set-attr-value name="collision" value="false"/>
 		<set-attr-value name="language" value="c++"/>
 		<set-attr-value name="implementation" value="./LinkageObjectController.so"/>
 		<set-attr-value name="graspable" value="true"/>
-		<set-attr-value name="graspRadius" value="12.0"/>
+		<set-attr-value name="graspRadius" value="7.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+	
+	<instanciate class="seTV_remocon.xml">
+		<set-attr-value name="name" value="seRemocon"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="20.0"/>
+		<set-attr-value name="y" value="61.0"/>
+		<set-attr-value name="z" value="30.0"/>
+		<set-attr-value name="collision" value="false"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./LinkageObjectController.so"/>
+		<set-attr-value name="graspable" value="true"/>
+		<set-attr-value name="graspRadius" value="7.0"/>
 		<set-attr-value name="scalex" value="1.0"/>
 		<set-attr-value name="scaley" value="1.0"/>
 		<set-attr-value name="scalez" value="1.0"/>
@@ -66,25 +99,41 @@
 	
 	<!-- Linkage Object for Foot mode-->
 	<instanciate class="seToy_D.xml">
-		<set-attr-value name="name" value="linkageObj4Foot"/>
+		<set-attr-value name="name" value="linkObj4Foot"/>
 		<set-attr-value name="dynamics" value="false"/>
 		<set-attr-value name="x" value="0.0"/>
 		<set-attr-value name="y" value="13.0"/>
 		<set-attr-value name="z" value="30.0"/>
-		<set-attr-value name="collision" value="true"/>
+		<set-attr-value name="collision" value="false"/>
 		<set-attr-value name="language" value="c++"/>
 		<set-attr-value name="implementation" value="./LinkageObjectController.so"/>
 		<set-attr-value name="graspable" value="true"/>
-		<set-attr-value name="graspRadius" value="14.4"/>
+		<set-attr-value name="graspRadius" value="8.4"/>
 		<set-attr-value name="scalex" value="1.2"/>
 		<set-attr-value name="scaley" value="1.2"/>
 		<set-attr-value name="scalez" value="1.2"/>
 	</instanciate>
-	
-	
+	<!--
+	<instanciate class="seToy_D.xml">
+		<set-attr-value name="name" value="linkObj4Foot2"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="-20.0"/>
+		<set-attr-value name="y" value="13.0"/>
+		<set-attr-value name="z" value="30.0"/>
+		<set-attr-value name="collision" value="false"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./LinkageObjectController.so"/>
+		<set-attr-value name="graspable" value="true"/>
+		<set-attr-value name="graspRadius" value="8.4"/>
+		<set-attr-value name="scalex" value="1.2"/>
+		<set-attr-value name="scaley" value="1.2"/>
+		<set-attr-value name="scalez" value="1.2"/>
+	</instanciate>
+-->
 	<!-- 
 	  Set house, situation is in the house 0
 	-->
+	
 	<instanciate class="A1_room.xml">
 		<set-attr-value name="name" value="Room0"/>
 		<set-attr-value name="dynamics" value="false"/>

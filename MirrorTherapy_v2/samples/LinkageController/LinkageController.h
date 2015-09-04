@@ -50,8 +50,8 @@ public:
 	 */
 	enum ReverseModeType
 	{
-		RIGHT       = 0,
-		LEFT        = 1,
+		LEFT        = 0,
+		RIGHT       = 1,
 		NOT_REVERSE = 2,
 		ReverseMode_Count = (NOT_REVERSE + 1)
 	};
@@ -87,13 +87,21 @@ public:
 	static const std::string paramFileKeyLinkageGraspReverseMode;
 	static const std::string paramFileValLinkageGraspReverseModeDefault;
 
-	static const std::string paramFileKeyLinkageGraspIsWaistFixed;
-	static const bool        paramFileValLinkageGraspIsWaistFixedDefault;
+	static const std::string paramFileKeyLinkageGraspLinkObjList4Hand;
+	static const std::string paramFileValLinkageGraspLinkObjList4HandDefault;
+	static const std::string paramFileKeyLinkageGraspLinkObjList4Foot;
+	static const std::string paramFileValLinkageGraspLinkObjList4FootDefault;
+
+	static const std::string paramFileKeyLinkageGraspFixedWaist;
+	static const bool        paramFileValLinkageGraspFixedWaistDefault;
+	static const std::string paramFileKeyLinkageGraspCorrectionAngle;
+	static const double      paramFileValLinkageGraspCorrectionAngleDefault;
 
 	// Message key string. This is used in onRecvMsg.
 	static const std::string msgKeyLimbMode;
 	static const std::string msgKeyGraspMode;
 	static const std::string msgKeyReverseMode;
+	static const std::string msgKeyFixedWaist;
 
 	// Grasp mode string array list.
 	static const std::string graspModes[GraspMode_Count];
@@ -103,8 +111,6 @@ public:
 
 	// Entity name in world file.
 	static const std::string chairName;            // Chair name
-	static const std::string linkageObjName4Hand;  // Linkage object name for Hand mode.
-	static const std::string linkageObjName4Foot;  // Linkage object name for Foot mode.
 
 	// Link name in Avatar. It is used when grasping.
 	static const std::string rightLink4Hand; // Right hand. For example, RARM_LINK7
@@ -118,7 +124,7 @@ public:
 	// Number of Hand state history. This is for GRASP. GRASP is one of the grasp mode.
 	static const int numOfHandStateHistory = 10;
 	// Threshold number of judging hand state. This is for GRASP. GRASP is one of the grasp mode.
-	static const int thresholdNumOfJudgingHandState = 5;
+	static const int thresholdNumOfJudgingHandState = 3;
 
 	// Initialize this controller.
 	void onInit(InitEvent &evt);
@@ -145,6 +151,8 @@ public:
 	void checkGraspStatus4Sandwich();
 	// Check grasp status for GRASP_RIGHT and GRASP_LEFT. GRASP_RIGHT and GRASP_LEFT are one of the grasp mode.
 	void checkGraspStatus4Grasp();
+	// Get nearest target info through args.
+	double getNearestTargetInfo(SimObj **myself, Vector3d &myPartsPos, SimObj **target, Vector3d &targetPos, std::string &targetName);
 	// Check trying to grasp for GRASP_RIGHT and GRASP_LEFT. GRASP_RIGHT and GRASP_LEFT are one of the grasp mode.
 	bool checkTrying2Grasp4Grasp(const bool isRightHandClosedNew, const bool isLeftHandClosedNew) const;
 
@@ -162,6 +170,8 @@ public:
 	void changeGraspMode(const std::map<std::string, std::vector<std::string> > &map);
 	// Change Reverse mode.
 	void changeReverseMode(const std::map<std::string, std::vector<std::string> > &map);
+	// Change Fixed Waist option.
+	void changeFixedWaist(const std::map<std::string, std::vector<std::string> > &map);
 
 	// Reset variables for Hand state in Limb mode.
 	void resetVariables4Hand();
@@ -191,8 +201,12 @@ public:
 	// Whether grasping or not.
 	bool isGrasping;
 
-	// Target object of grasping.
-	std::string linkageObjName;
+	// Target object name list for Hand.
+	std::vector<std::string> linkObjNameList4Hand;
+	// Target object name list for Foot.
+	std::vector<std::string> linkObjNameList4Foot;
+	// Target object name list.
+	std::vector<std::string> linkObjNameList;
 
 	// The part name of avatar that is grasping object.
 	std::string myGraspingPartName;
@@ -205,6 +219,9 @@ public:
 
 	// If true, ROOT_JOINT and WAIST_JOINT are Fixed.
 	bool isWaistFixed;
+
+	// Correction angle of x-direction slope for human avatar. Unit is degree.
+	double correctionAngle;
 
 	// Distance of both hands for SANDWICH. SANDWICH is one of the grasp mode.
 	double distanceBetweenBoth;
@@ -249,15 +266,23 @@ const std::string LinkageController::paramFileValLinkageGraspGraspModeDefault   
 const std::string LinkageController::paramFileKeyLinkageGraspReverseMode        = "LinkageGrasp.reverse_mode";
 const std::string LinkageController::paramFileValLinkageGraspReverseModeDefault = "RIGHT";
 
-const std::string LinkageController::paramFileKeyLinkageGraspIsWaistFixed         = "LinkageGrasp.is_waist_fixed";
-const bool        LinkageController::paramFileValLinkageGraspIsWaistFixedDefault  = false;
+const std::string LinkageController::paramFileKeyLinkageGraspLinkObjList4Hand        = "LinkageGrasp.link_obj_4_hand";
+const std::string LinkageController::paramFileValLinkageGraspLinkObjList4HandDefault = "linkObj4Hand";
+const std::string LinkageController::paramFileKeyLinkageGraspLinkObjList4Foot        = "LinkageGrasp.link_obj_4_foot";
+const std::string LinkageController::paramFileValLinkageGraspLinkObjList4FootDefault = "linkObj4Foot";
+
+const std::string LinkageController::paramFileKeyLinkageGraspFixedWaist             = "LinkageGrasp.fixed_waist";
+const bool        LinkageController::paramFileValLinkageGraspFixedWaistDefault      = false;
+const std::string LinkageController::paramFileKeyLinkageGraspCorrectionAngle        = "LinkageGrasp.correction_angle";
+const double      LinkageController::paramFileValLinkageGraspCorrectionAngleDefault = 0.0;
 
 const std::string LinkageController::msgKeyLimbMode    = "LIMB_MODE";
 const std::string LinkageController::msgKeyGraspMode   = "GRASP_MODE";
 const std::string LinkageController::msgKeyReverseMode = "REVERSE_MODE";
+const std::string LinkageController::msgKeyFixedWaist  = "FIXED_WAIST";
 
 const std::string LinkageController::graspModes[GraspMode_Count]     = { "SANDWICH", "GRASP_RIGHT", "GRASP_LEFT" };
-const std::string LinkageController::reverseModes[ReverseMode_Count] = { "RIGHT", "LEFT", "NOT_REVERSE" };
+const std::string LinkageController::reverseModes[ReverseMode_Count] = { "LEFT", "RIGHT", "NOT_REVERSE" };
 
 const std::string LinkageController::rightLink4Hand = "RARM_LINK7";
 const std::string LinkageController::leftLink4Hand  = "LARM_LINK7";
@@ -265,8 +290,6 @@ const std::string LinkageController::rightLink4Foot = "RLEG_LINK6";
 const std::string LinkageController::leftLink4Foot  = "LLEG_LINK6";
 
 const std::string LinkageController::chairName           = "chair";
-const std::string LinkageController::linkageObjName4Hand = "linkageObj4Hand";
-const std::string LinkageController::linkageObjName4Foot = "linkageObj4Foot";
 
 const bool        LinkageController::isPositionFixed = true;
 

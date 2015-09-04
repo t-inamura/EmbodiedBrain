@@ -8,14 +8,15 @@
 #include <sigverse/common/device/SensorData.h>
 #include "LinkageController.h"
 
-
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <cmath>
 #include <ctime>
 #include <algorithm>
-
+#include <sys/time.h>
 
 /*
  * Initialize this controller.
@@ -73,6 +74,11 @@ double LinkageController::onAction(ActionEvent &evt)
 
 	try
 	{
+		struct timeval start_timeval, end_timeval;
+		double sec_timeofday;
+
+		gettimeofday( &start_timeval, NULL );
+
 		if(this->graspMode==graspModes[SANDWICH])
 		{
 			this->checkGraspStatus4Sandwich();
@@ -81,6 +87,10 @@ double LinkageController::onAction(ActionEvent &evt)
 		{
 			this->checkGraspStatus4Grasp();
 		}
+
+		gettimeofday( &end_timeval, NULL );
+		sec_timeofday = (end_timeval.tv_sec - start_timeval.tv_sec) + (end_timeval.tv_usec - start_timeval.tv_usec) / 1000.0;
+//		std::cout << "onAction time is " << sec_timeofday << std::setfill('0') << 3 << "[ms]" << std::endl;
 	}
 	catch(SimObj::NoAttributeException &err)
 	{
@@ -194,39 +204,21 @@ double LinkageController::checkServiceForOnAction(const double intervalOfOnActio
  */
 void LinkageController::checkGraspStatus4Sandwich()
 {
-	SimObj *myself = getObj(myname());
-	SimObj *target = getObj(this->linkageObjName.c_str());
+	SimObj *myself, *target;
+	Vector3d myPartsPos, targetPos;
+	std::string targetName;
 
-	if (!myself || !target){ return; }
-	if (myself->dynamics() || target->dynamics()){ return; }
-
-	Vector3d targetPos;
-	target->getPosition(targetPos);
+	double distance2target = this->getNearestTargetInfo(&myself, myPartsPos, &target, targetPos, targetName);
 
 	Vector3d rightPos, leftPos, distanceBetweenBothNow;
 	myself->getParts(this->rightLink.c_str())->getPosition(rightPos);
 	myself->getParts(this->leftLink .c_str())->getPosition(leftPos);
+
 	distanceBetweenBothNow.x(rightPos.x() - leftPos.x());
 	distanceBetweenBothNow.y(rightPos.y() - leftPos.y());
 	distanceBetweenBothNow.z(rightPos.z() - leftPos.z());
 
 	double graspRadius = target->getAttr("graspRadius").getDouble();
-
-	/*
-	 * Calculate position of grasped object. And set position of grasped object.
-	 */
-	CParts *myParts  = myself->getParts(this->myGraspingPartName.c_str());
-
-	Vector3d myPartsPos;
-	myParts->getPosition(myPartsPos);
-
-	/*
-	 * Calculate distance of avatar and grasped object.
-	 */
-	Vector3d diff;
-	diff.x(targetPos.x()-myPartsPos.x());
-	diff.y(targetPos.y()-myPartsPos.y());
-	diff.z(targetPos.z()-myPartsPos.z());
 
 	// When the avatar is grasping object.
 	if (this->isGrasping)
@@ -234,12 +226,12 @@ void LinkageController::checkGraspStatus4Sandwich()
 		/*
 		 * Release object if distance is long.
 		 */
-		if (diff.length() > graspRadius || distanceBetweenBothNow.length() > 2.0*graspRadius)
+		if (distance2target > graspRadius+10 || distanceBetweenBothNow.length() > 2.0*graspRadius+10) // 10 is the play.
 		{
 			this->isGrasping = false;
-			this->sendMsg(this->linkageObjName, "RELEASE");
+			this->sendMsg(targetName, "RELEASE");
 
-			LOG_MSG(("Release %s.", linkageObjName.c_str()));
+			LOG_MSG(("Release %s.", targetName.c_str()));
 		}
 		else
 		{
@@ -252,20 +244,20 @@ void LinkageController::checkGraspStatus4Sandwich()
 
 			std::stringstream msgSS;
 			msgSS << "SET_POSITION:" << newTargetPos.x() << ":" << newTargetPos.y() << ":" << newTargetPos.z();
-			this->sendMsg(this->linkageObjName, msgSS.str());
+			this->sendMsg(targetName, msgSS.str());
 
 //			std::cout << "setpos:" << myPartsPos.x() << ", dis:"<< diffAvatarAndGraspedObject.x() << std::endl;
 		}
 	}
 	else
 	{
-		if(diff.length() < graspRadius && distanceBetweenBothNow.length() < 2.0*graspRadius && this->distanceBetweenBoth > 2.0*graspRadius)
+		if(distance2target < graspRadius+3 && distanceBetweenBothNow.length() < 2.0*graspRadius && this->distanceBetweenBoth > 2.0*graspRadius) // 3 is the play.
 		{
 			/*
 			 * Calculate distance of avatar and grasped object.
 			 * And set the grasping state.
 			 */
-			this->sendMsg(this->linkageObjName, "GRASP");
+			this->sendMsg(targetName, "GRASP");
 
 			this->distanceOfAvatarAndGraspedObject.x(targetPos.x()-myPartsPos.x());
 			this->distanceOfAvatarAndGraspedObject.y(targetPos.y()-myPartsPos.y());
@@ -273,7 +265,7 @@ void LinkageController::checkGraspStatus4Sandwich()
 
 			this->isGrasping = true;
 
-			LOG_MSG(("Grasped the %s.", this->linkageObjName.c_str()));
+			LOG_MSG(("Grasped the %s.", targetName.c_str()));
 		}
 	}
 
@@ -286,38 +278,14 @@ void LinkageController::checkGraspStatus4Sandwich()
  */
 void LinkageController::checkGraspStatus4Grasp()
 {
-	SimObj *myself = getObj(myname());
-	SimObj *target = getObj(this->linkageObjName.c_str());
+	SimObj *myself, *target;
+	Vector3d myPartsPos, targetPos;
+	std::string targetName;
 
-	if (!myself || !target){ return; }
-	if (myself->dynamics() || target->dynamics()){ return; }
+	double distance2target = this->getNearestTargetInfo(&myself, myPartsPos, &target, targetPos, targetName);
 
-	Vector3d targetPos;
-	target->getPosition(targetPos);
-
-//	std::lock_guard<std::mutex> lock(::mtxForHandState);
-//	::mtxForHandState.lock();
-	bool isLeftHandClosedNew  = isHandClosed(this->leftHandStateHistory);
-	bool isRightHandClosedNew = isHandClosed(this->rightHandStateHistory);
-
-//	if(graspModeType==GraspModeType::GRASP_RIGHT)
-//	::mtxForHandState.unlock();
-
-	/*
-	 * Calculate position of grasped object. And set position of grasped object.
-	 */
-	CParts *myParts  = myself->getParts(this->myGraspingPartName.c_str());
-
-	Vector3d myPartsPos;
-	myParts->getPosition(myPartsPos);
-
-	/*
-	 * Calculate distance of avatar and grasped object.
-	 */
-	Vector3d diff;
-	diff.x(targetPos.x()-myPartsPos.x());
-	diff.y(targetPos.y()-myPartsPos.y());
-	diff.z(targetPos.z()-myPartsPos.z());
+	bool isLeftHandClosedNew  = this->isHandClosed(this->leftHandStateHistory);
+	bool isRightHandClosedNew = this->isHandClosed(this->rightHandStateHistory);
 
 	double graspRadius = target->getAttr("graspRadius").getDouble();
 
@@ -327,14 +295,14 @@ void LinkageController::checkGraspStatus4Grasp()
 		/*
 		 * Release object if distance is long.
 		 */
-		if (diff.length() > graspRadius ||
+		if (distance2target  > graspRadius+10 || // 10 is the play.
 		   (this->graspMode==graspModes[GRASP_RIGHT] && !isRightHandClosedNew) ||
 		   (this->graspMode==graspModes[GRASP_LEFT] && !isLeftHandClosedNew))
 		{
 			this->isGrasping = false;
-			this->sendMsg(this->linkageObjName, "RELEASE");
+			this->sendMsg(targetName, "RELEASE");
 
-			LOG_MSG(("Release %s.", linkageObjName.c_str()));
+			LOG_MSG(("Release %s.", targetName.c_str()));
 		}
 		else
 		{
@@ -347,7 +315,7 @@ void LinkageController::checkGraspStatus4Grasp()
 
 			std::stringstream msgSS;
 			msgSS << "SET_POSITION:" << newTargetPos.x() << ":" << newTargetPos.y() << ":" << newTargetPos.z();
-			this->sendMsg(this->linkageObjName, msgSS.str());
+			this->sendMsg(targetName, msgSS.str());
 
 //			std::cout << "setpos:" << myPartsPos.x() << ", dis:"<< diffAvatarAndGraspedObject.x() << std::endl;
 		}
@@ -356,13 +324,13 @@ void LinkageController::checkGraspStatus4Grasp()
 	{
 //		std::cout << "diff.length():" << diff.length() << ", checkTrying:" << this->checkTrying2Grasp4Grasp(isRightHandClosedNew, isLeftHandClosedNew) << std::endl;
 
-		if(diff.length() < graspRadius && this->checkTrying2Grasp4Grasp(isRightHandClosedNew, isLeftHandClosedNew))
+		if(distance2target < graspRadius && this->checkTrying2Grasp4Grasp(isRightHandClosedNew, isLeftHandClosedNew))
 		{
 			/*
 			 * Calculate distance of avatar and grasped object.
 			 * And set the grasping state.
 			 */
-			this->sendMsg(this->linkageObjName, "GRASP");
+			this->sendMsg(targetName, "GRASP");
 
 			this->distanceOfAvatarAndGraspedObject.x(targetPos.x()-myPartsPos.x());
 			this->distanceOfAvatarAndGraspedObject.y(targetPos.y()-myPartsPos.y());
@@ -370,13 +338,68 @@ void LinkageController::checkGraspStatus4Grasp()
 
 			this->isGrasping = true;
 
-			LOG_MSG(("Grasped the %s.", this->linkageObjName.c_str()));
+			LOG_MSG(("Grasped the %s.", targetName.c_str()));
 		}
 	}
 
 	this->isLeftHandClosed  = isLeftHandClosedNew;
 	this->isRightHandClosed = isRightHandClosedNew;
 }
+
+/*
+ * Get nearest target info through args.
+ */
+double LinkageController::getNearestTargetInfo(SimObj **myself, Vector3d &myPartsPos, SimObj **target, Vector3d &targetPos, std::string &targetName)
+{
+	*myself = getObj(myname());
+
+	if(this->graspMode==graspModes[SANDWICH])
+	{
+		Vector3d rightPos, leftPos, distanceBetweenBothNow;
+		(*myself)->getParts(this->rightLink.c_str())->getPosition(rightPos);
+		(*myself)->getParts(this->leftLink .c_str())->getPosition(leftPos);
+
+		myPartsPos.x((rightPos.x()+leftPos.x())/2.0);
+		myPartsPos.y((rightPos.y()+leftPos.y())/2.0);
+		myPartsPos.z((rightPos.z()+leftPos.z())/2.0);
+	}
+	else
+	{
+		CParts *myParts  = (*myself)->getParts(this->myGraspingPartName.c_str());
+		myParts->getPosition(myPartsPos);
+	}
+
+	std::vector<std::string>::iterator it;
+
+	double distance = 1000.0; // Long enough.
+
+	for (it = this->linkObjNameList.begin(); it != this->linkObjNameList.end(); it++)
+	{
+		SimObj *targetTmp = getObj((*it).c_str());
+
+		if (!targetTmp){ continue; }
+
+		Vector3d targetPosTmp;
+		targetTmp->getPosition(targetPosTmp);
+
+		//Calculate distance of avatar and grasped object.
+		Vector3d diff;
+		diff.x(targetPosTmp.x()-myPartsPos.x());
+		diff.y(targetPosTmp.y()-myPartsPos.y());
+		diff.z(targetPosTmp.z()-myPartsPos.z());
+
+		if(diff.length() < distance)
+		{
+			*target    = targetTmp;
+			targetPos  = targetPosTmp;
+			targetName = (*it);
+			distance   = diff.length();
+		}
+	}
+
+	return distance;
+}
+
 
 /*
  * Check trying to grasp for GRASP_RIGHT and GRASP_LEFT. GRASP_RIGHT and GRASP_LEFT are one of the grasp mode.
@@ -435,13 +458,10 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt)
 				sensorData.setSensorData(sensorDataMap);
 
 				// Save Hand state.
-//				std::lock_guard<std::mutex> lock(::mtxForHandState);
-//				::mtxForHandState.lock();
 				this->rightHandStateHistory.push_front(sensorData.getRightHandState());
 				this->leftHandStateHistory .push_front(sensorData.getLeftHandState());
 				while(this->rightHandStateHistory.size()>numOfHandStateHistory){ this->rightHandStateHistory.pop_back(); }
 				while(this->leftHandStateHistory .size()>numOfHandStateHistory){ this->leftHandStateHistory .pop_back(); }
-//				::mtxForHandState.unlock();
 
 				// Convert kinect v2 quaternions(orientations) to man-nii posture(sigverse quaternion format).
 				ManNiiPosture posture = KinectV2DeviceManager::convertSensorData2ManNiiPosture(sensorData);
@@ -453,11 +473,16 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt)
 					posture.joint[ManNiiPosture::HEAD_JOINT1].quaternion.setQuaternion(0.0, 0.0, 0.0, 0.0);
 				}
 
-				// Invalidate body rotation. (When all values are zero, it means invalid.)
+				double radx = this->correctionAngle * M_PI / 180.0;
+				Quaternion correctQuaternion(std::cos(radx/2.0),std::sin(radx/2.0),0.0,0.0);
+				Quaternion newQuaternion = Quaternion::calcCrossProduct(posture.joint[ManNiiPosture::ROOT_JOINT0].quaternion, correctQuaternion);
+				posture.joint[ManNiiPosture::ROOT_JOINT0].quaternion = newQuaternion;
+
+				// Invalidate body rotation.
 				if(this->isWaistFixed)
 				{
-					posture.joint[ManNiiPosture::ROOT_JOINT0].quaternion.setQuaternion(0.0, 0.0, 0.0, 0.0);
-					posture.joint[ManNiiPosture::WAIST_JOINT1].quaternion.setQuaternion(0.0, 0.0, 0.0, 0.0);
+					posture.joint[ManNiiPosture::ROOT_JOINT0].quaternion.setQuaternion(1.0, 0.0, 0.0, 0.0);
+					posture.joint[ManNiiPosture::WAIST_JOINT1].quaternion.setQuaternion(1.0, 0.0, 0.0, 0.0);
 				}
 
 				// Invert posture.
@@ -510,17 +535,16 @@ bool LinkageController::isHandClosed(std::list<KinectV2SensorData::HandState> ha
 {
 	if(handStateHistory.size()<numOfHandStateHistory){ return false; }
 
-	std::list<KinectV2SensorData::HandState>::iterator it = handStateHistory.begin();
+	std::list<KinectV2SensorData::HandState>::iterator it;
 
 	int cntOfClosed = 0;
 
-	while(it!=handStateHistory.end())
+	for (it = handStateHistory.begin(); it != handStateHistory.end(); it++)
 	{
 		if(*it==KinectV2SensorData::HandState::HandState_Closed)
 		{
 			cntOfClosed++;
 		}
-		it++;
 	}
 
 	return cntOfClosed >=thresholdNumOfJudgingHandState;
@@ -596,6 +620,9 @@ void LinkageController::changeMode(const std::map<std::string, std::vector<std::
 
 	// Change Reverse mode.
 	this->changeReverseMode(map);
+
+	// Change Fixed Waist option.
+	this->changeFixedWaist(map);
 }
 
 /*
@@ -638,7 +665,7 @@ void LinkageController::resetVariables4Hand()
 {
 	// Set some variables.
 	this->limbMode         = Cmn::limbModes[CmnLMT::HAND];
-	this->linkageObjName   = this->linkageObjName4Hand;
+	this->linkObjNameList  = this->linkObjNameList4Hand;
 
 	this->rightLink = this->rightLink4Hand;
 	this->leftLink  = this->leftLink4Hand;
@@ -647,8 +674,14 @@ void LinkageController::resetVariables4Hand()
 	SimObj *table = getObj(Cmn::tableName.c_str());
 	table->setPosition(this->tableIniPos);
 
-	this->sendMsg(this->linkageObjName4Hand, "RESTART:"+this->limbMode);
-	this->sendMsg(this->linkageObjName4Foot, "RESTART:"+this->limbMode);
+	for(int i=0; i<this->linkObjNameList4Hand.size(); i++)
+	{
+		this->sendMsg(this->linkObjNameList4Hand[i], "RESTART:"+this->limbMode);
+	}
+	for(int i=0; i<this->linkObjNameList4Foot.size(); i++)
+	{
+		this->sendMsg(this->linkObjNameList4Foot[i], "RESTART:"+this->limbMode);
+	}
 }
 
 /*
@@ -658,7 +691,7 @@ void LinkageController::resetVariables4Foot()
 {
 	// Set some variables.
 	this->limbMode         = Cmn::limbModes[CmnLMT::FOOT];
-	this->linkageObjName   = this->linkageObjName4Foot;
+	this->linkObjNameList  = this->linkObjNameList4Foot;
 
 	this->rightLink = this->rightLink4Foot;
 	this->leftLink  = this->leftLink4Foot;
@@ -667,8 +700,14 @@ void LinkageController::resetVariables4Foot()
 	SimObj *table = getObj(Cmn::tableName.c_str());
 	table->setPosition(this->tableIniPos.x(), this->tableIniPos.y(), this->tableIniPos.z()+1000.0); // Long enough shift.
 
-	this->sendMsg(this->linkageObjName4Hand, "RESTART:"+this->limbMode);
-	this->sendMsg(this->linkageObjName4Foot, "RESTART:"+this->limbMode);
+	for(int i=0; i<this->linkObjNameList4Hand.size(); i++)
+	{
+		this->sendMsg(this->linkObjNameList4Hand[i], "RESTART:"+this->limbMode);
+	}
+	for(int i=0; i<this->linkObjNameList4Foot.size(); i++)
+	{
+		this->sendMsg(this->linkObjNameList4Foot[i], "RESTART:"+this->limbMode);
+	}
 }
 
 
@@ -738,7 +777,7 @@ void LinkageController::changeReverseMode(const std::map<std::string, std::vecto
 			return;
 		}
 
-		if(it->second[0]==reverseModes[RIGHT] || it->second[0]==reverseModes[LEFT] || it->second[0]==reverseModes[NOT_REVERSE])
+		if(it->second[0]==reverseModes[LEFT] || it->second[0]==reverseModes[RIGHT] || it->second[0]==reverseModes[NOT_REVERSE])
 		{
 			this->reverseMode = it->second[0];
 		}
@@ -751,6 +790,27 @@ void LinkageController::changeReverseMode(const std::map<std::string, std::vecto
 		this->reverseMode = it->second[0];
 
 		std::cout << "Set reverse mode:" << this->reverseMode << std::endl;
+	}
+}
+
+/*
+ * Change Fixed Waist option.
+ */
+void LinkageController::changeFixedWaist(const std::map<std::string, std::vector<std::string> > &map)
+{
+	if (map.find(msgKeyFixedWaist) != map.end())
+	{
+		std::map<std::string, std::vector<std::string> >::const_iterator it = map.find(msgKeyFixedWaist);
+
+		if(this->isWaistFixed == boost::iequals(it->second[0], "true"))
+		{
+			std::cout << "Fixed Waist option is already " << it->second[0] << "." << std::endl;
+			return;
+		}
+
+		this->isWaistFixed = boost::iequals(it->second[0], "true");
+
+		std::cout << "Set Fixed Waist option:" << this->isWaistFixed << std::endl;
 	}
 }
 
@@ -780,6 +840,9 @@ void LinkageController::readParamFileAndInitialize()
 	std::string oculusDK1DeviceType;
 	std::string oculusDK1DeviceUniqueID;
 
+	std::string linkObjNameList4HandTmp;
+	std::string linkObjNameList4FootTmp;
+
 	// If parameter file is "not" exists.
 	if (ifs.fail())
 	{
@@ -803,7 +866,14 @@ void LinkageController::readParamFileAndInitialize()
 		this->limbMode      = paramFileValLinkageGraspLimbModeDefault;
 		this->reverseMode   = paramFileValLinkageGraspReverseModeDefault;
 
-		this->isWaistFixed = paramFileValLinkageGraspIsWaistFixedDefault;
+		linkObjNameList4HandTmp = paramFileValLinkageGraspLinkObjList4HandDefault;
+		linkObjNameList4FootTmp = paramFileValLinkageGraspLinkObjList4FootDefault;
+		// split by ",".
+		boost::split(this->linkObjNameList4Hand, linkObjNameList4HandTmp, boost::is_any_of(","));
+		boost::split(this->linkObjNameList4Foot, linkObjNameList4FootTmp, boost::is_any_of(","));
+
+		this->isWaistFixed    = paramFileValLinkageGraspFixedWaistDefault;
+		this->correctionAngle = paramFileValLinkageGraspCorrectionAngleDefault;
 	}
 	// if parameter file is exists.
 	else
@@ -832,7 +902,14 @@ void LinkageController::readParamFileAndInitialize()
 			this->graspMode     = pt.get<std::string>(paramFileKeyLinkageGraspGraspMode);
 			this->reverseMode   = pt.get<std::string>(paramFileKeyLinkageGraspReverseMode);
 
-			this->isWaistFixed = pt.get<bool>(paramFileKeyLinkageGraspIsWaistFixed);
+			linkObjNameList4HandTmp = pt.get<std::string>(paramFileKeyLinkageGraspLinkObjList4Hand);
+			linkObjNameList4FootTmp = pt.get<std::string>(paramFileKeyLinkageGraspLinkObjList4Foot);
+			// split by ",".
+			boost::split(this->linkObjNameList4Hand, linkObjNameList4HandTmp, boost::is_any_of(","));
+			boost::split(this->linkObjNameList4Foot, linkObjNameList4FootTmp, boost::is_any_of(","));
+
+			this->isWaistFixed    = pt.get<bool>  (paramFileKeyLinkageGraspFixedWaist);
+			this->correctionAngle = pt.get<double>(paramFileKeyLinkageGraspCorrectionAngle);
 		}
 		catch (boost::exception &ex)
 		{
@@ -858,7 +935,11 @@ void LinkageController::readParamFileAndInitialize()
 	std::cout << paramFileKeyLinkageGraspGraspMode     << ":" << this->graspMode    << std::endl;
 	std::cout << paramFileKeyLinkageGraspReverseMode   << ":" << this->reverseMode  << std::endl;
 
-	std::cout << paramFileKeyLinkageGraspIsWaistFixed  << ":" << this->isWaistFixed  << std::endl;
+	std::cout << paramFileKeyLinkageGraspLinkObjList4Hand  << ":" << linkObjNameList4HandTmp << std::endl;
+	std::cout << paramFileKeyLinkageGraspLinkObjList4Foot  << ":" << linkObjNameList4FootTmp << std::endl;
+
+	std::cout << paramFileKeyLinkageGraspFixedWaist       << ":" << this->isWaistFixed    << std::endl;
+	std::cout << paramFileKeyLinkageGraspCorrectionAngle  << ":" << this->correctionAngle << std::endl;
 
 	this->kinectV2DeviceManager = KinectV2DeviceManager(kinectV2ServiceName, kinectV2DeviceType, kinectV2DeviceUniqueID, scaleRatio);
 
