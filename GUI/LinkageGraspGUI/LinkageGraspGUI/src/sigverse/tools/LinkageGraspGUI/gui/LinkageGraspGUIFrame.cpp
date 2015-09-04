@@ -61,6 +61,16 @@ MainFrame::MainFrame( wxWindow* parent, wxWindowID id, const wxString& title, co
 	m_choice_reverse_mode->SetSelection( 0 );
 	fgSizer111->Add( m_choice_reverse_mode, 0, wxALL, 5 );
 	
+	m_staticText_fixed_waist = new wxStaticText( this, wxID_ANY, wxT("Fixed Waist"), wxDefaultPosition, wxDefaultSize, 0 );
+	m_staticText_fixed_waist->Wrap( -1 );
+	fgSizer111->Add( m_staticText_fixed_waist, 0, wxALL, 5 );
+	
+	wxString m_choice_fixed_waistChoices[] = { wxT("false"), wxT("true") };
+	int m_choice_fixed_waistNChoices = sizeof( m_choice_fixed_waistChoices ) / sizeof( wxString );
+	m_choice_fixed_waist = new wxChoice( this, wxID_ANY, wxDefaultPosition, wxDefaultSize, m_choice_fixed_waistNChoices, m_choice_fixed_waistChoices, 0 );
+	m_choice_fixed_waist->SetSelection( 0 );
+	fgSizer111->Add( m_choice_fixed_waist, 0, wxALL, 5 );
+	
 	
 	fgSizer11->Add( fgSizer111, 1, wxLEFT, 20 );
 	
@@ -81,6 +91,7 @@ MainFrame::MainFrame( wxWindow* parent, wxWindowID id, const wxString& title, co
 	m_choice_limb_mode->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( MainFrame::OnLimbModeChoice ), NULL, this );
 	m_choice_grasp_mode->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( MainFrame::OnGraspModeChoice ), NULL, this );
 	m_choice_reverse_mode->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( MainFrame::OnReverseModeChoice ), NULL, this );
+	m_choice_fixed_waist->Connect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( MainFrame::OnFixedWaistChoice ), NULL, this );
 	m_button_change->Connect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MainFrame::OnChangeClick ), NULL, this );
 }
 
@@ -91,6 +102,7 @@ MainFrame::~MainFrame()
 	m_choice_limb_mode->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( MainFrame::OnLimbModeChoice ), NULL, this );
 	m_choice_grasp_mode->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( MainFrame::OnGraspModeChoice ), NULL, this );
 	m_choice_reverse_mode->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( MainFrame::OnReverseModeChoice ), NULL, this );
+	m_choice_fixed_waist->Disconnect( wxEVT_COMMAND_CHOICE_SELECTED, wxCommandEventHandler( MainFrame::OnFixedWaistChoice ), NULL, this );
 	m_button_change->Disconnect( wxEVT_COMMAND_BUTTON_CLICKED, wxCommandEventHandler( MainFrame::OnChangeClick ), NULL, this );
 	
 }

@@ -23,6 +23,7 @@ class LinkageGraspGUIMainFrame : public MainFrame
 		void OnLimbModeChoice( wxCommandEvent& event );
 		void OnGraspModeChoice( wxCommandEvent& event );
 		void OnReverseModeChoice( wxCommandEvent& event );
+		void OnFixedWaistChoice( wxCommandEvent& event );
 		void OnChangeClick( wxCommandEvent& event );
 
 		AvatarController avatarController;
