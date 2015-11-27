@@ -18,7 +18,7 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt)
 
 //		std::cout << "msg=" << allMsg << std::endl;
 
-		// Get device type from message.
+		// Decode message.
 		std::map<std::string, std::vector<std::string> > sensorDataMap = SensorData::decodeSensorData(allMsg);
 
 		/*
@@ -34,7 +34,7 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt)
 			 */
 			if (deviceTypeValue == this->kinectV2DeviceManager.deviceType && deviceUniqueId == this->kinectV2DeviceManager.deviceUniqueID)
 			{
-				// Decode message to sensor data of kinect v2.
+				// Get the sensor data of Kinect v2 from sensor data map.
 				KinectV2SensorData sensorData;
 				sensorData.setSensorData(sensorDataMap);
 
@@ -54,11 +54,6 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt)
 					posture.joint[ManNiiPosture::HEAD_JOINT1].quaternion.setQuaternion(0.0, 0.0, 0.0, 0.0);
 				}
 
-				double radx = this->correctionAngle * M_PI / 180.0;
-				Quaternion correctQuaternion(std::cos(radx/2.0),std::sin(radx/2.0),0.0,0.0);
-				Quaternion newQuaternion = Quaternion::calcCrossProduct(posture.joint[ManNiiPosture::ROOT_JOINT0].quaternion, correctQuaternion);
-				posture.joint[ManNiiPosture::ROOT_JOINT0].quaternion = newQuaternion;
-
 				// Invalidate body rotation.
 				if(this->isWaistFixed)
 				{
@@ -66,13 +61,18 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt)
 					posture.joint[ManNiiPosture::WAIST_JOINT1].quaternion.setQuaternion(1.0, 0.0, 0.0, 0.0);
 				}
 
+				// Correct the angle of x-direction slope for human avatar.
+				double radx = this->correctionAngle * M_PI / 180.0;
+				Quaternion correctQuaternion(std::cos(radx/2.0),std::sin(radx/2.0),0.0,0.0);
+				Quaternion newQuaternion = Quaternion::calcCrossProduct(posture.joint[ManNiiPosture::ROOT_JOINT0].quaternion, correctQuaternion);
+				posture.joint[ManNiiPosture::ROOT_JOINT0].quaternion = newQuaternion;
+
 				// Invert posture.
 				if(this->reverseMode != reverseModes[NOT_REVERSE])
 				{
 					this->makeInvertPosture(posture);
 				}
 
-				// Set SIGVerse quaternions and positions.
 				SimObj *obj = getObj(myname());
 
 				//this->kinectV2DeviceManager.setRootPosition(obj, sensorData.rootPosition); // Don't move.
@@ -87,6 +87,7 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt)
 			{
 				if(!this->usingOculus){ this->usingOculus = true; }
 
+				// Get the sensor data of Oculus Rift DK1 from sensor data map.
 				OculusRiftDK1SensorData sensorData;
 				sensorData.setSensorData(sensorDataMap);
 
@@ -96,7 +97,7 @@ void LinkageController::onRecvMsg(RecvMsgEvent &evt)
 				OculusDK1DeviceManager::setJointQuaternions2ManNii(obj, posture);
 			}
 		}
-		// Not a device.(Message from Change mode GUI)
+		// Not a device.
 		else
 		{
 			this->changeMode(sensorDataMap);

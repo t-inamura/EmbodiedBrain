@@ -154,9 +154,12 @@ void LinkageController::checkGraspStatus4Sandwich()
 	std::string targetName;
 
 	// Get nearest target(linkage object) info.
+	// And distance2target is the distance between myPartsPos and targetPos.
 	double distance2target = this->getNearestTargetInfo(&myself, myPartsPos, &target, targetPos, targetName);
 
-	Vector3d rightPos, leftPos, distanceBetweenBothLinksNow;
+	// The distance between both links at this time.
+	Vector3d distanceBetweenBothLinksNow;
+	Vector3d rightPos, leftPos;
 	myself->getParts(this->rightLink.c_str())->getPosition(rightPos);
 	myself->getParts(this->leftLink .c_str())->getPosition(leftPos);
 
@@ -169,16 +172,16 @@ void LinkageController::checkGraspStatus4Sandwich()
 	// When the avatar is grasping object.
 	if (this->isGrasping)
 	{
-		/*
-		 * Release object if distance is long.
-		 */
+		// Release.
 		if (distance2target > graspRadius+10 || distanceBetweenBothLinksNow.length() > 2.0*graspRadius+10) // 10 is the play.
 		{
 			this->isGrasping = false;
+			// Send message to release target object.
 			this->sendMsg(targetName, "RELEASE");
 
 			LOG_MSG(("Release %s.", targetName.c_str()));
 		}
+		// Doesn't release.
 		else
 		{
 			Vector3d newTargetPos;
@@ -188,6 +191,7 @@ void LinkageController::checkGraspStatus4Sandwich()
 
 //			if(this->isWaistFixed){ newTargetPos.x(0.0); }
 
+			// Send message to move target object.
 			std::stringstream msgSS;
 			msgSS << "SET_POSITION:" << newTargetPos.x() << ":" << newTargetPos.y() << ":" << newTargetPos.z();
 			this->sendMsg(targetName, msgSS.str());
@@ -195,16 +199,15 @@ void LinkageController::checkGraspStatus4Sandwich()
 //			std::cout << "setpos:" << myPartsPos.x() << ", dis:"<< diffAvatarAndGraspedObject.x() << std::endl;
 		}
 	}
+	// When the avatar is not grasping object.
 	else
 	{
 		if(distance2target < graspRadius+3 && distanceBetweenBothLinksNow.length() < 2.0*graspRadius && this->distanceBetweenBothLinks > 2.0*graspRadius) // 3 is the play.
 		{
-			/*
-			 * Calculate distance of avatar and grasped object.
-			 * And set the grasping state.
-			 */
+			// Send message to change state of grasp.
 			this->sendMsg(targetName, "GRASP");
 
+			// Calculate distance between avatar and grasped object.
 			this->distanceOfAvatarAndGraspedObject.x(targetPos.x()-myPartsPos.x());
 			this->distanceOfAvatarAndGraspedObject.y(targetPos.y()-myPartsPos.y());
 			this->distanceOfAvatarAndGraspedObject.z(targetPos.z()-myPartsPos.z());
@@ -228,8 +231,11 @@ void LinkageController::checkGraspStatus4Grasp()
 	Vector3d myPartsPos, targetPos;
 	std::string targetName;
 
+	// Get nearest target(linkage object) info.
+	// And distance2target is the distance between myPartsPos and targetPos.
 	double distance2target = this->getNearestTargetInfo(&myself, myPartsPos, &target, targetPos, targetName);
 
+	// Get state of hand. Closed or not.
 	bool isLeftHandClosedNew  = this->isHandClosed(this->leftHandStateHistory);
 	bool isRightHandClosedNew = this->isHandClosed(this->rightHandStateHistory);
 
@@ -238,18 +244,18 @@ void LinkageController::checkGraspStatus4Grasp()
 	// When the avatar is grasping object.
 	if (this->isGrasping)
 	{
-		/*
-		 * Release object if distance is long.
-		 */
+		// Release
 		if (distance2target  > graspRadius+10 || // 10 is the play.
 		   (this->graspMode==graspModes[GRASP_RIGHT] && !isRightHandClosedNew) ||
 		   (this->graspMode==graspModes[GRASP_LEFT] && !isLeftHandClosedNew))
 		{
 			this->isGrasping = false;
+			// Send message to release target object.
 			this->sendMsg(targetName, "RELEASE");
 
 			LOG_MSG(("Release %s.", targetName.c_str()));
 		}
+		// Doesn't release.
 		else
 		{
 			Vector3d newTargetPos;
@@ -259,6 +265,7 @@ void LinkageController::checkGraspStatus4Grasp()
 
 //			if(this->isWaistFixed){ newTargetPos.x(0.0); }
 
+			// Send message to move target object.
 			std::stringstream msgSS;
 			msgSS << "SET_POSITION:" << newTargetPos.x() << ":" << newTargetPos.y() << ":" << newTargetPos.z();
 			this->sendMsg(targetName, msgSS.str());
@@ -266,18 +273,17 @@ void LinkageController::checkGraspStatus4Grasp()
 //			std::cout << "setpos:" << myPartsPos.x() << ", dis:"<< diffAvatarAndGraspedObject.x() << std::endl;
 		}
 	}
+	// When the avatar is not grasping object.
 	else
 	{
 //		std::cout << "diff.length():" << diff.length() << ", checkTrying:" << this->checkTrying2Grasp4Grasp(isRightHandClosedNew, isLeftHandClosedNew) << std::endl;
 
 		if(distance2target < graspRadius && this->checkTrying2Grasp4Grasp(isRightHandClosedNew, isLeftHandClosedNew))
 		{
-			/*
-			 * Calculate distance of avatar and grasped object.
-			 * And set the grasping state.
-			 */
+			// Send message to change state of grasp.
 			this->sendMsg(targetName, "GRASP");
 
+			// Calculate distance between avatar and grasped object.
 			this->distanceOfAvatarAndGraspedObject.x(targetPos.x()-myPartsPos.x());
 			this->distanceOfAvatarAndGraspedObject.y(targetPos.y()-myPartsPos.y());
 			this->distanceOfAvatarAndGraspedObject.z(targetPos.z()-myPartsPos.z());
@@ -305,6 +311,7 @@ double LinkageController::getNearestTargetInfo(SimObj **myself, Vector3d &myPart
 		(*myself)->getParts(this->rightLink.c_str())->getPosition(rightPos);
 		(*myself)->getParts(this->leftLink .c_str())->getPosition(leftPos);
 
+		// MyPartsPos is Midpoint of both links.
 		myPartsPos.x((rightPos.x()+leftPos.x())/2.0);
 		myPartsPos.y((rightPos.y()+leftPos.y())/2.0);
 		myPartsPos.z((rightPos.z()+leftPos.z())/2.0);
@@ -333,12 +340,13 @@ double LinkageController::getNearestTargetInfo(SimObj **myself, Vector3d &myPart
 		Vector3d targetPosTmp;
 		targetTmp->getPosition(targetPosTmp);
 
-		//Calculate distance of avatar and grasped object.
+		// Calculate distance between avatar and grasped object.
 		Vector3d diff;
 		diff.x(targetPosTmp.x()-myPartsPos.x());
 		diff.y(targetPosTmp.y()-myPartsPos.y());
 		diff.z(targetPosTmp.z()-myPartsPos.z());
 
+		// Search the nearest target.
 		if(diff.length() < distance)
 		{
 			*target    = targetTmp;
@@ -354,6 +362,7 @@ double LinkageController::getNearestTargetInfo(SimObj **myself, Vector3d &myPart
 
 /*
  * Checking Hand state. Closed or not.
+ * Check the state of the past few points, and then return true if there are closed more than a certain number.
  */
 bool LinkageController::isHandClosed(std::list<KinectV2SensorData::HandState> handStateHistory)
 {
@@ -376,7 +385,7 @@ bool LinkageController::isHandClosed(std::list<KinectV2SensorData::HandState> ha
 
 
 /*
- * Check trying to grasp for GRASP_RIGHT and GRASP_LEFT. GRASP_RIGHT and GRASP_LEFT are one of the grasp mode.
+ * Check whether trying to grasp for GRASP_RIGHT and GRASP_LEFT. GRASP_RIGHT and GRASP_LEFT are one of the grasp mode.
  */
 bool LinkageController::checkTrying2Grasp4Grasp(const bool isRightHandClosedNew, const bool isLeftHandClosedNew) const
 {
