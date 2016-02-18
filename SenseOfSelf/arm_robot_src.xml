@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf8"?>
+<define-class name="X3DFILENAME" inherit="Agent.xml">
+
+	<set-attr-value name="scalex" value="SCALEX"/>
+	<set-attr-value name="scaley" value="SCALEY"/>
+	<set-attr-value name="scalez" value="SCALEZ"/>
+
+	<x3d>
+		<filename>X3DFILENAME.x3d</filename>
+	</x3d>
+
+</define-class>
