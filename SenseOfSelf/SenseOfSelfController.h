@@ -11,7 +11,7 @@
 #include <sigverse/commonlib/ControllerEvent.h>
 #include <sigverse/commonlib/comm/controller/Controller.h>
 
-#include <sigverse/plugin/controller/common/AvatarController.h>
+#include <sigverse/plugin/controller/common/AgentController.h>
 #include <sigverse/plugin/controller/common/ManNiiPosture.h>
 #include <sigverse/plugin/controller/common/ManNiiAvatarController.h>
 #include <sigverse/plugin/controller/common/sensor/KinectV2DeviceManager.h>
@@ -39,9 +39,6 @@ public:
 //
 //	///@brief Posture record.
 //	std::vector<TimeAndPostureType> pastPostures;
-
-	///@brief Parameter file name.
-	static const std::string parameterFileName;
 
 	//Parameter file key name.
 	static const std::string paramFileKeyKinectV2ServiceName;
@@ -174,7 +171,7 @@ public:
 };
 
 
-const std::string SenseOfSelfController::parameterFileName = "SenseOfSelf.ini";
+const std::string AgentController::parameterFileName = "SenseOfSelf.ini";
 
 const std::string SenseOfSelfController::paramFileKeyKinectV2ServiceName    = "KinectV2.service_name";
 const std::string SenseOfSelfController::paramFileKeyKinectV2Devicetype     = "KinectV2.device_type";

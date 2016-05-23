@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="utf8"?>
+
+<world name="SenseOfSelfWorld">
+	
+	<!--Gravity-->
+	<gravity x="0.0" y="-980.7" z="0.0"/>
+
+	<!--worldParam-->
+<!--
+	<worldParam stepsize="0.001"/>
+-->
+
+	<!--Agent man_nii_head (with camera) -->
+	<instanciate class="Man-nii_head.xml">
+		<set-attr-value name="name" value="man_nii_head"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./SenseOfSelfController.so"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="0.0"/>
+		<set-attr-value name="y" value="35.0"/>
+		<set-attr-value name="z" value="1000.0"/>
+	</instanciate>
+	
+	
+	<!--Agent mirror_therapy_man -->
+	<instanciate class="arm_robot_mid.xml">
+		<set-attr-value name="name" value="arm_middle_man"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./SenseOfSelfController.so"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="0.0"/>
+		<set-attr-value name="y" value="30.0"/>
+		<set-attr-value name="z" value="0.0"/>
+		<camera id="1" link="HEAD_LINK" direction="0 -0.5 0.866" position="0.0 0.0 5.0"/>
+	</instanciate>
+	
+	<!--Agent right_arm_long_man -->
+	<instanciate class="arm_robot_lengthen.xml">
+		<set-attr-value name="name" value="arm_long_man"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./SenseOfSelfController.so"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="70.0"/>
+		<set-attr-value name="y" value="30.0"/>
+		<set-attr-value name="z" value="0.0"/>
+		<camera id="1" link="HEAD_LINK" direction="0 -0.5 0.866" position="0.0 0.0 5.0"/>
+	</instanciate>
+
+	<!--Agent right_arm_short_man -->
+	<instanciate class="arm_robot_cut.xml">
+		<set-attr-value name="name" value="arm_short_man"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./SenseOfSelfController.so"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="140.0"/>
+		<set-attr-value name="y" value="30.0"/>
+		<set-attr-value name="z" value="0.0"/>
+		<camera id="1" link="HEAD_LINK" direction="0 -0.5 0.866" position="0.0 0.0 5.0"/>
+	</instanciate>
+	
+	<!--Agent lower body man -->
+	<instanciate class="lowerbody.xml">
+		<set-attr-value name="name" value="lower_body_man"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./SenseOfSelfController_lowerbody.so"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="0.0"/>
+		<set-attr-value name="y" value="42.0"/>
+		<set-attr-value name="z" value="-20.0"/>
+	</instanciate>
+	
+	<!--Agent lower body man -->
+	<instanciate class="lowerbody.xml">
+		<set-attr-value name="name" value="lower_body_man2"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./SenseOfSelfController_lowerbody.so"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="70.0"/>
+		<set-attr-value name="y" value="42.0"/>
+		<set-attr-value name="z" value="-20.0"/>
+	</instanciate>
+	
+	<!--Agent lower body man -->
+	<instanciate class="lowerbody.xml">
+		<set-attr-value name="name" value="lower_body_man3"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./SenseOfSelfController_lowerbody.so"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="140.0"/>
+		<set-attr-value name="y" value="42.0"/>
+		<set-attr-value name="z" value="-20.0"/>
+	</instanciate>
+	
+	<!-- Chair for avatar to sit -->
+	<instanciate class="seChair_B_c02.xml">
+		<set-attr-value name="name" value="chair"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="0.0"/>
+		<set-attr-value name="y" value="44.0"/>
+		<set-attr-value name="z" value="-25.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="0.8"/>
+		<set-attr-value name="scaley" value="0.8"/>
+		<set-attr-value name="scalez" value="0.8"/>
+	</instanciate>
+
+	<!-- Chair for avatar to sit -->
+	<instanciate class="seChair_B_c02.xml">
+		<set-attr-value name="name" value="chair2"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="70.0"/>
+		<set-attr-value name="y" value="44.0"/>
+		<set-attr-value name="z" value="-25.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="0.8"/>
+		<set-attr-value name="scaley" value="0.8"/>
+		<set-attr-value name="scalez" value="0.8"/>
+	</instanciate>
+
+	<!-- Chair for avatar to sit -->
+	<instanciate class="seChair_B_c02.xml">
+		<set-attr-value name="name" value="chair3"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="140.0"/>
+		<set-attr-value name="y" value="44.0"/>
+		<set-attr-value name="z" value="-25.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="0.8"/>
+		<set-attr-value name="scaley" value="0.8"/>
+		<set-attr-value name="scalez" value="0.8"/>
+	</instanciate>
+
+	<!-- Table for Hand mode -->
+	<instanciate class="seLowtable_A.xml">
+		<set-attr-value name="name" value="table"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="0.0"/>
+		<set-attr-value name="y" value="45.0"/>
+		<set-attr-value name="z" value="30.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="2.2"/>
+		<set-attr-value name="scalez" value="2"/>
+	</instanciate>
+
+	<!-- Table for Hand mode -->
+	<instanciate class="seLowtable_A.xml">
+		<set-attr-value name="name" value="table2"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="70.0"/>
+		<set-attr-value name="y" value="45.0"/>
+		<set-attr-value name="z" value="30.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="2.2"/>
+		<set-attr-value name="scalez" value="2"/>
+	</instanciate>
+
+	<!-- Table for Hand mode -->
+	<instanciate class="seLowtable_A.xml">
+		<set-attr-value name="name" value="table3"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="140.0"/>
+		<set-attr-value name="y" value="45.0"/>
+		<set-attr-value name="z" value="30.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="2.2"/>
+		<set-attr-value name="scalez" value="2"/>
+	</instanciate>
+
+	<!-- Linkage Object for Hand mode -->
+	
+	<instanciate class="A1_plate.xml">
+		<set-attr-value name="name" value="plate60M"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="-4"/>
+		<set-attr-value name="y" value="69.5"/>
+		<set-attr-value name="z" value="24.2"/>
+		<set-attr-value name="scalex" value="0.1"/>
+		<set-attr-value name="scaley" value="0.2"/>
+		<set-attr-value name="scalez" value="0.2"/>
+		<set-attr-value name="qw" value="0.707"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="0.0"/>
+		<set-attr-value name="qz" value="0.707"/>
+	</instanciate>
+
+	<instanciate class="A1_plate.xml">
+		<set-attr-value name="name" value="plate90M"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="-18.0"/>
+		<set-attr-value name="y" value="69.5"/>
+		<set-attr-value name="z" value="28.0"/>
+		<set-attr-value name="scalex" value="0.1"/>
+		<set-attr-value name="scaley" value="0.2"/>
+		<set-attr-value name="scalez" value="0.2"/>
+		<set-attr-value name="qw" value="0.707"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="0.0"/>
+		<set-attr-value name="qz" value="0.707"/>
+	</instanciate>
+
+	<instanciate class="A1_plate.xml">
+		<set-attr-value name="name" value="plate60L"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="73.7"/>
+		<set-attr-value name="y" value="69.5"/>
+		<set-attr-value name="z" value="37.6"/>
+		<set-attr-value name="scalex" value="0.1"/>
+		<set-attr-value name="scaley" value="0.2"/>
+		<set-attr-value name="scalez" value="0.2"/>
+		<set-attr-value name="qw" value="0.707"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="0.0"/>
+		<set-attr-value name="qz" value="0.707"/>
+	</instanciate>
+
+	<instanciate class="A1_plate.xml">
+		<set-attr-value name="name" value="plate90L"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="52.0"/>
+		<set-attr-value name="y" value="69.5"/>
+		<set-attr-value name="z" value="43.4"/>
+		<set-attr-value name="scalex" value="0.1"/>
+		<set-attr-value name="scaley" value="0.2"/>
+		<set-attr-value name="scalez" value="0.2"/>
+		<set-attr-value name="qw" value="0.707"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="0.0"/>
+		<set-attr-value name="qz" value="0.707"/>
+	</instanciate>
+
+	<instanciate class="A1_plate.xml">
+		<set-attr-value name="name" value="plate60S"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="132.5"/>
+		<set-attr-value name="y" value="69.5"/>
+		<set-attr-value name="z" value="18.2"/>
+		<set-attr-value name="scalex" value="0.1"/>
+		<set-attr-value name="scaley" value="0.2"/>
+		<set-attr-value name="scalez" value="0.2"/>
+		<set-attr-value name="qw" value="0.707"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="0.0"/>
+		<set-attr-value name="qz" value="0.707"/>
+	</instanciate>
+
+	<instanciate class="A1_plate.xml">
+		<set-attr-value name="name" value="plate90S"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="122.0"/>
+		<set-attr-value name="y" value="69.5"/>
+		<set-attr-value name="z" value="21.0"/>
+		<set-attr-value name="scalex" value="0.1"/>
+		<set-attr-value name="scaley" value="0.2"/>
+		<set-attr-value name="scalez" value="0.2"/>
+		<set-attr-value name="qw" value="0.707"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="0.0"/>
+		<set-attr-value name="qz" value="0.707"/>
+	</instanciate>
+
+	<instanciate class="A1_room.xml">
+		<set-attr-value name="name" value="Room0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="0.0"/>
+		<set-attr-value name="y" value="215.0"/>
+		<set-attr-value name="z" value="50.0"/>
+	</instanciate>
+
+
+</world>
+
