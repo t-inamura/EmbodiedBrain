@@ -1,0 +1,625 @@
+<?xml version="1.0" encoding="utf8"?>
+
+<world name="OpenHouse2016World">
+	
+	<!--Gravity-->
+	<gravity x="0.0" y="-980.7" z="0.0"/>
+
+	<!--worldParam-->
+<!--
+	<worldParam stepsize="0.001"/>
+-->
+	
+	<instanciate class="seToy_D.xml">
+		<set-attr-value name="name" value="Head"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./HeadController.so"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="0.0"/>
+		<set-attr-value name="y" value="0.0"/>
+		<set-attr-value name="z" value="0.0"/>
+		<set-attr-value name="scalex" value="0.01"/>
+		<set-attr-value name="scaley" value="0.01"/>
+		<set-attr-value name="scalez" value="0.01"/>
+		<camera id="1" direction="0 0 1" position="0.0 0.0 5.0"/>
+	</instanciate>
+	
+	<instanciate class="seToy_D.xml">
+		<set-attr-value name="name" value="Audience"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./DummyController.so"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="0.0"/>
+		<set-attr-value name="y" value="115.0"/>
+		<set-attr-value name="z" value="500.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="0.01"/>
+		<set-attr-value name="scaley" value="0.01"/>
+		<set-attr-value name="scalez" value="0.01"/>
+		<camera id="1" direction="0 -1 3" position="0.0 0.0 400.0"/>
+	</instanciate>
+	
+	
+	<!-- 
+		For Mirror Therapy
+	-->
+	<!--Agent mirror_therapy_man -->
+	<instanciate class="mirror_arm_mid.xml">
+		<set-attr-value name="name" value="mirror_therapy_man"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./MirrorTherapyController.so"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="0.0"/>
+		<set-attr-value name="y" value="65.0"/>
+		<set-attr-value name="z" value="0.0"/>
+		<!-- 
+		<camera id="1" link="HEAD_LINK" direction="0 0 1" position="0.0 0.0 5.0"/>
+		 -->
+	</instanciate>
+	
+	
+	<!--Agent arm_long_man -->
+	<instanciate class="mirror_arm_long.xml">
+		<set-attr-value name="name" value="mirror_arm_long_man"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./MirrorTherapyController.so"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="0.0"/>
+		<set-attr-value name="y" value="65.0"/>
+		<set-attr-value name="z" value="1000.0"/>
+		<!-- 
+		<camera id="1" link="HEAD_LINK" direction="0 0 1" position="0.0 0.0 5.0"/>
+		 -->
+	</instanciate>
+
+	<!--Agent arm_short_man -->
+	<instanciate class="mirror_arm_short.xml">
+		<set-attr-value name="name" value="mirror_arm_short_man"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./MirrorTherapyController.so"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="0.0"/>
+		<set-attr-value name="y" value="65.0"/>
+		<set-attr-value name="z" value="1000.0"/>
+		<!-- 
+		<camera id="1" link="HEAD_LINK" direction="0 0 1" position="0.0 0.0 5.0"/>
+		 -->
+	</instanciate>
+	
+	<!--Agent right_arm_robot_man -->
+	<instanciate class="mirror_RightArm_robot.xml">
+		<set-attr-value name="name" value="mirror_right_arm_robot_man"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./MirrorTherapyController.so"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="0.0"/>
+		<set-attr-value name="y" value="65.0"/>
+		<set-attr-value name="z" value="1000.0"/>
+		<!-- 
+		<camera id="1" link="HEAD_LINK" direction="0 0 1" position="0.0 0.0 5.0"/>
+		 -->
+	</instanciate>
+	
+	<!-- 
+	  Set house, situation is in the house 0
+	-->
+	<instanciate class="A1_room.xml">
+		<set-attr-value name="name" value="mirror_Room0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="0.0"/>
+		<set-attr-value name="y" value="215.0"/>
+		<set-attr-value name="z" value="0.0"/>
+	</instanciate>
+
+	<instanciate class="seTVbass_A.xml">
+		<set-attr-value name="name" value="mirror_TVBass0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="100.0"/>
+		<set-attr-value name="y" value="30.0"/>
+		<set-attr-value name="z" value="195.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+	<instanciate class="seSpeaker.xml">
+		<set-attr-value name="name" value="mirror_Speaker_A0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="160.0"/>
+		<set-attr-value name="y" value="60.0"/>
+		<set-attr-value name="z" value="190.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+	<instanciate class="seSpeaker.xml">
+		<set-attr-value name="name" value="mirror_Speaker_B0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="40.0"/>
+		<set-attr-value name="y" value="60.0"/>
+		<set-attr-value name="z" value="190.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+	<instanciate class="A1_magazines.xml">
+		<set-attr-value name="name" value="mirror_Magagines0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="120.0"/>
+		<set-attr-value name="y" value="40.0"/>
+		<set-attr-value name="z" value="180.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+	<instanciate class="seStove.xml">
+		<set-attr-value name="name" value="mirror_Stove0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="-10.0"/>
+		<set-attr-value name="y" value="20.0"/>
+		<set-attr-value name="z" value="180.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+	<instanciate class="seSofa_2seater.xml">
+		<set-attr-value name="name" value="mirror_Sofa0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="280.0"/>
+		<set-attr-value name="y" value="30.0"/>
+		<set-attr-value name="z" value="180.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+
+
+
+
+
+	<!-- 
+		For LinkageController
+	-->
+	<!--Avatar -->
+	<instanciate class="Man-nii.xml">
+		<set-attr-value name="name" value="linkage_man"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="2000.0"/>
+		<set-attr-value name="y" value="40.0"/>
+		<set-attr-value name="z" value="0.0"/>
+		<set-attr-value name="collision" value="true"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./LinkageController.so"/>
+		<!-- 
+		<camera id="1" link="HEAD_LINK" direction="0 0 1" position="0.0 0.0 5.0"/>
+		 -->
+	</instanciate>
+
+	<!-- Chair for avatar to sit -->
+	<instanciate class="seChair_B_c02.xml">
+		<set-attr-value name="name" value="linkage_chair"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="2000.0"/>
+		<set-attr-value name="y" value="44.0"/>
+		<set-attr-value name="z" value="-10.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="0.8"/>
+		<set-attr-value name="scaley" value="0.8"/>
+		<set-attr-value name="scalez" value="0.8"/>
+	</instanciate>
+
+	<!-- Table for Hand mode -->
+	<instanciate class="seLowtable_A.xml">
+		<set-attr-value name="name" value="linkage_table"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="2000.0"/>
+		<set-attr-value name="y" value="33.0"/>
+		<set-attr-value name="z" value="40.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="2.5"/>
+		<set-attr-value name="scalez" value="1.2"/>
+	</instanciate>
+
+	<!-- Linkage Object for Hand mode -->
+	
+	<!-- 
+	<instanciate class="seDoll_Rabbit.xml">
+		<set-attr-value name="name" value="linkage_seRabbit"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="1980.0"/>
+		<set-attr-value name="y" value="72.0"/>
+		<set-attr-value name="z" value="30.0"/>
+		<set-attr-value name="collision" value="false"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./LinkageObjectController.so"/>
+		<set-attr-value name="graspable" value="true"/>
+		<set-attr-value name="graspRadius" value="7.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+	 -->
+	<instanciate class="seToy_D.xml">
+		<set-attr-value name="name" value="linkage_seToyD"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="2000.0"/>
+		<set-attr-value name="y" value="67.0"/>
+		<set-attr-value name="z" value="30.0"/>
+		<set-attr-value name="collision" value="false"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./LinkageObjectController.so"/>
+		<set-attr-value name="graspable" value="true"/>
+		<set-attr-value name="graspRadius" value="7.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+	<!-- 
+	<instanciate class="seTV_remocon.xml">
+		<set-attr-value name="name" value="linkage_seRemocon"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="2020.0"/>
+		<set-attr-value name="y" value="61.0"/>
+		<set-attr-value name="z" value="30.0"/>
+		<set-attr-value name="collision" value="false"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./LinkageObjectController.so"/>
+		<set-attr-value name="graspable" value="true"/>
+		<set-attr-value name="graspRadius" value="7.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+	 -->
+	<!-- Linkage Object for Foot mode-->
+	<instanciate class="seToy_D.xml">
+		<set-attr-value name="name" value="linkage_linkObj4Foot"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="2000.0"/>
+		<set-attr-value name="y" value="13.0"/>
+		<set-attr-value name="z" value="30.0"/>
+		<set-attr-value name="collision" value="false"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./LinkageObjectController.so"/>
+		<set-attr-value name="graspable" value="true"/>
+		<set-attr-value name="graspRadius" value="8.4"/>
+		<set-attr-value name="scalex" value="1.2"/>
+		<set-attr-value name="scaley" value="1.2"/>
+		<set-attr-value name="scalez" value="1.2"/>
+	</instanciate>
+
+	<!-- 
+	  Set house, situation is in the house 0
+	-->	
+	<instanciate class="A1_room.xml">
+		<set-attr-value name="name" value="linkage_Room0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="2000.0"/>
+		<set-attr-value name="y" value="215.0"/>
+		<set-attr-value name="z" value="0.0"/>
+	</instanciate>
+
+	<instanciate class="seTVbass_A.xml">
+		<set-attr-value name="name" value="linkage_TVBass0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="2100.0"/>
+		<set-attr-value name="y" value="50.0"/>
+		<set-attr-value name="z" value="195.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+	<instanciate class="seSpeaker.xml">
+		<set-attr-value name="name" value="linkage_Speaker_A0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="2160.0"/>
+		<set-attr-value name="y" value="80.0"/>
+		<set-attr-value name="z" value="190.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+	<instanciate class="seSpeaker.xml">
+		<set-attr-value name="name" value="linkage_Speaker_B0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="2040.0"/>
+		<set-attr-value name="y" value="80.0"/>
+		<set-attr-value name="z" value="190.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+	<instanciate class="A1_magazines.xml">
+		<set-attr-value name="name" value="linkage_Magagines0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="2120.0"/>
+		<set-attr-value name="y" value="60.0"/>
+		<set-attr-value name="z" value="180.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+	<instanciate class="seStove.xml">
+		<set-attr-value name="name" value="linkage_Stove0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="1990.0"/>
+		<set-attr-value name="y" value="50.0"/>
+		<set-attr-value name="z" value="180.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+	<instanciate class="seSofa_2seater.xml">
+		<set-attr-value name="name" value="linkage_Sofa0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="2280.0"/>
+		<set-attr-value name="y" value="50.0"/>
+		<set-attr-value name="z" value="180.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+	
+	
+	
+	
+	
+	<!-- 
+		For Sense of Self
+	-->
+	<!--Agent arm_middle_man -->
+	<instanciate class="sos_arm_mid.xml">
+		<set-attr-value name="name" value="sos_arm_middle_man"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./SenseOfSelfController.so"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="4000.0"/>
+		<set-attr-value name="y" value="30.0"/>
+		<set-attr-value name="z" value="0.0"/>
+		<!-- 
+		<camera id="1" link="HEAD_LINK" direction="0 0 1" position="0.0 0.0 5.0"/>
+		 -->
+	</instanciate>
+	
+	<!--Agent arm_long_man -->
+	<instanciate class="sos_arm_lengthen.xml">
+		<set-attr-value name="name" value="sos_arm_long_man"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./SenseOfSelfController.so"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="4000.0"/>
+		<set-attr-value name="y" value="30.0"/>
+		<set-attr-value name="z" value="1000.0"/>
+		<!-- 
+		<camera id="1" link="HEAD_LINK" direction="0 0 1" position="0.0 0.0 5.0"/>
+		 -->
+	</instanciate>
+
+	<!--Agent arm_short_man -->
+	<instanciate class="sos_arm_cut.xml">
+		<set-attr-value name="name" value="sos_arm_short_man"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./SenseOfSelfController.so"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="4000.0"/>
+		<set-attr-value name="y" value="30.0"/>
+		<set-attr-value name="z" value="1000.0"/>
+		<!-- 
+		<camera id="1" link="HEAD_LINK" direction="0 0 1" position="0.0 0.0 5.0"/>
+		 -->
+	</instanciate>
+	
+
+	<!--Agent lower body man -->
+	<instanciate class="sos_lowerbody.xml">
+		<set-attr-value name="name" value="sos_lower_body_man"/>
+		<set-attr-value name="language" value="c++"/>
+		<set-attr-value name="implementation" value="./SenseOfSelfController_lowerbody.so"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="4000.0"/>
+		<set-attr-value name="y" value="42.0"/>
+		<set-attr-value name="z" value="-20.0"/>
+	</instanciate>
+	
+	<!-- Chair for avatar to sit -->
+	<instanciate class="seChair_B_c02.xml">
+		<set-attr-value name="name" value="sos_chair"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="4000.0"/>
+		<set-attr-value name="y" value="44.0"/>
+		<set-attr-value name="z" value="-25.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="0.8"/>
+		<set-attr-value name="scaley" value="0.8"/>
+		<set-attr-value name="scalez" value="0.8"/>
+	</instanciate>
+
+	<!-- Table for Hand mode -->
+
+	<instanciate class="sos_seLowtable_A_black.xml">
+		<set-attr-value name="name" value="sos_table"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="4000.0"/>
+		<set-attr-value name="y" value="45.0"/>
+		<set-attr-value name="z" value="30.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="2.2"/>
+		<set-attr-value name="scalez" value="2"/>
+	</instanciate>
+
+	<!-- Linkage Object for Hand mode -->
+	
+	<instanciate class="A1_plate.xml">
+		<set-attr-value name="name" value="sos_plate60"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="3996"/>
+		<set-attr-value name="y" value="69.5"/>
+		<set-attr-value name="z" value="24.25"/>
+		<set-attr-value name="scalex" value="0.1"/>
+		<set-attr-value name="scaley" value="0.2"/>
+		<set-attr-value name="scalez" value="0.2"/>
+		<set-attr-value name="qw" value="0.707"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="0.0"/>
+		<set-attr-value name="qz" value="0.707"/>
+	</instanciate>
+
+	<instanciate class="A1_plate.xml">
+		<set-attr-value name="name" value="sos_plate90"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="3982"/>
+		<set-attr-value name="y" value="69.5"/>
+		<set-attr-value name="z" value="28.0"/>
+		<set-attr-value name="scalex" value="0.1"/>
+		<set-attr-value name="scaley" value="0.2"/>
+		<set-attr-value name="scalez" value="0.2"/>
+		<set-attr-value name="qw" value="0.707"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="0.0"/>
+		<set-attr-value name="qz" value="0.707"/>
+	</instanciate>
+
+	<!-- 
+	  Set house, situation is in the house 0
+	-->
+
+	<instanciate class="A1_room.xml">
+		<set-attr-value name="name" value="sos_Room0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="4000.0"/>
+		<set-attr-value name="y" value="215.0"/>
+		<set-attr-value name="z" value="35.0"/>
+	</instanciate>
+
+	<instanciate class="seTVbass_A.xml">
+		<set-attr-value name="name" value="sos_TVBass0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="4110.0"/>
+		<set-attr-value name="y" value="30.0"/>
+		<set-attr-value name="z" value="230.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+
+	<instanciate class="seSpeaker.xml">
+		<set-attr-value name="name" value="sos_Speaker_A0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="4170.0"/>
+		<set-attr-value name="y" value="60.0"/>
+		<set-attr-value name="z" value="225.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+
+	<instanciate class="seSpeaker.xml">
+		<set-attr-value name="name" value="sos_Speaker_B0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="4050.0"/>
+		<set-attr-value name="y" value="60.0"/>
+		<set-attr-value name="z" value="225.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+	<instanciate class="A1_magazines.xml">
+		<set-attr-value name="name" value="sos_Magagines0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="4130.0"/>
+		<set-attr-value name="y" value="40.0"/>
+		<set-attr-value name="z" value="215.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+	<instanciate class="seStove.xml">
+		<set-attr-value name="name" value="sos_Stove0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="4000.0"/>
+		<set-attr-value name="y" value="30.0"/>
+		<set-attr-value name="z" value="215.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+
+	
+</world>
+

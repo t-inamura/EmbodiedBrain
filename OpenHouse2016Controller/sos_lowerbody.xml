@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf8"?>
+<define-class name="sos_lowerbody" inherit="Agent.xml">
+
+	<set-attr-value name="scalex" value="0.65"/>
+	<set-attr-value name="scaley" value="0.85"/>
+	<set-attr-value name="scalez" value="0.7"/>
+
+	<x3d>
+		<filename>sos_lowerbody.x3d</filename>
+	</x3d>
+
+</define-class>
