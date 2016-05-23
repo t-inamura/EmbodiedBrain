@@ -12,9 +12,9 @@
 #ifndef SIGVERSE_LINKAGE_OBJECT_CONTROLLER_H
 #define SIGVERSE_LINKAGE_OBJECT_CONTROLLER_H
 
-#include <sigverse/Controller.h>
-#include <sigverse/ControllerEvent.h>
-#include <sigverse/comm/controller/Controller.h>
+#include <sigverse/commonlib/Controller.h>
+#include <sigverse/commonlib/ControllerEvent.h>
+#include <sigverse/commonlib/comm/controller/Controller.h>
 
 #include "LinkageCommon.h"
 

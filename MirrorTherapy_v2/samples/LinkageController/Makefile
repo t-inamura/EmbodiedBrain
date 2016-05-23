@@ -4,35 +4,19 @@ TARGET2 = ./LinkageObjectController.so
 
 # sources
 SRCS1 =\
-	$(SIGVERSE_BUILD_PATH)/sigverse/common/SigCmn.cpp \
-	$(SIGVERSE_BUILD_PATH)/sigverse/common/Quaternion.cpp \
-	$(SIGVERSE_BUILD_PATH)/sigverse/common/device/SensorData.cpp \
-	$(SIGVERSE_BUILD_PATH)/sigverse/common/device/KinectV2SensorData.cpp \
-	$(SIGVERSE_BUILD_PATH)/sigverse/common/device/OculusRiftDK1SensorData.cpp \
-	$(SIGVERSE_BUILD_PATH)/sigverse/controller/common/Posture.cpp \
-	$(SIGVERSE_BUILD_PATH)/sigverse/controller/common/ManNiiPosture.cpp \
-	$(SIGVERSE_BUILD_PATH)/sigverse/controller/common/AvatarController.cpp \
-	$(SIGVERSE_BUILD_PATH)/sigverse/controller/common/ManNiiAvatarController.cpp \
-	$(SIGVERSE_BUILD_PATH)/sigverse/controller/common/device/KinectV2DeviceManager.cpp \
-	$(SIGVERSE_BUILD_PATH)/sigverse/controller/common/device/OculusDK1DeviceManager.cpp \
 	LinkageController.cpp \
 	LinkageControllerOnInit.cpp \
 	LinkageControllerOnAction.cpp \
 	LinkageControllerOnRecvMsg.cpp \
 
 SRCS2 =\
-	$(SIGVERSE_BUILD_PATH)/sigverse/common/SigCmn.cpp \
-	$(SIGVERSE_BUILD_PATH)/sigverse/common/Quaternion.cpp \
 	LinkageObjectController.cpp \
-
-# sigverse path
-SIG_SRC = $(SIGVERSE_PATH)/include
 
 # compiler
 CXX = g++
 
 # compile option
-CFLAGS = -std=c++11 -DCONTROLLER -DNDEBUG -DUSE_ODE -DdDOUBLE -I$(SIG_SRC) -I$(SIGVERSE_BUILD_PATH) -fPIC -shared
+CFLAGS = -std=c++11 -DCONTROLLER -DNDEBUG -DUSE_ODE -DdDOUBLE -I$(SIGVERSE_PATH)/include -Wl,-rpath=$(SIGVERSE_PATH)/lib -L$(SIGVERSE_PATH)/lib -lsigplugin -fPIC -shared
 
 # generate intermediate object file from sources.
 OBJS1 := $(SRCS1:.cpp=.o)

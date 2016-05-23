@@ -86,77 +86,49 @@ void LinkageController::readParamFileAndInitialize()
 	 */
 	if (ifs.fail())
 	{
-		// Set a default parameter.
 		std::cout << "Not exist : " << parameterFileName << std::endl;
-		std::cout << "Use default parameter." << std::endl;
+		exit(-1);
+	}
 
-		kinectV2ServiceName    = SERVICE_NAME_KINECT_V2;
-		kinectV2DeviceType     = DEV_TYPE_KINECT_V2;
-		kinectV2DeviceUniqueID = DEV_UNIQUE_ID_0;
+	/*
+	 * If parameter file is exists.
+	 */
+	// Get a parameter from parameter file, then set.
+	try
+	{
+		std::cout << "Read " << parameterFileName << std::endl;
+		boost::property_tree::ptree pt;
+		boost::property_tree::read_ini(parameterFileName, pt);
 
-		sensorDataModeStr = paramFileValKinectV2SensorDataModeDefault;
-		scaleRatio        = paramFileValKinectV2ScaleRatioDefault;
+		kinectV2ServiceName    = pt.get<std::string>(paramFileKeyKinectV2ServiceName);
+		kinectV2DeviceType     = pt.get<std::string>(paramFileKeyKinectV2Devicetype);
+		kinectV2DeviceUniqueID = pt.get<std::string>(paramFileKeyKinectV2DeviceUniqueID);
 
-		oculusDK1ServiceName    = SERVICE_NAME_OCULUS_DK1;
-		oculusDK1DeviceType     = DEV_TYPE_OCULUS_DK1;
-		oculusDK1DeviceUniqueID = DEV_UNIQUE_ID_0;
+		sensorDataModeStr = pt.get<std::string>(paramFileKeyKinectV2SensorDataMode);
+		scaleRatio        = pt.get<double>     (paramFileKeyKinectV2ScaleRatio);
 
-		this->guiServiceName = paramFileValLinkageGraspGUIServiceNameDefault;
+		oculusDK1ServiceName    = pt.get<std::string>(paramFileKeyOculusDK1ServiceName);
+		oculusDK1DeviceType     = pt.get<std::string>(paramFileKeyOculusDK1Devicetype);
+		oculusDK1DeviceUniqueID = pt.get<std::string>(paramFileKeyOculusDK1DeviceUniqueID);
 
-		this->limbMode      = paramFileValLinkageGraspLimbModeDefault;
-		this->reverseMode   = paramFileValLinkageGraspReverseModeDefault;
+		this->guiServiceName = pt.get<std::string>(paramFileKeyLinkageGraspGUIServiceName);
 
-		linkObjNameList4HandTmp = paramFileValLinkageGraspLinkObjList4HandDefault;
-		linkObjNameList4FootTmp = paramFileValLinkageGraspLinkObjList4FootDefault;
+		this->limbMode      = pt.get<std::string>(paramFileKeyLinkageGraspLimbMode);
+		this->graspMode     = pt.get<std::string>(paramFileKeyLinkageGraspGraspMode);
+		this->reverseMode   = pt.get<std::string>(paramFileKeyLinkageGraspReverseMode);
+
+		linkObjNameList4HandTmp = pt.get<std::string>(paramFileKeyLinkageGraspLinkObjList4Hand);
+		linkObjNameList4FootTmp = pt.get<std::string>(paramFileKeyLinkageGraspLinkObjList4Foot);
 		// split by ",".
 		boost::split(this->linkObjNameList4Hand, linkObjNameList4HandTmp, boost::is_any_of(","));
 		boost::split(this->linkObjNameList4Foot, linkObjNameList4FootTmp, boost::is_any_of(","));
 
-		this->isWaistFixed    = paramFileValLinkageGraspFixedWaistDefault;
-		this->correctionAngle = paramFileValLinkageGraspCorrectionAngleDefault;
+		this->isWaistFixed    = pt.get<bool>  (paramFileKeyLinkageGraspFixedWaist);
+		this->correctionAngle = pt.get<double>(paramFileKeyLinkageGraspCorrectionAngle);
 	}
-	/*
-	 * If parameter file is exists.
-	 */
-	else
+	catch (boost::exception &ex)
 	{
-		// Get a parameter from parameter file, then set.
-		try
-		{
-			std::cout << "Read " << parameterFileName << std::endl;
-			boost::property_tree::ptree pt;
-			boost::property_tree::read_ini(parameterFileName, pt);
-
-			kinectV2ServiceName    = pt.get<std::string>(paramFileKeyKinectV2ServiceName);
-			kinectV2DeviceType     = pt.get<std::string>(paramFileKeyKinectV2Devicetype);
-			kinectV2DeviceUniqueID = pt.get<std::string>(paramFileKeyKinectV2DeviceUniqueID);
-
-			sensorDataModeStr = pt.get<std::string>(paramFileKeyKinectV2SensorDataMode);
-			scaleRatio        = pt.get<double>     (paramFileKeyKinectV2ScaleRatio);
-
-			oculusDK1ServiceName    = pt.get<std::string>(paramFileKeyOculusDK1ServiceName);
-			oculusDK1DeviceType     = pt.get<std::string>(paramFileKeyOculusDK1Devicetype);
-			oculusDK1DeviceUniqueID = pt.get<std::string>(paramFileKeyOculusDK1DeviceUniqueID);
-
-			this->guiServiceName = pt.get<std::string>(paramFileKeyLinkageGraspGUIServiceName);
-
-			this->limbMode      = pt.get<std::string>(paramFileKeyLinkageGraspLimbMode);
-			this->graspMode     = pt.get<std::string>(paramFileKeyLinkageGraspGraspMode);
-			this->reverseMode   = pt.get<std::string>(paramFileKeyLinkageGraspReverseMode);
-
-			linkObjNameList4HandTmp = pt.get<std::string>(paramFileKeyLinkageGraspLinkObjList4Hand);
-			linkObjNameList4FootTmp = pt.get<std::string>(paramFileKeyLinkageGraspLinkObjList4Foot);
-			// split by ",".
-			boost::split(this->linkObjNameList4Hand, linkObjNameList4HandTmp, boost::is_any_of(","));
-			boost::split(this->linkObjNameList4Foot, linkObjNameList4FootTmp, boost::is_any_of(","));
-
-			this->isWaistFixed    = pt.get<bool>  (paramFileKeyLinkageGraspFixedWaist);
-			this->correctionAngle = pt.get<double>(paramFileKeyLinkageGraspCorrectionAngle);
-		}
-		catch (boost::exception &ex)
-		{
-			std::cout << parameterFileName << " ERR :" << *boost::diagnostic_information_what(ex) << std::endl;
-		}
+		std::cout << parameterFileName << " ERR :" << *boost::diagnostic_information_what(ex) << std::endl;
 	}
 
 	/*

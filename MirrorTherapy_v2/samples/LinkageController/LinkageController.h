@@ -8,17 +8,17 @@
 #define SIGVERSE_LINKAGE_CONTROLLER_H
 
 #include <string>
-#include <sigverse/Controller.h>
-#include <sigverse/ControllerEvent.h>
-#include <sigverse/comm/controller/Controller.h>
+#include <sigverse/commonlib/Controller.h>
+#include <sigverse/commonlib/ControllerEvent.h>
+#include <sigverse/commonlib/comm/controller/Controller.h>
 
-#include <sigverse/common/device/KinectV2SensorData.h>
-#include <sigverse/common/device/OculusRiftDK1SensorData.h>
-#include <sigverse/controller/common/AvatarController.h>
-#include <sigverse/controller/common/ManNiiPosture.h>
-#include <sigverse/controller/common/ManNiiAvatarController.h>
-#include <sigverse/controller/common/device/KinectV2DeviceManager.h>
-#include <sigverse/controller/common/device/OculusDK1DeviceManager.h>
+#include <sigverse/plugin/common/sensor/KinectV2SensorData.h>
+#include <sigverse/plugin/common/sensor/OculusRiftDK1SensorData.h>
+#include <sigverse/plugin/controller/common/AgentController.h>
+#include <sigverse/plugin/controller/common/ManNiiPosture.h>
+#include <sigverse/plugin/controller/common/ManNiiAvatarController.h>
+#include <sigverse/plugin/controller/common/sensor/KinectV2DeviceManager.h>
+#include <sigverse/plugin/controller/common/sensor/OculusDK1DeviceManager.h>
 #include "LinkageCommon.h"
 
 class LinkageController : public ManNiiAvatarController
