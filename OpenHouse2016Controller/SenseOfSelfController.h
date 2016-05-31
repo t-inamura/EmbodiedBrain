@@ -92,9 +92,9 @@ public:
 	//tmp parameter
 	bool isBodyFixed = true;
 	double bodyAngle = 0;
-	bool isHeadFixed = true; //headFixedの時はOculusは使用しない前提
+	bool isHeadFixed = false; //headFixedの時はOculusは使用しない前提
 	double headAngle = 40;
-	bool tmpUsingOculus = false;
+	bool tmpUsingOculus = true;
 
 	std::string bodyAvatarName;
 

@@ -58,7 +58,7 @@ void SenseOfSelfController::onInit(InitEvent &evt)
 	//遠くに飛ばす
 	if(std::string(myname())==this->bodyAvatarName)
 	{
-		this->kinectV2DeviceManager.iniPos.z = 0.0;
+		this->kinectV2DeviceManager.iniPos.z = -5.0;
 	}
 	else
 	{
@@ -242,7 +242,7 @@ void SenseOfSelfController::changeAvatar(const std::map<std::string, std::vector
 		{
 //			std::cout << "Change Avatar:" << this->bodyAvatarName << std::endl;
 //
-			this->kinectV2DeviceManager.iniPos.z = 0.0;
+			this->kinectV2DeviceManager.iniPos.z = -5.0;
 
 			this->kinectV2DeviceManager.started = false;
 
@@ -289,6 +289,16 @@ void SenseOfSelfController::changeAvatar(const std::map<std::string, std::vector
 			SimObj *my = getObj(myname());
 //			this->kinectV2DeviceManager.setRootPosition(my, this->kinectV2DeviceManager.rootPos);
 			this->kinectV2DeviceManager.setRootPosition(my, zeroPos);
+
+//			SimObj *lower = getObj(myname());
+//			lower->setJointAngle("HEAD_JOINT1",  DEG2RAD(-25));
+//			lower->setJointAngle("WAIST_JOINT1", DEG2RAD(+25));
+//
+//			lower->setJointAngle("LLEG_JOINT2", DEG2RAD(-90));
+//			lower->setJointAngle("LLEG_JOINT4", DEG2RAD(+90));
+//			lower->setJointAngle("RLEG_JOINT2", DEG2RAD(-90));
+//			lower->setJointAngle("RLEG_JOINT4", DEG2RAD(+90));
+
 		}
 		else
 		{

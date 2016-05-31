@@ -21,7 +21,7 @@
 		<set-attr-value name="scalex" value="0.01"/>
 		<set-attr-value name="scaley" value="0.01"/>
 		<set-attr-value name="scalez" value="0.01"/>
-		<camera id="1" direction="0 0 1" position="0.0 0.0 5.0"/>
+		<camera id="1" direction="0 0 1" position="0.0 0.0 10.0"/>
 	</instanciate>
 	
 	<instanciate class="seToy_D.xml">
@@ -212,7 +212,7 @@
 		<set-attr-value name="dynamics" value="false"/>
 		<set-attr-value name="x" value="2000.0"/>
 		<set-attr-value name="y" value="40.0"/>
-		<set-attr-value name="z" value="0.0"/>
+		<set-attr-value name="z" value="-5.0"/>
 		<set-attr-value name="collision" value="true"/>
 		<set-attr-value name="language" value="c++"/>
 		<set-attr-value name="implementation" value="./LinkageController.so"/>
@@ -274,6 +274,10 @@
 		<set-attr-value name="x" value="2000.0"/>
 		<set-attr-value name="y" value="67.0"/>
 		<set-attr-value name="z" value="30.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
 		<set-attr-value name="collision" value="false"/>
 		<set-attr-value name="language" value="c++"/>
 		<set-attr-value name="implementation" value="./LinkageObjectController.so"/>
@@ -428,7 +432,7 @@
 		<set-attr-value name="dynamics" value="false"/>
 		<set-attr-value name="x" value="4000.0"/>
 		<set-attr-value name="y" value="30.0"/>
-		<set-attr-value name="z" value="0.0"/>
+		<set-attr-value name="z" value="-5.0"/>
 		<!-- 
 		<camera id="1" link="HEAD_LINK" direction="0 0 1" position="0.0 0.0 5.0"/>
 		 -->
@@ -471,7 +475,7 @@
 		<set-attr-value name="dynamics" value="false"/>
 		<set-attr-value name="x" value="4000.0"/>
 		<set-attr-value name="y" value="42.0"/>
-		<set-attr-value name="z" value="-20.0"/>
+		<set-attr-value name="z" value="-25.0"/>
 	</instanciate>
 	
 	<!-- Chair for avatar to sit -->

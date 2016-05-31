@@ -163,7 +163,7 @@
 		      <fieldValue name='centerOfMass' value='0.0 35.0 0.0' />
 		      <fieldValue name='mass' value='6.0' />
 		      <fieldValue name='momentsOfInertia' value='1.0 ,0.0 ,0.0 ,0.0 ,1.0 ,0.0 ,0.0 ,0.0 ,1.0' />
-		      <Transform scale="0.9 0.8 0.9">
+		      <Transform scale="0.8 0.8 0.8">
 			<Shape>
 			  <Appearance>
 			    <ImageTexture url='"man_c01.jpg"' />
@@ -178,7 +178,7 @@
 		    </ProtoInstance>
 		    <ProtoInstance name='Joint' DEF="HEAD_JOINT0"  containerField='children'>
 		      <fieldValue name='name' value='HEAD_JOINT0' />
-		      <fieldValue name='translation' value='0.0 50.0 5.0' />
+		      <fieldValue name='translation' value='0.0 50.0 2.0' />
 		      <fieldValue name='jointType' value='rotate' />
 		      <fieldValue name='jointAxis' value='0.0 1.0 0.0' />
 		      <ProtoInstance name='Joint' DEF="HEAD_JOINT1"  containerField='children'>
@@ -191,7 +191,7 @@
 			  <fieldValue name='mass' value='3.0' />
 			  <fieldValue name='momentsOfInertia' value='1.0 ,0.0 ,0.0 ,0.0 ,1.0 ,0.0 ,0.0 ,0.0 ,1.0' />
 
-			  <Transform DEF="HEAD">
+			  <Transform DEF="HEAD" scale="0.9 0.9 0.9">
 			    <Shape>
 			      <Appearance>
 				<ImageTexture url='"man_c01.jpg"' />
@@ -206,7 +206,7 @@
 			</ProtoInstance>
 			<ProtoInstance name='Joint' DEF="LEYE_JOINT0"  containerField='children'>
 			  <fieldValue name='name' value='LEYE_JOINT0' />
-			  <fieldValue name='translation' value='3.3 5.9 5.5' />
+			  <fieldValue name='translation' value='3 5.9 5' />
 			  <fieldValue name='jointType' value='rotate' />
 			  <fieldValue name='jointAxis' value='1.0 0.0 0.0' />
 			  <ProtoInstance name='Joint' DEF="LEYE_JOINT1"  containerField='children'>
@@ -220,7 +220,7 @@
 			      <fieldValue name='mass' value='0.6' />
 			      <fieldValue name='momentsOfInertia' value='1.0 ,0.0 ,0.0 ,0.0 ,1.0 ,0.0 ,0.0 ,0.0 ,1.0' />
 
-			      <Transform rotation='0.0 1.0 0.0 1.396'>
+			      <Transform rotation='0.0 1.0 0.0 1.396' scale="0.9 0.9 0.9">
 				<Shape>
 				  <Appearance>
 				    <ImageTexture url='"eye-t.jpg"' />
@@ -239,7 +239,7 @@
 			</ProtoInstance>
 			<ProtoInstance name='Joint' DEF="REYE_JOINT0"  containerField='children'>
 			  <fieldValue name='name' value='REYE_JOINT0' />
-			  <fieldValue name='translation' value='-3.9 5.9 5.5' />
+			  <fieldValue name='translation' value='-3.6 5.9 5' />
 			  <fieldValue name='jointType' value='rotate' />
 			  <fieldValue name='jointAxis' value='1.0 0.0 0.0' />
 			  <ProtoInstance name='Joint' DEF="REYE_JOINT1"  containerField='children'>
@@ -251,7 +251,7 @@
 			      <fieldValue name='centerOfMass' value='0.0 0.0 0.0' />
 			      <fieldValue name='mass' value='0.6' />
 			      <fieldValue name='momentsOfInertia' value='1.0 ,0.0 ,0.0 ,0.0 ,1.0 ,0.0 ,0.0 ,0.0 ,1.0' />
-			      <Transform rotation='0.0 1.0 0.0 1.3'>
+			      <Transform rotation='0.0 1.0 0.0 1.3' scale="0.9 0.9 0.9">
 				<Shape>
 				  <Appearance>
 				    <ImageTexture url='"eye-t.jpg"' />
@@ -286,8 +286,8 @@
 			    <fieldValue name='mass' value='0.6' />
 			    <fieldValue name='momentsOfInertia' value='1.0 ,0.0 ,0.0 ,0.0 ,1.0 ,0.0 ,0.0 ,0.0 ,1.0' />
 			    <Transform
-			        translation="15.0 0.0 0.0"
-			    	scale="1.0 0.8 0.8"
+			        translation="10.0 0.0 0.0"
+			    	scale="0.8 0.8 0.8"
 			    	>
 			      <Shape>
 				<Appearance>
@@ -306,13 +306,13 @@
 			  </ProtoInstance>
 			  <ProtoInstance name='Joint' DEF="LARM_JOINT3"  containerField='children'>
 			    <fieldValue name='name' value='LARM_JOINT3' />
-			    <fieldValue name='translation' value='25.0 0.0 0.0' />
+			    <fieldValue name='translation' value='20.0 0.0 0.0' />
 			    <fieldValue name='jointType' value='rotate' />
 			    <fieldValue name='jointAxis' value='0.0 1.0 0.0' />
 			    <ProtoInstance name='Joint' DEF="LARM_JOINT4"  containerField='children'>
 			      <fieldValue name='name' value='LARM_JOINT4' />
 			      <fieldValue name='jointType' value='rotate' />
-			      <fieldValue name='jointAxis' value='0.0 0.0 1.0' />
+			      <fieldValue name='jointAxis' value='1.0 0.0 0.0' />
 			      <ProtoInstance name='Segment' DEF="LARM_LINK4"  containerField='children'>
 				<fieldValue name='name' value='LARM_LINK4' />
 				<fieldValue name='centerOfMass' value='0.1 0.0 0.0' />
@@ -320,9 +320,9 @@
 				<fieldValue name='momentsOfInertia' value='1.0 ,0.0 ,0.0 ,0.0 ,1.0 ,0.0 ,0.0 ,0.0 ,1.0' />
 
 				<Transform 
-			           translation="3.5  0.0  0.0"
+			           translation="0.0  0.0  0.0"
 			           rotation="0.000000 0.707107 0.707107 3.141593"
-			           scale="30.0 100.0 120.0"
+			           scale="20.0 80.0 80.0"
 			           >
 					<Shape>
 						<Appearance>
@@ -362,9 +362,9 @@
 				      <fieldValue name='mass' value='0.4' />
 				      <fieldValue name='momentsOfInertia' value='1.0 ,0.0 ,0.0 ,0.0 ,1.0 ,0.0 ,0.0 ,0.0 ,1.0' />
 					<Transform 
-					   translation="11.0 0.05 0.0"
+					   translation="0.0 0.0 0.0"
 					   rotation="0.0616284 0.704416 0.707107 3.14159"
-					   scale="100.0 100.0 100.0"
+					   scale="80.0 80.0 80.0"
 					   >
 						<Shape>
 							<Appearance>
@@ -413,8 +413,8 @@
 			    <fieldValue name='momentsOfInertia' value='1.0 ,0.0 ,0.0 ,0.0 ,1.0 ,0.0 ,0.0 ,0.0 ,1.0' />
 
 			    <Transform
-			        translation="-15.0 0.0 0.0"
-			    	scale="1.0 0.8 0.8"
+			        translation="-10.0 0.0 0.0"
+			    	scale="0.8 0.8 0.8"
 			    	>
 			      <Shape>
 				<Appearance>
@@ -431,7 +431,7 @@
 
 			  <ProtoInstance name='Joint' DEF="RARM_JOINT3"  containerField='children'>
 			    <fieldValue name='name' value='RARM_JOINT3' />
-			    <fieldValue name='translation' value='-25.0 0.0 0.0' />
+			    <fieldValue name='translation' value='-20.0 0.0 0.0' />
 			    <fieldValue name='jointType' value='rotate' />
 			    <fieldValue name='jointAxis' value='0.0 1.0 0.0' />
 			    <ProtoInstance name='Joint' DEF="RARM_JOINT4"  containerField='children'>
@@ -445,9 +445,9 @@
 				<fieldValue name='momentsOfInertia' value='1.0 ,0.0 ,0.0 ,0.0 ,1.0 ,0.0 ,0.0 ,0.0 ,1.0' />
 
 				<Transform 
-			           translation="-3.5  0.0  0.0"
+			           translation="0.0  0.0  0.0"
 			           rotation="0.000000 -0.707107 0.707107 3.141593"
-			           scale="-30.0 -100.0 -120.0"
+			           scale="-20.0 -80.0 -80.0"
 			           >
 					<Shape>
 						<Appearance>
@@ -487,9 +487,9 @@
 					  <fieldValue name='mass' value='0.4' />
 					  <fieldValue name='momentsOfInertia' value='1.0 ,0.0 ,0.0 ,0.0 ,1.0 ,0.0 ,0.0 ,0.0 ,1.0' />
 						<Transform 
-						   translation="-11.0 0.05 1.5"
+						   translation="0.0 0.0 1.0"
 						   rotation="0.0616284 -0.704416 0.707107 3.14159"
-						   scale="-100.0 -100.0 -100.0"
+						   scale="-80.0 -80.0 -80.0"
 						   >
 							<Shape>
 								<Appearance>
