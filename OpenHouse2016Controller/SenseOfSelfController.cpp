@@ -156,8 +156,8 @@ void SenseOfSelfController::onRecvMsg(RecvMsgEvent &evt)
 
 				Quaternion correctedQuaternion = Quaternion(posture.joint[ManNiiPosture::HEAD_JOINT0].quaternion);
 
-				correctedQuaternion = Quaternion::multiplyNI(this->waistJointQuaternion, correctedQuaternion);
 				correctedQuaternion = Quaternion::multiplyNI(this->rootJointQuaternion,  correctedQuaternion);
+				correctedQuaternion = Quaternion::multiplyNI(this->waistJointQuaternion, correctedQuaternion);
 
 				posture.joint[ManNiiPosture::HEAD_JOINT0].quaternion = correctedQuaternion;
 
