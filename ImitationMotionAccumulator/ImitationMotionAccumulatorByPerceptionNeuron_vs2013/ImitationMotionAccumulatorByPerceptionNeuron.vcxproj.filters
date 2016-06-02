@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="src\embodied_brain\main.cpp" />
+    <ClCompile Include="src\embodied_brain\imitation_motion_accumulator.cpp" />
+    <ClCompile Include="src\embodied_brain\common\param.cpp" />
+    <ClCompile Include="src\embodied_brain\file\file_manager.cpp" />
+    <ClCompile Include="src\embodied_brain\avatar\check_recv_sigservice_data.cpp" />
+    <ClCompile Include="src\embodied_brain\avatar\avatar_controller.cpp" />
+    <ClCompile Include="src\embodied_brain\database\table\perception_neuron_dao.cpp" />
+    <ClCompile Include="src\embodied_brain\database\table\pms_imitation_dao.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\embodied_brain\imitation_motion_accumulator.h" />
+    <ClInclude Include="src\embodied_brain\common\param.h" />
+    <ClInclude Include="src\embodied_brain\file\file_manager.h" />
+    <ClInclude Include="src\embodied_brain\avatar\check_recv_sigservice_data.h" />
+    <ClInclude Include="src\embodied_brain\avatar\avatar_controller.h" />
+    <ClInclude Include="src\embodied_brain\database\table\perception_neuron_dao.h" />
+    <ClInclude Include="src\embodied_brain\database\table\pms_imitation_dao.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="config\ImitationMotionAccumulator.ini" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="lib\PerceptionNeuron_vs2013.lib" />
+  </ItemGroup>
+</Project>

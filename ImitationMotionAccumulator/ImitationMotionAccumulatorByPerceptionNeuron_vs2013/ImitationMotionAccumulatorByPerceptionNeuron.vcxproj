@@ -1,0 +1,101 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="12.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{325C0DF8-1C39-4F8B-ADDC-155F5EE8C7F4}</ProjectGuid>
+    <RootNamespace>ImitationMotionAccumulatorByPerceptionNeuron</RootNamespace>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>Unicode</CharacterSet>
+    <PlatformToolset>v120</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <TargetExt>.exe</TargetExt>
+    <TargetName>ImitationMotionAccumulator</TargetName>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+    </Link>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>MaxSpeed</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <AdditionalIncludeDirectories>.\src;$(BOOST_LIB_DIR);$(MYSQL_CONN_CPP_LIB_DIR)\include;$(SIGSERVICE_LIB_DIR);$(SIGVERSE_PLUGIN_DIR)\srcs;C:\SIGVerse\ext\NeuronDataReader_SDK_b15\Windows\include;C:\SIGVerse\GitHub\SIGService\Windows\SIGService;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalLibraryDirectories>.\lib;$(BOOST_LIB_DIR)\lib32-msvc-12.0;$(MYSQL_CONN_CPP_LIB_DIR)\lib;$(SIGSERVICE_LIB_DIR)\Release_2013;C:\SIGVerse\ext\NeuronDataReader_SDK_b15\Windows\lib\x86;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ws2_32.lib;winmm.lib;mysqlcppconn.lib;SIGService.lib;NeuronDataReader.lib;PerceptionNeuron_vs2013.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>copy "config\ImitationMotionAccumulator.ini" "..\Release"</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <ClCompile Include="src\embodied_brain\avatar\avatar_controller.cpp" />
+    <ClCompile Include="src\embodied_brain\avatar\check_recv_sigservice_data.cpp" />
+    <ClCompile Include="src\embodied_brain\database\table\pms_imitation_dao.cpp" />
+    <ClCompile Include="src\embodied_brain\database\table\perception_neuron_dao.cpp" />
+    <ClCompile Include="src\embodied_brain\imitation_motion_accumulator.cpp" />
+    <ClCompile Include="src\embodied_brain\common\param.cpp" />
+    <ClCompile Include="src\embodied_brain\file\file_manager.cpp" />
+    <ClCompile Include="src\embodied_brain\main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="src\embodied_brain\avatar\avatar_controller.h" />
+    <ClInclude Include="src\embodied_brain\avatar\check_recv_sigservice_data.h" />
+    <ClInclude Include="src\embodied_brain\database\table\pms_imitation_dao.h" />
+    <ClInclude Include="src\embodied_brain\database\table\perception_neuron_dao.h" />
+    <ClInclude Include="src\embodied_brain\imitation_motion_accumulator.h" />
+    <ClInclude Include="src\embodied_brain\common\param.h" />
+    <ClInclude Include="src\embodied_brain\file\file_manager.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="config\ImitationMotionAccumulator.ini" />
+  </ItemGroup>
+  <ItemGroup>
+    <Library Include="lib\PerceptionNeuron_vs2013.lib" />
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>
