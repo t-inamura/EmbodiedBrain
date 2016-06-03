@@ -3,6 +3,9 @@
 #include <stdio.h>
 #include <sstream>
 
+#include <boost/exception/diagnostic_information.hpp>
+#include <boost/property_tree/ptree.hpp>
+
 #include <embodied_brain/imitation_motion_accumulator.h>
 #include <embodied_brain/common/param.h>
 
@@ -19,12 +22,26 @@ int main(int argc, char **argv)
 		ImitationMotionAccumulator mainApp;
 
 		//メイン処理
-		mainApp.run(argc, argv);
-
-		return EXIT_SUCCESS;
+		return mainApp.run(argc, argv);
+	}
+	catch (std::string &ex)
+	{
+		std::cout << " ERR :" << ex << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	catch(const property_tree::ptree_error &ex)
+	{
+		std::cout << " ERR :" << ex.what() << std::endl;
+		exit(EXIT_FAILURE);
+	}
+	catch (boost::exception &ex) 
+	{
+		std::cout << " ERR :" << boost::diagnostic_information_what(ex) << std::endl;
+		exit(EXIT_FAILURE);
 	}
 	catch (std::exception ex)
 	{
-		std::cout << ex.what() << std::endl;
+		std::cout << " ERR :" << ex.what() << std::endl;
+		exit(EXIT_FAILURE);
 	}
 }

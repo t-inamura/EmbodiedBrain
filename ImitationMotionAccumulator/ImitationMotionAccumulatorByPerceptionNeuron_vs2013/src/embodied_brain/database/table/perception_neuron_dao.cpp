@@ -262,7 +262,7 @@ void PerceptionNeuronDAO::insertDatabase(const PerceptionNeuronDAO::DataSet &mot
  */
 void PerceptionNeuronDAO::insertDatabaseExec(const PerceptionNeuronDAO::DataSet &motionInfo)
 {
-	std::cout << "◆データベース蓄積　－開始－◆" << std::endl << std::endl;
+	std::cout << "◆データベース(Perception Neuron関連)蓄積　－開始－◆" << std::endl;
 
 	sql::mysql::MySQL_Driver *driver;
 	sql::Connection *con;
@@ -287,7 +287,7 @@ void PerceptionNeuronDAO::insertDatabaseExec(const PerceptionNeuronDAO::DataSet 
 
 	con->close();
 
-	std::cout << "◆データベース蓄積　－終了－◆" << std::endl << std::endl;
+	std::cout << "◆データベース(Perception Neuron関連)蓄積　－終了－◆" << std::endl << std::endl;
 }
 
 
@@ -314,9 +314,8 @@ void PerceptionNeuronDAO::insert(sql::Connection *con, const PerceptionNeuronDAO
 
 	stmt = con->createStatement();
 	stmt->executeUpdate(insertQuery);
-	con->commit();
 
-	std::cout << "Perception Neuron動作サマリ情報テーブルへのINSERT終了" << insertQuery << std::endl;
+	std::cout << "Perception Neuron動作サマリ情報テーブルへのINSERT終了" << std::endl;
 
 
 	/*
@@ -328,6 +327,7 @@ void PerceptionNeuronDAO::insert(sql::Connection *con, const PerceptionNeuronDAO
 		=
 		"INSERT INTO perception_neuron_motions_time_series VALUES ("
 		"?,?,"                                                                  // rec_id, elapsed_time
+		"?,?,?,"                                                                // hips_pos_x, hips_pos_y, hips_pos_z
 		"?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?," // 10
 		"?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?," // 20
 		"?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?," // 30
@@ -350,7 +350,11 @@ void PerceptionNeuronDAO::insert(sql::Connection *con, const PerceptionNeuronDAO
 		pstmt->setInt(1, motionInfo.summary.recId);
 		pstmt->setInt(2, (*it).elapsedTime);
 
-		int index = 3;
+		pstmt->setDouble(3, (*it).hips_pos.x);
+		pstmt->setDouble(4, (*it).hips_pos.y);
+		pstmt->setDouble(5, (*it).hips_pos.z);
+
+		int index = 6;
 
 		for (int linkNo = 0; linkNo < NeuronBVH::BonesType::BonesTypeCount; linkNo++)
 		{
@@ -366,7 +370,7 @@ void PerceptionNeuronDAO::insert(sql::Connection *con, const PerceptionNeuronDAO
 	//commit
 	con->commit();
 
-	std::cout << "Perception Neuron動作時系列情報テーブルへのINSERT終了" << insertQuery << std::endl;
+	std::cout << "Perception Neuron動作時系列情報テーブルへのINSERT終了" << std::endl;
 
 
 	stmt->close();

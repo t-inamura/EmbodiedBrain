@@ -24,7 +24,7 @@
  */
 void AvatarController::connectSIGServer(const std::string &ipAddress, const int portNum)
 {
-	this->m_srv = new sigverse::SIGService(Param::getSigServiceName());
+	this->m_srv = new sigverse::SIGService(Param::getGeneralServiceName());
 	
 	this->m_srv->connect(ipAddress, portNum);
 //	this->m_srv->connectToViewer();
@@ -78,7 +78,43 @@ void AvatarController::makeTelegramForAvatar(const std::list<PerceptionNeuronDAO
 {
 	try
 	{
-//		std::list<MotionInfoTelegram> motionInfoTelegramList;
+		std::list<PerceptionNeuronDAO::TimeSeries_t>::const_iterator it = motionData.begin();
+
+		for (int i = 1; it != motionData.end(); i++)
+		{
+			PerceptionNeuronSensorData sensorData;
+
+			sensorData.dataType = PerceptionNeuronSensorData::DataTypeEnum::BVH;
+			
+			sensorData.bvhData.avatarIndex   = 0;
+			sensorData.bvhData.avatarName    = "PN01";
+			sensorData.bvhData.withDisp      = false;
+			sensorData.bvhData.withReference = false;
+			sensorData.bvhData.frameIndex    = i;
+			sensorData.bvhData.dataCount     = 180;
+			sensorData.bvhData.data          = (float *)malloc(sensorData.bvhData.dataCount * sizeof(float));
+	
+			sensorData.bvhData.data[0] = (*it).hips_pos.x;
+			sensorData.bvhData.data[1] = (*it).hips_pos.y;
+			sensorData.bvhData.data[2] = (*it).hips_pos.z;
+
+			for (int j = 0; j < NeuronBVH::BonesType::BonesTypeCount; j++)
+			{
+				sensorData.bvhData.data[3*(j+1)+0] = (*it).links[j].rotation.y;
+				sensorData.bvhData.data[3*(j+1)+1] = (*it).links[j].rotation.x;
+				sensorData.bvhData.data[3*(j+1)+2] = (*it).links[j].rotation.z;
+			}
+
+			MotionInfoTelegram motionInfoTelegram;
+			motionInfoTelegram.elapsedTime   = (*it).elapsedTime;
+			motionInfoTelegram.motionInfoStr = sensorData.encodeSensorData();
+
+			this->motionInfoTelegramList.push_back(motionInfoTelegram);
+
+			free(sensorData.bvhData.data);
+
+			it++;
+		}
 
 		std::cout << "◆SIGVerse送信用動作情報作成　－終了－◆" << std::endl;
 	}

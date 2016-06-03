@@ -4,7 +4,7 @@
 #include <time.h>
 #include <ctime>
 #include <windows.h>
-//#include <embodied_brain/avatar/avatar_controller.h>
+#include <embodied_brain/common/param.h>
 #include <embodied_brain/database/table/perception_neuron_dao.h>
 #include <embodied_brain/database/table/pms_imitation_dao.h>
 

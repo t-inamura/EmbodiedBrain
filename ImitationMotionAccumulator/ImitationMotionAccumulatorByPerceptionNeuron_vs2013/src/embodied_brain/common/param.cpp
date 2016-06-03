@@ -10,7 +10,7 @@ std::string Param::getDbSchema() { return dbSchema; }
 std::string Param::getDbUser()   { return dbUser; }
 std::string Param::getDbPass()   { return dbPass; }
 
-std::string    Param::getSigServiceName()       { return sigServiceName; }
+std::string    Param::getGeneralServiceName()       { return generalServiceName; }
 int            Param::getSigAvatarDispInterval(){ return sigAvatarDispInterval; }
 //double         Param::getSigAvatarMoveSpeed()   { return sigAvatarMoveSpeed; }
 
@@ -53,7 +53,7 @@ void Param::readConfigFile()
 	dbPass   = pt.get<std::string>("db.pass");
 
 	//SIGService名
-	sigServiceName = pt.get<std::string>("sigverse.service_name");
+	generalServiceName = pt.get<std::string>("General.service_name");
 	//アバター表示更新間隔
 	sigAvatarDispInterval = pt.get<int> ("sigverse.avatar_disp_interval");
 	////アバター移動速度 (1.0で通常速度)
@@ -84,35 +84,34 @@ void Param::readConfigFile()
 
 
 	//表示
-	std::cout << "■ コンフィグ内容 ■" << std::endl;
-//	std::cout << "[cmn]sync_port      = " << cmnSyncPort << std::endl;
+	std::cout << "◆ コンフィグ内容 ◆" << std::endl;
 	std::cout << "[db]host            = " << dbHost << std::endl;
 	std::cout << "[db]port            = " << dbPort << std::endl;
 	std::cout << "[db]schema          = " << dbSchema << std::endl;
 	std::cout << "[db]user            = " << dbUser << std::endl;
 
-	std::cout << "[sigverse]service_name = "         << sigServiceName << std::endl;
+	std::cout << "[General]service_name         = "         << generalServiceName << std::endl;
+
 	std::cout << "[sigverse]avatar_disp_interval = " << sigAvatarDispInterval << std::endl;
-	//std::cout << "[sigverse]avatar_move_speed = "    << sigAvatarMoveSpeed << std::endl;
 
 	std::cout << "[imitation]accum_interval            = " << imiAccumInterval << std::endl;
 	std::cout << "[imitation]motion_data_file_path     = " << imiMotionDataFilePath << std::endl;
 
-	std::cout << "[imitation]mode     = " << imiMode << std::endl;
-	std::cout << "[imitation]rec_id   = " << imiRecId << std::endl;
-	std::cout << "[imitation]user_id  = " << imiUserId << std::endl;
+	std::cout << "[imitation]mode                      = " << imiMode << std::endl;
+	std::cout << "[imitation]rec_id                    = " << imiRecId << std::endl;
+	std::cout << "[imitation]user_id                   = " << imiUserId << std::endl;
 
 	if (imiMode=="origin")
 	{
 		Param::mode = Mode::Origin;
-		std::cout << "[imitation]origin_max_time  = " << imiOriginMaxTime << std::endl;
+		std::cout << "[imitation]origin_max_time           = " << imiOriginMaxTime << std::endl;
 	}
 	else if (imiMode == "imitation")
 	{
 		Param::mode = Mode::Imitation;
-		std::cout << "[imitation]imitation_group_id      = " << imiImitationGroupId << std::endl;
-		std::cout << "[imitation]imitation_rec_type      = " << imiImitationRecType << std::endl;
-		std::cout << "[imitation]imitation_origin_rec_id = " << imiImitationOriginRecId << std::endl;
+		std::cout << "[imitation]imitation_group_id        = " << imiImitationGroupId << std::endl;
+		std::cout << "[imitation]imitation_rec_type        = " << imiImitationRecType << std::endl;
+		std::cout << "[imitation]imitation_origin_rec_id   = " << imiImitationOriginRecId << std::endl;
 	}
 	else
 	{

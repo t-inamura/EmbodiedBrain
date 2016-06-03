@@ -110,7 +110,7 @@ void PmsImitationDAO::insertDatabase(const PmsImitationDAO::DataSet &motionInfo)
  */
 void PmsImitationDAO::insertDatabaseExec(const PmsImitationDAO::DataSet &motionInfo)
 {
-	std::cout << "◆データベース蓄積　－開始－◆" << std::endl << std::endl;
+	std::cout << "◆データベース(PMS情報関連)蓄積　－開始－◆" << std::endl;
 
 	sql::mysql::MySQL_Driver *driver;
 	sql::Connection *con;
@@ -135,7 +135,7 @@ void PmsImitationDAO::insertDatabaseExec(const PmsImitationDAO::DataSet &motionI
 
 	con->close();
 
-	std::cout << "◆データベース蓄積　－終了－◆" << std::endl << std::endl;
+	std::cout << "◆データベース(PMS情報関連)蓄積　－終了－◆" << std::endl << std::endl;
 }
 
 
@@ -179,7 +179,7 @@ void PmsImitationDAO::insert(sql::Connection *con, const PmsImitationDAO::DataSe
 	stmt->executeUpdate(insertQuery);
 	con->commit();
 
-	std::cout << "PMS実験_真似情報テーブルへのINSERT終了" << insertQuery << std::endl;
+	std::cout << "PMS実験_真似情報テーブルへのINSERT終了" << std::endl;
 
 	stmt->close();
 }

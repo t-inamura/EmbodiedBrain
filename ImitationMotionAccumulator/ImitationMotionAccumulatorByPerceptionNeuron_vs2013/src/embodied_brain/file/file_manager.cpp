@@ -196,7 +196,7 @@ void FileManager::outputDataFile(const PerceptionNeuronDAO::DataSet &motionData,
  */
 void FileManager::outputDataFileExec(const PerceptionNeuronDAO::DataSet &motionData, const PmsImitationDAO::DataSet &imitationInfo)
 {
-	std::cout << "◆ファイル出力　－開始－◆" << std::endl << std::endl;
+	std::cout << "◆ファイル出力　－開始－◆" << std::endl;
 
 	/*
 		* dataディレクトリの作成
@@ -276,28 +276,30 @@ void FileManager::outputDataFileExec(const PerceptionNeuronDAO::DataSet &motionD
 	/*
 	 * PMS実験_真似情報ファイル出力
 	 */
-	strftime(filePath, sizeof(filePath), "data\\pms_imitation_info_%Y%m%d_%H%M%S.dat", &nowTm);
+	if (Param::getMode() == Param::Mode::Imitation)
+	{
+		strftime(filePath, sizeof(filePath), "data\\pms_imitation_info_%Y%m%d_%H%M%S.dat", &nowTm);
 
-	ofs.open(filePath);
+		ofs.open(filePath);
 
-	ofs << imitationInfo.groupId                 << "\t"
-		<< imitationInfo.recType                 << "\t"
-		<< imitationInfo.recId                   << "\t"
-		<< imitationInfo.originalRecId           << "\t"
-		<< imitationInfo.conditionPulsePower     << "\t"
-		<< imitationInfo.conditionPulseFrequency << "\t"
-		<< imitationInfo.conditionPulseDuration  << "\t"
-		<< imitationInfo.conditionPulseInterval  << "\t"
-		<< imitationInfo.conditionPulseNumber    << "\t"
-		<< "'" << imitationInfo.memo << "'"
-		<< std::endl;
+		ofs << imitationInfo.groupId << "\t"
+			<< imitationInfo.recType << "\t"
+			<< imitationInfo.recId << "\t"
+			<< imitationInfo.originalRecId << "\t"
+			<< imitationInfo.conditionPulsePower << "\t"
+			<< imitationInfo.conditionPulseFrequency << "\t"
+			<< imitationInfo.conditionPulseDuration << "\t"
+			<< imitationInfo.conditionPulseInterval << "\t"
+			<< imitationInfo.conditionPulseNumber << "\t"
+			<< "'" << imitationInfo.memo << "'"
+			<< std::endl;
 
-	ofs.flush();
-	ofs.close();
-	ofs.clear();
+		ofs.flush();
+		ofs.close();
+		ofs.clear();
 
-	std::cout << "　PMS実験_真似情報ファイル出力 完了(" << filePath << ")" << std::endl;
-
+		std::cout << "　PMS実験_真似情報ファイル出力 完了(" << filePath << ")" << std::endl;
+	}
 
 	std::cout << "◆ファイル出力　－終了－◆" << std::endl << std::endl;
 }

@@ -29,11 +29,8 @@ private:
 	static std::string dbUser;
 	static std::string dbPass;
 
-//	static std::string    sigServerHost;
-//	static std::list<int> sigServerPorts;
-	static std::string    sigServiceName;
+	static std::string    generalServiceName;
 	static int            sigAvatarDispInterval;
-//	static double         sigAvatarMoveSpeed;
 
 	static int         imiAccumInterval;
 	static std::string imiMotionDataFilePath;
@@ -65,11 +62,9 @@ public:
 	static std::string getDbUser();
 	static std::string getDbPass();
 
-//	static std::string      getSigServerHost();
-//	static std::list<int>   getSigServerPorts();
-	static std::string      getSigServiceName();
+	static std::string      getGeneralServiceName();
+
 	static int              getSigAvatarDispInterval();
-//	static double           getSigAvatarMoveSpeed();
 
 	static int         getImiAccumInterval();
 	static std::string getImiMotionDataFilePath();

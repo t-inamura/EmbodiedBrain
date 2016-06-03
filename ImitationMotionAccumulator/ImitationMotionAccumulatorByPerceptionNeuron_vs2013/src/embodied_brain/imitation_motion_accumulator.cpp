@@ -53,6 +53,7 @@
 
 ///@brief Parameter file name.
 const std::string Param::PARAM_FILE_NAME = "ImitationMotionAccumulator.ini";
+//const std::string Param::PARAM_FILE_NAME = ".\\ImitationMotionAccumulator.ini";
 
 std::string Param::dbHost;
 int         Param::dbPort;
@@ -60,7 +61,7 @@ std::string Param::dbSchema;
 std::string Param::dbUser;
 std::string Param::dbPass;
 
-std::string Param::sigServiceName;
+std::string Param::generalServiceName;
 int         Param::sigAvatarDispInterval;
 
 int         Param::imiAccumInterval;
@@ -90,33 +91,42 @@ Param::Mode Param::mode;
  */
 int ImitationMotionAccumulator::run(int argc, char **argv)
 {
+	//コンフィグファイル読み込み
+	std::cout << "■ コンフィグファイル読込 開始 ■" << std::endl;
+	Param::readConfigFile();
+
 	char argSigAddr[128]; //SIGVerse IPアドレス
 	int argSigPortNum;    //SIGVerse ポート番号
 
-	if(argc == 3) 
+	if (Param::getMode()==Param::Imitation)
 	{
-		sprintf_s(argSigAddr, 128, "%s",argv[1]);
-		argSigPortNum  = atoi(argv[2]);
+		if(argc == 3) 
+		{
+			sprintf_s(argSigAddr, 128, "%s",argv[1]);
+			argSigPortNum  = atoi(argv[2]);
 
-		std::cout << "Connect to server [" <<argSigAddr << "]\n";
-		std::cout << "Portnumber [" << argSigPortNum << "]\n\n";
+			std::cout << "Connect to server [" <<argSigAddr << "]\n";
+			std::cout << "Portnumber [" << argSigPortNum << "]\n\n";
+		}
+		else
+		{
+			std::cout << "引数不正です" << std::endl;
+			return(-1);
+		}
 	}
-	else
-	{
-		std::cout << "引数不正です" << std::endl;
-		return(-1);
-	}
-
-	//コンフィグファイル読み込み
-	Param::readConfigFile();
-
 
 	/*
 	 * Perception Neuron関連の初期化
 	 */
+	std::cout << "■ Perception Neuron関連のコンフィグファイル読込 開始 ■" << std::endl;
+
 	// Read the initialize file.
 	this->readIniFile(Param::PARAM_FILE_NAME);
 
+	this->latestSensorData.dataType     = PerceptionNeuronSensorData::DataTypeEnum::BVH;
+	this->latestSensorData.bvhData.data = (float *)calloc(10000, sizeof(float));  //多めに領域確保
+
+	std::cout << "■ Perception Neuronへ接続 開始 ■" << std::endl;
 	// connect to Perception Neuron
 	SOCKET_REF sockRefBvh  = NULL;
 
@@ -126,11 +136,12 @@ int ImitationMotionAccumulator::run(int argc, char **argv)
 	BRRegisterFrameDataCallback(this, ImitationMotionAccumulator::bvhFrameDataReceived);
 
 	// Receive Socket status by the callback function.
-	BRRegisterSocketStatusCallback(this, this->socketStatusChanged);
+	BRRegisterSocketStatusCallback(this, ImitationMotionAccumulator::socketStatusChanged);
 
 
 
-	//データベースのID重複チェック（重複があった場合、exceptionをthrowする）
+	std::cout << "■ データベースの重複チェック 開始 ■" << std::endl;
+	//データベースのID重複チェック
 	PerceptionNeuronDAO::duplicationCheck(Param::getImiUserId());
 
 
@@ -138,6 +149,7 @@ int ImitationMotionAccumulator::run(int argc, char **argv)
 
 	if (Param::getMode()==Param::Mode::Imitation)
 	{
+		std::cout << "■ SIGVerseへの接続 開始 ■" << std::endl;
 		//データベースのID重複チェック（重複があった場合、exceptionをthrowする）
 		PmsImitationDAO::duplicationCheck(Param::getImiImitationGroupId(), Param::getImiImitationRecType());
 
@@ -165,6 +177,8 @@ int ImitationMotionAccumulator::run(int argc, char **argv)
 		motionData.clear();
 	}
 
+
+	std::cout << "■ 収録 開始 ■" << std::endl;
 
 	//カウントダウンを描画
 	int showCnt = 10;
@@ -195,23 +209,16 @@ int ImitationMotionAccumulator::run(int argc, char **argv)
 	// close socket
 	BRCloseSocket(sockRefBvh);
 
+	free(this->latestSensorData.bvhData.data);
+
 	// Windows での終了設定
 	WSACleanup();
 
-	std::cout << "収録終了" << std::endl;
+	std::cout << "■ 収録終了 ■" << std::endl;
 
 	return EXIT_SUCCESS;
 }
 
-///*
-// * 初期化全般
-// */
-//void ImitationMotionAccumulator::initialize(const int argRecId, const std::string &memo, const int argMaxRecordTime)
-//{
-//	this->recId = argRecId;
-//
-//
-//}
 
 
 
@@ -228,23 +235,23 @@ void ImitationMotionAccumulator::updateBvhData(void* customedObj, SOCKET_REF sen
 {
 	ImitationMotionAccumulator* pthis = (ImitationMotionAccumulator*)customedObj;
 
-	PerceptionNeuronSensorData sensorData;
-
-	sensorData.dataType = PerceptionNeuronSensorData::DataTypeEnum::BVH;
-
-	sensorData.bvhData.avatarIndex   = header->AvatarIndex;
-	sensorData.bvhData.avatarName    = std::string((char*)header->AvatarName);
-	sensorData.bvhData.withDisp      = (header->WithDisp==1);
-	sensorData.bvhData.withReference = (header->WithReference==1);
-	sensorData.bvhData.frameIndex    = header->FrameIndex;
-	sensorData.bvhData.dataCount     = header->DataCount;
-	sensorData.bvhData.data          = data;
-
 	// 排他制御
 	std::lock_guard<std::mutex> lock(pthis->mtx4LatestSensorData);
 
-	pthis->latestSensorData = sensorData;
+	pthis->latestSensorData.bvhData.avatarIndex   = header->AvatarIndex;
+	pthis->latestSensorData.bvhData.avatarName    = std::string((char*)header->AvatarName);
+	pthis->latestSensorData.bvhData.withDisp      = (header->WithDisp==1);
+	pthis->latestSensorData.bvhData.withReference = (header->WithReference==1);
+	pthis->latestSensorData.bvhData.frameIndex    = header->FrameIndex;
+	pthis->latestSensorData.bvhData.dataCount     = header->DataCount;
+
+	memcpy(pthis->latestSensorData.bvhData.data, data, header->DataCount * sizeof(float));
+
+//	pthis->latestSensorData = sensorData;
+
+//	std::cout << "update bvh data." << std::endl;
 }
+
 
 
 /*
@@ -397,21 +404,24 @@ void ImitationMotionAccumulator::accumulateMotionData()
 	//PreparedStatementを使用して複数件のレコードをINSERT
 	while (it != this->accumulatingSensorDataMap.end())
 	{
-		std::string telegram = (*it).second.encodeSensorData();
-		std::map<std::string, std::vector<std::string> > sensorMap = SensorData::decodeSensorData(telegram);
-
-		((*it).second).setSensorData(sensorMap);
-
 		PerceptionNeuronDAO::TimeSeries_t posture;
 		posture.recId       = Param::getImiRecId();
 		posture.elapsedTime = (*it).first;
-		posture.hips_pos    = ((*it).second).rootPosition;
+		posture.hips_pos.x  = ((*it).second).bvhData.data[0];
+		posture.hips_pos.y  = ((*it).second).bvhData.data[1];
+		posture.hips_pos.z  = ((*it).second).bvhData.data[2];
+
+//		std::cout << "1: elapsedTime:" << posture.elapsedTime << ", data[0]:" << ((*it).second).bvhData.data[0] << std::endl;
 
 		for (int i = 0; i < NeuronBVH::BonesType::BonesTypeCount; i++)
 		{
-			posture.links[i]    = ((*it).second).bvhJoints[i];
+			posture.links[i].rotation.y  = ((*it).second).bvhData.data[3*(i+1)+0];
+			posture.links[i].rotation.x  = ((*it).second).bvhData.data[3*(i+1)+1];
+			posture.links[i].rotation.z  = ((*it).second).bvhData.data[3*(i+1)+2];
 		}
 		motionSet.timeSeries.push_back(posture);
+
+		free(((*it).second).bvhData.data);
 
 		it++;
 	}
@@ -428,13 +438,31 @@ void ImitationMotionAccumulator::accumulateMotionData()
 	imitationInfo.conditionPulseNumber    = Param::getImiDbImitationConditionPulseNumber();
 	imitationInfo.memo                    = Param::getImiDbImitationMemo();
 
+	Sleep(500);
 
 	/*
 	 * 取得したPerception Neuronの人物モーション情報をデータベースに追加
 	 */
-	PerceptionNeuronDAO::insertDatabaseExec(motionSet);
+	std::string inputKey;
 
-	PmsImitationDAO::insertDatabaseExec(imitationInfo);
+	while (inputKey.compare("y") != 0 && inputKey.compare("n") != 0)
+	{
+		std::cout << "収録データをデータベースに蓄積しますか？(y/n)："; std::cin >> inputKey;
+	}
+
+	if (inputKey.compare("y") == 0)
+	{
+		PerceptionNeuronDAO::insertDatabaseExec(motionSet);
+
+		if (Param::getMode() == Param::Mode::Imitation)
+		{
+			PmsImitationDAO::insertDatabaseExec(imitationInfo);
+		}
+	}
+	else
+	{
+		std::cout << "◆データベースに蓄積しません◆" << std::endl << std::endl;
+	}
 
 
 	/*
@@ -453,8 +481,16 @@ void ImitationMotionAccumulator::accumulate(const int elapsedTime)
 	// 排他制御
 	std::lock_guard<std::mutex> lock(this->mtx4LatestSensorData);
 
-	//モーション情報をマップに保持する
-	this->accumulatingSensorDataMap.insert( make_pair(elapsedTime, this->latestSensorData));
+	PerceptionNeuronSensorData sensorData;
+	sensorData.bvhData.data = (float *)malloc(this->latestSensorData.bvhData.dataCount * sizeof(float));
 
-	this->latestSensorData = PerceptionNeuronSensorData();
+	sensorData.bvhData.dataCount = this->latestSensorData.bvhData.dataCount;
+	memcpy(sensorData.bvhData.data, this->latestSensorData.bvhData.data, this->latestSensorData.bvhData.dataCount * sizeof(float));
+
+	//モーション情報をマップに保持する
+	this->accumulatingSensorDataMap.insert( make_pair(elapsedTime, sensorData));
+
+//	std::cout << this->latestSensorData.bvhData.dataCount << ";, data[0]:" << this->latestSensorData.bvhData.data[0] << ", data[1]:" << this->latestSensorData.bvhData.data[1] << ", data[2]:" << this->latestSensorData.bvhData.data[2] << std::endl;
+
+//	this->latestSensorData = PerceptionNeuronSensorData();
 }

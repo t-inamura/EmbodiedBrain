@@ -2,13 +2,13 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClCompile Include="src\embodied_brain\main.cpp" />
-    <ClCompile Include="src\embodied_brain\imitation_motion_accumulator.cpp" />
     <ClCompile Include="src\embodied_brain\common\param.cpp" />
     <ClCompile Include="src\embodied_brain\file\file_manager.cpp" />
     <ClCompile Include="src\embodied_brain\avatar\check_recv_sigservice_data.cpp" />
     <ClCompile Include="src\embodied_brain\avatar\avatar_controller.cpp" />
     <ClCompile Include="src\embodied_brain\database\table\perception_neuron_dao.cpp" />
     <ClCompile Include="src\embodied_brain\database\table\pms_imitation_dao.cpp" />
+    <ClCompile Include="src\embodied_brain\imitation_motion_accumulator.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\embodied_brain\imitation_motion_accumulator.h" />
