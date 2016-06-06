@@ -17,9 +17,9 @@
 #include <embodied_brain/database/table/pms_imitation_dao.h>
 
 /*
- * 収録IDの重複チェック（データベースに既に同一動作IDのレコードがあった場合、exceptionをthrowする）
+ * IDの重複チェック
  */
-void PmsImitationDAO::duplicationCheck(const int groupId, const int recType)
+bool PmsImitationDAO::duplicationCheck(const int groupId, const int recType)
 {
 	sql::mysql::MySQL_Driver *driver;
 	sql::Connection *con;
@@ -35,7 +35,7 @@ void PmsImitationDAO::duplicationCheck(const int groupId, const int recType)
 
 		con->setSchema(Param::getDbSchema());
 
-		//モデル動作情報サマリテーブルから、指定動作IDの件数を取得するSQL
+		//真似情報テーブルから、指定IDの件数を取得するSQL
 		sql::SQLString selectSQL = "SELECT COUNT(*) AS cnt FROM pms_imitation_info WHERE group_id=" + std::to_string(groupId) + " AND rec_type=" + std::to_string(recType) + ";";
 
 		stmt = con->createStatement();
@@ -43,16 +43,19 @@ void PmsImitationDAO::duplicationCheck(const int groupId, const int recType)
 
 		if (rs->next())
 		{
-			//指定動作IDの件数が0件でなかった場合は、エラー
+			//指定IDの件数が0件でなかった場合は、エラー
 			if (rs->getInt("cnt") != 0)
 			{
-				throw std::exception(("データベース上に同じ主キー(group_id=" + std::to_string(groupId) + ",rec_type="+std::to_string(recType)+")の情報が存在します。処理終了します。").c_str());
+				std::cout << "データベース上に同じ主キー(group_id=" + std::to_string(groupId) + ",rec_type="+std::to_string(recType)+")の情報が存在します。処理終了します。" << std::endl;
+				return false;
 			}
 		}
 
 		delete rs;
 		delete stmt;
 		delete con;
+
+		return true;
 	}
 	catch (sql::SQLException & ex)
 	{
@@ -71,12 +74,13 @@ void PmsImitationDAO::duplicationCheck(const int groupId, const int recType)
 			throw std::exception("DBに接続できないため処理中止します。");
 		}
 	}
+	return false;
 }
 
 
 
 /*
- * データベースへのモーションデータの蓄積
+ * データベースへのレコード追加
  */
 void PmsImitationDAO::insertDatabase(const PmsImitationDAO::DataSet &motionInfo)
 {
@@ -106,7 +110,7 @@ void PmsImitationDAO::insertDatabase(const PmsImitationDAO::DataSet &motionInfo)
 
 
 /*
- * データベースへのモーションデータの蓄積（実行部）
+ * データベースへの情報追加（実行部）
  */
 void PmsImitationDAO::insertDatabaseExec(const PmsImitationDAO::DataSet &motionInfo)
 {
@@ -140,12 +144,12 @@ void PmsImitationDAO::insertDatabaseExec(const PmsImitationDAO::DataSet &motionI
 
 
 /*
- * データベースへのモーションデータの蓄積（汎用テーブル用）
+ * データベースへの情報追加（クエリ発行）
  */
 void PmsImitationDAO::insert(sql::Connection *con, const PmsImitationDAO::DataSet &motionInfo)
 {
 	/*
-	 * Perception Neuron動作サマリ情報テーブルへのINSERT処理（1件のみ）
+	 * 真似情報テーブルへのINSERT処理（1件のみ）
 	 */
 	sql::Statement *stmt;
 

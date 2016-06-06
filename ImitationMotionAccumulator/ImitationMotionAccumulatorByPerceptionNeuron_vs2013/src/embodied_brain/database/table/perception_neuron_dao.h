@@ -10,7 +10,7 @@
 #include <sigverse/plugin/common/sensor/PerceptionNeuronSensorData.h>
 
 /*
- * MySQL操作クラス
+ * Perception Neuron関連テーブル操作クラス
  */
 class PerceptionNeuronDAO
 {
@@ -56,7 +56,7 @@ protected:
 	static void setPreparedStatementLinkValue(sql::PreparedStatement *pstmt, const int preparedStatementIndex, const PerceptionNeuronSensorData::PerceptionNeuronBVHJoint link);
 
 public:
-	static void duplicationCheck(const int recId);
+	static bool duplicationCheck(const int recId);
 	static int  selectMotionData(std::list<PerceptionNeuronDAO::TimeSeries_t> &motionInfo, const std::string &recId);
 	static void insertDatabase(const PerceptionNeuronDAO::DataSet &motionInfo);
 	static void insertDatabaseExec(const PerceptionNeuronDAO::DataSet &motionInfo);

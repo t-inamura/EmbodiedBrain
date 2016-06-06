@@ -17,9 +17,9 @@
 #include <embodied_brain/database/table/perception_neuron_dao.h>
 
 /*
- * 収録IDの重複チェック（データベースに既に同一動作IDのレコードがあった場合、exceptionをthrowする）
+ * 収録IDの重複チェック
  */
-void PerceptionNeuronDAO::duplicationCheck(const int recId)
+bool PerceptionNeuronDAO::duplicationCheck(const int recId)
 {
 	sql::mysql::MySQL_Driver *driver;
 	sql::Connection *con;
@@ -35,7 +35,7 @@ void PerceptionNeuronDAO::duplicationCheck(const int recId)
 
 		con->setSchema(Param::getDbSchema());
 
-		//モデル動作情報サマリテーブルから、指定動作IDの件数を取得するSQL
+		//Perception Neuron動作サマリテーブルから、指定動作IDの件数を取得するSQL
 		sql::SQLString selectSQL = "SELECT COUNT(*) AS cnt FROM perception_neuron_motions_summary WHERE rec_id=" + std::to_string(recId) + ";";
 
 		stmt = con->createStatement();
@@ -46,13 +46,16 @@ void PerceptionNeuronDAO::duplicationCheck(const int recId)
 			//指定動作IDの件数が0件でなかった場合は、エラー
 			if (rs->getInt("cnt") != 0)
 			{
-				throw std::exception(("データベース上に同じ収録ID(" + std::to_string(recId) + ")の情報が存在します。処理終了します。").c_str());
+				std::cout << "データベース上に同じ収録ID(" + std::to_string(recId) + ")の情報が存在します。処理終了します。" << std::endl;
+				return false;
 			}
 		}
 
 		delete rs;
 		delete stmt;
 		delete con;
+
+		return true;
 	}
 	catch (sql::SQLException & ex)
 	{
@@ -71,6 +74,7 @@ void PerceptionNeuronDAO::duplicationCheck(const int recId)
 			throw std::exception("DBに接続できないため処理中止します。");
 		}
 	}
+	return false;
 }
 
 
@@ -84,7 +88,7 @@ int  PerceptionNeuronDAO::selectMotionData(std::list<PerceptionNeuronDAO::TimeSe
 		DWORD startTime, endTime;
 		double diffTime;
 
-		std::cout << "◆モデル動作データ取得　－開始－◆" << std::endl;
+		std::cout << "◆動作データ取得　－開始－◆" << std::endl;
 
 		startTime = timeGetTime();
 	
@@ -104,7 +108,7 @@ int  PerceptionNeuronDAO::selectMotionData(std::list<PerceptionNeuronDAO::TimeSe
 	//	con->setAutoCommit(false);
 
 		/*
-		 * モデル動作情報テーブルからのSELECT
+		 * 動作情報テーブルからのSELECT
 		 */
 		sql::Statement *stmt;
 		sql::ResultSet *rs;
@@ -201,7 +205,7 @@ int  PerceptionNeuronDAO::selectMotionData(std::list<PerceptionNeuronDAO::TimeSe
 
 		fprintf(stdout, "SELECTにかかった時間： %8.3f[s] \n", diffTime);
 
-		std::cout << "◆モデル動作データ取得　－終了－◆" << std::endl;
+		std::cout << "◆動作データ取得　－終了－◆" << std::endl;
 	}
 	catch (std::exception& ex)
 	{
@@ -258,7 +262,7 @@ void PerceptionNeuronDAO::insertDatabase(const PerceptionNeuronDAO::DataSet &mot
 
 
 /*
- * データベースへのモーションデータの蓄積（実行部）
+ * データベースへの動作データの蓄積（実行部）
  */
 void PerceptionNeuronDAO::insertDatabaseExec(const PerceptionNeuronDAO::DataSet &motionInfo)
 {
@@ -292,7 +296,7 @@ void PerceptionNeuronDAO::insertDatabaseExec(const PerceptionNeuronDAO::DataSet 
 
 
 /*
- * データベースへのモーションデータの蓄積（汎用テーブル用）
+ * データベースへの動作データの蓄積（クエリ発行）
  */
 void PerceptionNeuronDAO::insert(sql::Connection *con, const PerceptionNeuronDAO::DataSet &motionInfo)
 {

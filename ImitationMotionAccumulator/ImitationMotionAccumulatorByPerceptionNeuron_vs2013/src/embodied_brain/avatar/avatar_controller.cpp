@@ -36,8 +36,13 @@ void AvatarController::connectSIGServer(const std::string &ipAddress, const int 
  */
 void AvatarController::disconnectFromAllController()
 {
+	if (this->m_srv == NULL){ return; }
+
 	// 接続中の全コントローラと切断する
-	this->m_srv->disconnectFromAllController();
+	if (this->isConnectedToSIGServer())
+	{
+		this->m_srv->disconnectFromAllController();
+	}
 
 	// SIGVerseサーバディスコネクト
 	this->m_srv->disconnect();
@@ -55,29 +60,31 @@ void AvatarController::checkRecvSIGServiceData()
 }
 
 
-
-
-/*
- * floatをstringに変換する
- */
-std::string AvatarController::floatToString(const float x)
-{
-	char tmp[32];
-	sprintf_s(tmp, 32, "%f", x);
-	std::string str;
-	str = std::string(tmp);
-	return str;
-}
+//
+//
+///*
+// * floatをstringに変換する
+// */
+//std::string AvatarController::floatToString(const float x)
+//{
+//	char tmp[32];
+//	sprintf_s(tmp, 32, "%f", x);
+//	std::string str;
+//	str = std::string(tmp);
+//	return str;
+//}
 
 
 
 /*
  * SIGVerse送信用動作情報電文を作成する
  */
-void AvatarController::makeTelegramForAvatar(const std::list<PerceptionNeuronDAO::TimeSeries_t> &motionData)
+void AvatarController::makeTelegramForAvatar(const std::list<PerceptionNeuronDAO::TimeSeries_t> &motionData, const std::string &msgHeader)
 {
 	try
 	{
+		std::cout << "◆SIGVerse送信用動作情報作成　－開始－◆" << std::endl;
+
 		std::list<PerceptionNeuronDAO::TimeSeries_t>::const_iterator it = motionData.begin();
 
 		for (int i = 1; it != motionData.end(); i++)
@@ -107,7 +114,11 @@ void AvatarController::makeTelegramForAvatar(const std::list<PerceptionNeuronDAO
 
 			MotionInfoTelegram motionInfoTelegram;
 			motionInfoTelegram.elapsedTime   = (*it).elapsedTime;
-			motionInfoTelegram.motionInfoStr = sensorData.encodeSensorData();
+
+			// Send message to SigServer.
+			std::string sensorDataMessage = sensorData.encodeSensorData();
+
+			motionInfoTelegram.motionInfoStr = msgHeader + sensorDataMessage;
 
 			this->motionInfoTelegramList.push_back(motionInfoTelegram);
 
@@ -115,8 +126,6 @@ void AvatarController::makeTelegramForAvatar(const std::list<PerceptionNeuronDAO
 
 			it++;
 		}
-
-		std::cout << "◆SIGVerse送信用動作情報作成　－終了－◆" << std::endl;
 	}
 	catch (std::exception& ex)
 	{
@@ -195,10 +204,25 @@ void AvatarController::sendMotionDataToSIGVerse()
 			}
 		}
 
+		this->replaying = false;
+
+		this->motionInfoTelegramList.clear();
+
 		std::cout << "◆描画　－終了－◆" << std::endl;
 	}
 	catch (std::exception& ex)
 	{
 		std::cout << ex.what() << std::endl;
 	}
+}
+
+
+/*
+ * SIGServerに接続しているか否かを返す
+ */
+bool AvatarController::isConnectedToSIGServer()
+{
+	if (this->m_srv == NULL){ return false; }
+
+	return this->m_srv->getConnectedControllerNum() != 0;
 }

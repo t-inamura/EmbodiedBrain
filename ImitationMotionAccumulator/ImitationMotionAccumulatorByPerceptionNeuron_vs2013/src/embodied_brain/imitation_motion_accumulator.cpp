@@ -1,36 +1,40 @@
 ﻿/*
- * PSMove操作履歴蓄積プログラムは、人物モデルの動作情報を使用してSIGverse上のアバターを動かしつつ、ユーザがそのアバターの動作を見ながら操作した
- * PS Moveモーションコントローラの操作履歴をMySQLに蓄積する。
+ * 真似動作収録プログラムは、事前に収録した動作情報を使用してSIGverse上のアバターを動かしつつ、ユーザがそのアバターの動作を真似し、その真似動作をMySQLに蓄積する。
  * 
- *    ２つのプログラム（アバター描画処理と操作履歴蓄積処理）で構成され、それぞれをWindowsとUbuntuの2つのOS上で実行する。	
- *    Windowsを使用するのはSIGVerseを使用したアバター描画を行いたいためで、Ubuntuを使用するのはPS Move APIを使用したいため。
- *    描画処理プログラムと蓄積処理プログラムは平行して同時に実行しなければならないため、TCPソケット通信で同期を取り描画・蓄積処理を同時に開始する。
- *    描画処理プログラムをTCPサーバ側、蓄積処理プログラムをTCPクライアント側とする。そのため描画処理プログラムを起動してから、蓄積処理プログラムを起動する。
+ *    ・動作情報取得には Perception Neuron を使用する。
+ *    ・以下の２つの収録モードを用意する。
+ *    　　・ユーザに見せるための＜手本動作収録モード＞
+ *    　　・手本を見ながら真似した動作を収録する＜真似動作収録モード＞
+ *    ・手本動作収録モード時はPerception Neuronのみ使用し、真似動作収録モード時は、SIGVerse、Oculus Rift DK2、Perception Neuronを使用する。
  *    
- *    本プログラムは、＜アバター描画側＞となる。
- *    描画処理プログラムは起動後、TCPクライアントからの接続要求を待ちうけ、メイン処理実行後は、再度接続要求待ち状態に戻る。
- *    描画にSIGVerseを使用しているため、SIGVerseのサービスプロバイダとして実装する。
  *    
- * ＜流れ＞
- * 1. SIGServerに接続する
- * 2. TCPサーバとして待機し、TCPクライアント(蓄積側)からの接続要求を待つ
- * 3. TCPクライアント(蓄積側)との接続後、TCPクライアント(蓄積側)とメッセージのやり取りを行いながら、描画データの準備と、蓄積側との処理同期を行う
- * 4. 人物モデル動作データをSIGVerseに送信し、SIGViewer上のアバターを動かす（同時に蓄積プログラムではデータの蓄積を行っている）
- * 5. 描画処理終了後、再度TCPサーバとして待機し、TCPクライアント(蓄積側)からの接続要求を待つ
+ * ＜手本動作収録の流れ＞
+ * 1. Perception Neuronを準備し、被験者は装着する。
+ * 2. 手本動作収録モードでプログラムを起動する。
+ * 3. 収録を開始して、何らかの手本動作を行う。
+ * 4. 'q'キー押下で収録を終了する。（或いは指定した時間経過で終了）
+ * 
+ * ＜真似動作収録の流れ＞
+ * 0. 事前に手本動作を収録する。
+ * 1. SIGServer(AvatarControllerByPerceptionNeuronAndOculusRiftDK2コントローラ)、SIGViewer、Oculus Rift DK2、Perception Neuronを準備する。
+ * 2. 被験者はPerception Neuronを装着し、Oculus Rift DK2を被る。
+ * 2. 真似動作収録モードでプログラムを起動する。
+ * 3. 収録を開始すると、SIGVerse上のアバターが手本動作を行うので、その真似を行う。
+ * 4. 手本動作が終了すると、自動的に収録が終了する。
  *
  * ＜引数＞
- * 第1引数：IPアドレス、第2引数：ポート番号
+ * ・手本動作収録の場合：無し
+ * ・真似動作収録の場合：第1引数：SIGServer IPアドレス、第2引数：SIGServer ポート番号
  * 
  * ＜その他＞
  * ・設定ファイル名は、ImitationMotionAccumulator.ini
- * ・処理終了後は、再びTCPクライアントからの接続要求の待ち受けを開始する
- * ・設定ファイルのcmn.motion_data_file_pathにファイルパスを設定した場合、データベースではなく当該ファイルからモデル動作情報を取得する
+ * ・収録は基本的に連続で行うことが出来るが、収録モードの変更は不可能なので、プログラムを再起動する必要がある。
+ * ・設定ファイルのimitation.motion_data_file_pathにファイルパスを設定した場合、データベースではなく当該ファイルから手本動作を取得する
  */
 #include <SIGService/SIGService.h>
 #include <sigverse/plugin/plugin/common/CheckRecvSIGServiceData.h>
 #include <embodied_brain/imitation_motion_accumulator.h>
 
-#include <embodied_brain/avatar/avatar_controller.h>
 #include <embodied_brain/common/param.h>
 #include <embodied_brain/file/file_manager.h>
 
@@ -50,10 +54,10 @@
 
 #include <boost/thread.hpp>
 #include <boost/thread/thread.hpp>
+#include <boost/bind.hpp>
 
 ///@brief Parameter file name.
 const std::string Param::PARAM_FILE_NAME = "ImitationMotionAccumulator.ini";
-//const std::string Param::PARAM_FILE_NAME = ".\\ImitationMotionAccumulator.ini";
 
 std::string Param::dbHost;
 int         Param::dbPort;
@@ -91,30 +95,6 @@ Param::Mode Param::mode;
  */
 int ImitationMotionAccumulator::run(int argc, char **argv)
 {
-	//コンフィグファイル読み込み
-	std::cout << "■ コンフィグファイル読込 開始 ■" << std::endl;
-	Param::readConfigFile();
-
-	char argSigAddr[128]; //SIGVerse IPアドレス
-	int argSigPortNum;    //SIGVerse ポート番号
-
-	if (Param::getMode()==Param::Imitation)
-	{
-		if(argc == 3) 
-		{
-			sprintf_s(argSigAddr, 128, "%s",argv[1]);
-			argSigPortNum  = atoi(argv[2]);
-
-			std::cout << "Connect to server [" <<argSigAddr << "]\n";
-			std::cout << "Portnumber [" << argSigPortNum << "]\n\n";
-		}
-		else
-		{
-			std::cout << "引数不正です" << std::endl;
-			return(-1);
-		}
-	}
-
 	/*
 	 * Perception Neuron関連の初期化
 	 */
@@ -139,90 +119,163 @@ int ImitationMotionAccumulator::run(int argc, char **argv)
 	BRRegisterSocketStatusCallback(this, ImitationMotionAccumulator::socketStatusChanged);
 
 
+	AvatarController avatarController;
 
-	std::cout << "■ データベースの重複チェック 開始 ■" << std::endl;
-	//データベースのID重複チェック
-	PerceptionNeuronDAO::duplicationCheck(Param::getImiUserId());
+	// ★★★★ メインループ 開始 ★★★★
+	std::string inputKey;
 
-
-	AvatarController avatarController; 
-
-	if (Param::getMode()==Param::Mode::Imitation)
+	while (true)
 	{
-		std::cout << "■ SIGVerseへの接続 開始 ■" << std::endl;
-		//データベースのID重複チェック（重複があった場合、exceptionをthrowする）
-		PmsImitationDAO::duplicationCheck(Param::getImiImitationGroupId(), Param::getImiImitationRecType());
+		// 収録の開始要否をユーザに問う
+		inputKey = "";
+
+		if (inputKey.compare("y") != 0 && inputKey.compare("n") != 0)
+		{
+			std::cout << std::endl << "★★ 収録を行いますか？(y/n)★★ ："; std::cin >> inputKey;
+		}
+
+		if (inputKey.compare("y") == 0)
+		{
+			// 処理続行
+		}
+		else if (inputKey.compare("n") == 0)
+		{
+			break;
+		}
+		else
+		{
+			continue;
+		}
 
 		/*
-		 * 手本モーションIDのモデル動作情報を取得
+		 * コンフィグファイル読み込み
+		 *   （収録の度にコンフィグファイルを変更し、読みなおすことが可能。但し現状、収録モードは変更不可。再起動が必要）
 		 */
-		std::list<PerceptionNeuronDAO::TimeSeries_t> motionData = this->getMotionDataFromDBorFile(std::to_string(Param::getImiImitationOriginRecId()));
+		std::cout << "■ コンフィグファイル読込 開始 ■" << std::endl;
+		Param::readConfigFile();
+
+		char argSigAddr[128]; //SIGVerse IPアドレス
+		int  argSigPortNum;   //SIGVerse ポート番号
+
+		if (Param::getMode()==Param::Imitation)
+		{
+			if(argc == 3) 
+			{
+				sprintf_s(argSigAddr, 128, "%s",argv[1]);
+				argSigPortNum  = atoi(argv[2]);
+
+				std::cout << "Connect to server [" <<argSigAddr << "]\n";
+				std::cout << "Portnumber [" << argSigPortNum << "]\n\n";
+			}
+			else
+			{
+				std::cout << "引数不正です" << std::endl;
+				return(EXIT_FAILURE);
+			}
+		}
+
+		std::cout << "■ データベースの重複チェック 開始 ■" << std::endl;
+		//データベースのID重複チェック
+		if (!PerceptionNeuronDAO::duplicationCheck(Param::getImiRecId())){ continue; }
+
+
+		// 真似動作収録時は、手本動作をDBから取得したり、SIGServerに接続する必要がある
+		if (Param::getMode() == Param::Mode::Imitation)
+		{
+			std::cout << "■ SIGVerseへの接続 開始 ■" << std::endl;
+			//データベースのID重複チェック
+			if (!PmsImitationDAO::duplicationCheck(Param::getImiImitationGroupId(), Param::getImiImitationRecType())){ continue; }
+
+			/*
+			 * 手本の動作情報を取得
+			 */
+			std::list<PerceptionNeuronDAO::TimeSeries_t> motionData = this->getMotionDataFromDBorFile(std::to_string(Param::getImiImitationOriginRecId()));
+
+			//DBから取得した手本動作情報を使用してSIGVerseへ送信する電文リストを作成する
+			avatarController.makeTelegramForAvatar(motionData, this->generateMessageHeader());
+
+			//不要になった動作情報リストの全要素を削除
+			motionData.clear();
+
+			/*
+			 * SIGVerseに接続する
+			 */
+			if (!avatarController.isConnectedToSIGServer())
+			{
+				//接続
+				avatarController.connectSIGServer(argSigAddr, argSigPortNum);
+
+				//SIGVerseからの定期データ受信スレッド実行
+				avatarController.checkRecvSIGServiceData();
+			}
+		}
+
+
+		std::cout << "■ 収録 開始 ■" << std::endl;
 
 		/*
-		 * SIGVerseに接続
-		 *
-		 * ・DBから取得したモデル動作情報からSIGVerseへ送信する電文リストを作成する
-		 * ・SIGVerseに接続する
+		 * カウントダウンを表示
 		 */
-		//接続
-		avatarController.connectSIGServer(argSigAddr, argSigPortNum);
+		int showCnt = 10;
 
-		//SIGVerseからの定期データ受信スレッド実行
-		avatarController.checkRecvSIGServiceData();
+		while (showCnt > 0)
+		{
+			std::cout << "収録開始 " << showCnt << " 秒前" << std::endl;
 
-		//電文作成
-		avatarController.makeTelegramForAvatar(motionData);
+			Sleep(1000); //１秒スリープ
 
-		//不要になった動作情報リストの全要素を削除
-		motionData.clear();
+			showCnt--;
+		}
+
+		std::cout << "収録開始！" << std::endl;
+		if (Param::getMode() == Param::Mode::Origin) { std::cout << "('q'キー押下で終了)" << std::endl; }
+
+
+		/*
+		 * 真似動作収録時は、別スレッドでSIGVerseアバターに手本動作を送信する
+		 */
+		boost::thread thSendMotionDataToSIGVerse;
+
+		if (Param::getMode() == Param::Mode::Imitation)
+		{
+			avatarController.replaying = true;
+
+			//アバターに電文を送って操作
+			thSendMotionDataToSIGVerse = boost::thread(&AvatarController::sendMotionDataToSIGVerse, &avatarController);
+		}
+
+		/*
+		 * 動作情報取得、データベースへの蓄積、ファイル出力処理の開始
+		 */
+		this->accumulateMotionData(avatarController);
+
+		if (Param::getMode() == Param::Mode::Imitation){ thSendMotionDataToSIGVerse.join(); }
+
+		std::cout << "■ 収録終了 ■" << std::endl;
 	}
 
+	// ★★★★ メインループ 終了 ★★★★
 
-	std::cout << "■ 収録 開始 ■" << std::endl;
+	std::cout << "★★ プログラム終了 ★★" << std::endl << std::endl;
 
-	//カウントダウンを描画
-	int showCnt = 10;
-
-	while (showCnt > 0)
-	{
-		std::cout << "収録開始 " << showCnt << " 秒前" << std::endl;
-
-		Sleep(1000); //１秒スリープ
-
-		showCnt--;
-	}
-
-	std::cout << "収録開始！('q'キー押下で終了)" << std::endl;
-
-	//人物モーション情報取得、データベース蓄積、ファイル出力処理の開始
-	this->accumulateMotionData();
-
-	if (Param::getMode() == Param::Mode::Imitation)
-	{
-		//アバターに電文を送って操作
-		avatarController.sendMotionDataToSIGVerse();
-
-		//SIGServerからの切断
-		avatarController.disconnectFromAllController();
-	}
+	//SIGServerからの切断
+	if (Param::getMode() == Param::Mode::Imitation) { avatarController.disconnectFromAllController(); }
 
 	// close socket
 	BRCloseSocket(sockRefBvh);
 
-	free(this->latestSensorData.bvhData.data);
+	std::free(this->latestSensorData.bvhData.data);
 
 	// Windows での終了設定
 	WSACleanup();
-
-	std::cout << "■ 収録終了 ■" << std::endl;
 
 	return EXIT_SUCCESS;
 }
 
 
-
-
-
+/*
+ * Perception Neuronから動作情報を受信する、コールバック関数
+ */
 void __stdcall ImitationMotionAccumulator::bvhFrameDataReceived(void* customedObj, SOCKET_REF sender, BvhDataHeader* header, float* data)
 {
 	ImitationMotionAccumulator* pthis = (ImitationMotionAccumulator*)customedObj;
@@ -231,6 +284,9 @@ void __stdcall ImitationMotionAccumulator::bvhFrameDataReceived(void* customedOb
 }
 
 
+/*
+ * Perception Neuronから受信した最新の動作情報を、共有メモリに保存する
+ */
 void ImitationMotionAccumulator::updateBvhData(void* customedObj, SOCKET_REF sender, BvhDataHeader* header, float* data)
 {
 	ImitationMotionAccumulator* pthis = (ImitationMotionAccumulator*)customedObj;
@@ -246,16 +302,12 @@ void ImitationMotionAccumulator::updateBvhData(void* customedObj, SOCKET_REF sen
 	pthis->latestSensorData.bvhData.dataCount     = header->DataCount;
 
 	memcpy(pthis->latestSensorData.bvhData.data, data, header->DataCount * sizeof(float));
-
-//	pthis->latestSensorData = sensorData;
-
-//	std::cout << "update bvh data." << std::endl;
 }
 
 
 
 /*
- * 動作情報を取得する
+ * 手本動作情報をDB (or ファイル) から取得する
  */
 std::list<PerceptionNeuronDAO::TimeSeries_t> ImitationMotionAccumulator::getMotionDataFromDBorFile(const std::string &recIdStr)
 {
@@ -264,31 +316,29 @@ std::list<PerceptionNeuronDAO::TimeSeries_t> ImitationMotionAccumulator::getMoti
 
 	if(Param::getImiMotionDataFilePath()=="")
 	{
-		//データベースからモデル動作情報を取得
+		//データベースから動作情報を取得
 		motionDataNum = PerceptionNeuronDAO::selectMotionData(motionInfo, recIdStr);
 	}
 	else
 	{
-		//ファイルからモデル動作情報を取得
+		//ファイルから動作情報を取得
 		FileManager fileManager;
 		motionDataNum = fileManager.getMotionData(motionInfo, Param::getImiMotionDataFilePath(), recIdStr);
 	}
 	if(motionDataNum==0)
 	{
 		std::cout << "データが１件も無いため終了します。" << std::endl;
-		exit(-1);
+		exit(EXIT_FAILURE);
 	}
 
 	return motionInfo;
 }
 
 
-
-
 /*
- * Perception Neuronから人物モーション情報を取得し、データベースへの追加とファイル出力を行う
+ * Perception Neuronから動作情報を取得・蓄積し、データベースへの追加とファイル出力を行う
  */
-void ImitationMotionAccumulator::accumulateMotionData()
+void ImitationMotionAccumulator::accumulateMotionData(AvatarController &avatarController)
 {
 	PerceptionNeuronDAO::DataSet motionSet;
 
@@ -341,7 +391,7 @@ void ImitationMotionAccumulator::accumulateMotionData()
 	QueryPerformanceCounter(&startLi);
 
 	/*
-	 * 特定の条件が満たされるまで、Perception Neuronの人物モーション情報をメモリに蓄積し続ける
+	 * 特定の条件が満たされるまで、Perception Neuronの動作情報をメモリに蓄積し続ける
 	 */
 	while (true)
 	{
@@ -353,7 +403,7 @@ void ImitationMotionAccumulator::accumulateMotionData()
 		//データ蓄積
 		if (elapsedTime >= accumNextTime)
 		{
-			//人物モーション情報をメモリに蓄積
+			//動作情報をメモリに蓄積
 			this->accumulate((int)elapsedTime);
 
 			//次回データ蓄積時間を算出
@@ -382,8 +432,8 @@ void ImitationMotionAccumulator::accumulateMotionData()
 			}
 		}
 
-		//最大収録時間を経過したら処理終了
-		if (elapsedTime > maxTime)
+		//最大収録時間を経過するか、手本動作の送信が終了したら、蓄積終了
+		if (elapsedTime > maxTime || !avatarController.replaying)
 		{
 			break;
 		}
@@ -401,7 +451,6 @@ void ImitationMotionAccumulator::accumulateMotionData()
 	 */
 	std::map<int, PerceptionNeuronSensorData>::iterator it = this->accumulatingSensorDataMap.begin();
 
-	//PreparedStatementを使用して複数件のレコードをINSERT
 	while (it != this->accumulatingSensorDataMap.end())
 	{
 		PerceptionNeuronDAO::TimeSeries_t posture;
@@ -410,8 +459,6 @@ void ImitationMotionAccumulator::accumulateMotionData()
 		posture.hips_pos.x  = ((*it).second).bvhData.data[0];
 		posture.hips_pos.y  = ((*it).second).bvhData.data[1];
 		posture.hips_pos.z  = ((*it).second).bvhData.data[2];
-
-//		std::cout << "1: elapsedTime:" << posture.elapsedTime << ", data[0]:" << ((*it).second).bvhData.data[0] << std::endl;
 
 		for (int i = 0; i < NeuronBVH::BonesType::BonesTypeCount; i++)
 		{
@@ -438,10 +485,12 @@ void ImitationMotionAccumulator::accumulateMotionData()
 	imitationInfo.conditionPulseNumber    = Param::getImiDbImitationConditionPulseNumber();
 	imitationInfo.memo                    = Param::getImiDbImitationMemo();
 
+	// 少しだけキー入力待機
 	Sleep(500);
 
+
 	/*
-	 * 取得したPerception Neuronの人物モーション情報をデータベースに追加
+	 * 取得したPerception Neuronの動作情報をデータベースに追加
 	 */
 	std::string inputKey;
 
@@ -452,10 +501,12 @@ void ImitationMotionAccumulator::accumulateMotionData()
 
 	if (inputKey.compare("y") == 0)
 	{
+		// Perception Neuron動作関連
 		PerceptionNeuronDAO::insertDatabaseExec(motionSet);
 
 		if (Param::getMode() == Param::Mode::Imitation)
 		{
+			// 真似動作関連
 			PmsImitationDAO::insertDatabaseExec(imitationInfo);
 		}
 	}
@@ -466,19 +517,21 @@ void ImitationMotionAccumulator::accumulateMotionData()
 
 
 	/*
-	 * 取得したPerception Neuronの人物モーション情報をファイル出力
+	 * 取得したPerception Neuronの動作情報をファイル出力
 	 */
 	FileManager fileManager;
 	fileManager.outputDataFile(motionSet, imitationInfo);
+
+	this->accumulatingSensorDataMap.clear();
 }
 
 
 /*
- * 人物モーション情報をメモリに蓄積
+ * 最新の動作情報を共有メモリに保存
  */
 void ImitationMotionAccumulator::accumulate(const int elapsedTime)
 {
-	// 排他制御
+	// スレッド排他制御
 	std::lock_guard<std::mutex> lock(this->mtx4LatestSensorData);
 
 	PerceptionNeuronSensorData sensorData;
@@ -487,10 +540,6 @@ void ImitationMotionAccumulator::accumulate(const int elapsedTime)
 	sensorData.bvhData.dataCount = this->latestSensorData.bvhData.dataCount;
 	memcpy(sensorData.bvhData.data, this->latestSensorData.bvhData.data, this->latestSensorData.bvhData.dataCount * sizeof(float));
 
-	//モーション情報をマップに保持する
+	//最新の動作情報を共有メモリのマップに保持する
 	this->accumulatingSensorDataMap.insert( make_pair(elapsedTime, sensorData));
-
-//	std::cout << this->latestSensorData.bvhData.dataCount << ";, data[0]:" << this->latestSensorData.bvhData.data[0] << ", data[1]:" << this->latestSensorData.bvhData.data[1] << ", data[2]:" << this->latestSensorData.bvhData.data[2] << std::endl;
-
-//	this->latestSensorData = PerceptionNeuronSensorData();
 }

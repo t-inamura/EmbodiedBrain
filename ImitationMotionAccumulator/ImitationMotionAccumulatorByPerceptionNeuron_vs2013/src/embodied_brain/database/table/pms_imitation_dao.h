@@ -9,7 +9,7 @@
 #include <cppconn/prepared_statement.h>
 
 /*
- * MySQL操作クラス
+ * 真似情報関連テーブル操作クラス
  */
 class PmsImitationDAO
 {
@@ -29,7 +29,7 @@ public:
 	};
 
 public:
-	static void duplicationCheck(const int groupId, const int recType);
+	static bool duplicationCheck(const int groupId, const int recType);
 	static void insertDatabase(const PmsImitationDAO::DataSet &motionInfo);
 	static void insertDatabaseExec(const PmsImitationDAO::DataSet &motionInfo);
 	static void insert(sql::Connection *con, const PmsImitationDAO::DataSet &motionInfo);

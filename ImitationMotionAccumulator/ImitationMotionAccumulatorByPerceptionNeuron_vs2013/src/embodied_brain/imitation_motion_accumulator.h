@@ -9,9 +9,10 @@
 #include <embodied_brain/database/perception_neuron_db.h>
 #include <embodied_brain/database/table/perception_neuron_dao.h>
 #include <embodied_brain/database/table/pms_imitation_dao.h>
+#include <embodied_brain/avatar/avatar_controller.h>
 
 /*
- * PSMove操作履歴蓄積プログラム(アバター描画側)クラス
+ * 真似動作収録クラス
  */
 class ImitationMotionAccumulator : public PerceptionNeuronDevice
 {
@@ -20,40 +21,14 @@ protected :
 
 	std::list<PerceptionNeuronDAO::TimeSeries_t> getMotionDataFromDBorFile(const std::string &recIdStr);
 
-	void accumulateMotionData();
+	void accumulateMotionData(AvatarController &avatarController);
 	void accumulate(const int elapsedTime);
 
 	PerceptionNeuronSensorData latestSensorData;
 	std::map<int, PerceptionNeuronSensorData> accumulatingSensorDataMap;
 
-	
-	std::list<PerceptionNeuronDAO::TimeSeries_t> originalPerceptionNeuronTimeSeries;
-
-//	PerceptionNeuronDAO::DataSet imitationMotionData;
-
-	//PerceptionNeuronDAO imitationMotionData;
-
-	//Summary_t summary;
-	//std::list<TimeSeries_t> timeSeries;
-
-
-
-	//int    recId;
-	//double maxTime;
-
-	////MySQL関連
-	//PerceptionNeuronDAO perceptionNeuronDAO;
-
 	std::mutex mtx4LatestSensorData;
 
-//	//モデル動作情報テーブルクラス
-//	MotionInfoOfModelDAO motionInfoOfModelDAO;
-//
-//	アバター操作クラス
-//	AvatarController avatarController;
-//
-//	std::list<AvatarController::MotionInfo> getMotionData(const std::string &motionIdStr);
-//
 public:
 	///@brief Callback function for receiving BVH data.
 	static void __stdcall bvhFrameDataReceived(void* customedObj, SOCKET_REF sender, BvhDataHeader* header, float* data);

@@ -28,18 +28,10 @@ private:
 		std::string motionInfoStr;
 	};
 
-	//typedef std::map<std::string, Quaternion> QMap;
-
-	//bool diffVec(XnPoint3D &rvec, const XnSkeletonJointPosition &jvec, const XnSkeletonJointPosition &kvec);
-	//Quaternion calcQuaternion(const XnPoint3D &kvec, const XnPoint3D &svec);
-	//void rotVec(XnPoint3D &v, const Quaternion &q);
-	//XnPoint3D getSigVec(int sigvec);
-	std::string floatToString(const float x);
-	//std::string getStringFromQuaternion(const std::string &jname, const Quaternion &q);
-//	Quaternion multiQuaternion(const Quaternion &p, const Quaternion &q);
+//	std::string floatToString(const float x);
 
 	//SIGService
-	sigverse::SIGService *m_srv;
+	sigverse::SIGService *m_srv = NULL;
 
 	//SIGVerse送信用動作情報電文リスト
 	std::list<MotionInfoTelegram> motionInfoTelegramList;
@@ -50,8 +42,11 @@ public:
 	void disconnectFromAllController();
 	void checkRecvSIGServiceData();
 
-	void makeTelegramForAvatar(const std::list<PerceptionNeuronDAO::TimeSeries_t> &motionData);
+	void makeTelegramForAvatar(const std::list<PerceptionNeuronDAO::TimeSeries_t> &motionData, const std::string &msgHeader);
 	void sendMotionDataToSIGVerse();
+	bool isConnectedToSIGServer();
+
+	bool replaying;
 };
 
 #endif //EMBODIED_BRAIN_AVATAR_CONTROLLER_H

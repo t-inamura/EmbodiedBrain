@@ -17,8 +17,7 @@
 #include <embodied_brain/file/file_manager.h>
 
 /*
- * ファイルからモデル動作データを取得する
- * （本プログラムではmotionElapsedTimeListは未使用）
+ * ファイルから動作データを取得する
  */
 int  FileManager::getMotionData(std::list<PerceptionNeuronDAO::TimeSeries_t> &timeSeries, const std::string &fileName, const std::string &recId)
 {
@@ -30,11 +29,10 @@ int  FileManager::getMotionData(std::list<PerceptionNeuronDAO::TimeSeries_t> &ti
 		boost::regex delimiter("\t");
 		int jointDataNum = 3;
 
-		std::cout << "◆モデル動作データ取得　－開始－◆" << std::endl;
+		std::cout << "◆動作データ取得　－開始－◆" << std::endl;
 
 		/*
-		 * ファイルからモデル動作データ取得
-		 * （ファイルはモデル動作情報テーブルと同じフォーマットでタブ区切り）
+		 * ファイルから動作データ取得
 		 */
 		startTime = timeGetTime();
 
@@ -52,7 +50,7 @@ int  FileManager::getMotionData(std::list<PerceptionNeuronDAO::TimeSeries_t> &ti
 			if(recId!=results[0])
 			{
 				std::cout << "ファイル内に、引数で指定した動作IDと異なる動作IDが存在したため終了します。" << std::endl;
-				exit(-1);
+				exit(EXIT_FAILURE);
 			}
 
 			motion.recId       = std::atoi(results[0].c_str());
@@ -163,7 +161,7 @@ void FileManager::setJointPosition(PerceptionNeuronSensorData::PerceptionNeuronB
 
 
 /*
- * 人物モーション情報をファイル出力
+ * 動作情報をファイル出力
  */
 void FileManager::outputDataFile(const PerceptionNeuronDAO::DataSet &motionData, const PmsImitationDAO::DataSet &imitationInfo)
 {
@@ -192,7 +190,7 @@ void FileManager::outputDataFile(const PerceptionNeuronDAO::DataSet &motionData,
 }
 
 /*
- * 人物モーション情報をファイル出力（実行部）
+ * 動作情報をファイル出力（実行部）
  */
 void FileManager::outputDataFileExec(const PerceptionNeuronDAO::DataSet &motionData, const PmsImitationDAO::DataSet &imitationInfo)
 {
