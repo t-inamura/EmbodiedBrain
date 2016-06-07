@@ -4,15 +4,16 @@
  * ＜流れ＞
  * 1. コンソールからのコマンド入力で、メンテナンスしたいテーブルを選択させる
  *    　メンテナンス対象テーブルは以下
- *    　　モデル動作情報関連テーブル(m_motion_info_of_model, m_motion_info_of_model_summary)
- *    　　PSMove操作履歴関連テーブル(t_psmove_operation_history, t_psmove_operation_history_summary)
+ *        ・Perception Neuron動作サマリテーブル(perception_neuron_motions_summary)
+ *        ・Perception Neuron動作時系列テーブル(perception_neuron_motions_time_series)
+ *        ・PMS実験_真似情報テーブル(pms_imitation_info)
  * 2. 指定したテーブルについて、情報表示、更新、削除 等をコンソールからの簡易なコマンド入力で行う
  *
  * ＜引数＞
  * なし
  * 
  * ＜その他＞
- * ・設定ファイル名は、config.ini
+ * ・設定ファイル名は、ManageRecordedDataOnMySQL.ini
  */
 #include <embodied_brain/common/Param.h>
 #include <embodied_brain/manage_recorded_data_on_mysql.h>
