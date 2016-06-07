@@ -6,12 +6,10 @@
  */
 class ManageRecordedDataOnMySQL
 {
-public:
-	static const int         MAX_LINE = 100;
-	static const std::string DETAIL_TBL;
-	static const std::string SUMMARY_TBL;
-	static const std::string IMITATION_TBL;
+private:
+	void printHelp();
 
+public:
 	void run();
 };
 

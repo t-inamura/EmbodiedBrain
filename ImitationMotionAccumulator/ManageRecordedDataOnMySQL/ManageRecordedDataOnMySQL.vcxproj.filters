@@ -2,13 +2,11 @@
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
     <ClInclude Include="src\embodied_brain\common\param.h" />
-    <ClInclude Include="src\embodied_brain\database\ManagePSMoveOperationHistory.h" />
     <ClInclude Include="src\embodied_brain\database\database_dao.h" />
     <ClInclude Include="src\embodied_brain\manage_recorded_data_on_mysql.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="src\embodied_brain\common\param.cpp" />
-    <ClCompile Include="src\embodied_brain\database\ManagePSMoveOperationHistory.cpp" />
     <ClCompile Include="src\embodied_brain\main.cpp" />
     <ClCompile Include="src\embodied_brain\database\database_dao.cpp" />
     <ClCompile Include="src\embodied_brain\manage_recorded_data_on_mysql.cpp" />

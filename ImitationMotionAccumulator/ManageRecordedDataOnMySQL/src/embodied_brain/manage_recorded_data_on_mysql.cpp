@@ -13,10 +13,9 @@
 #include <boost/foreach.hpp>
 
 
-const int         ManageRecordedDataOnMySQL::MAX_LINE      = 100;
-const std::string ManageRecordedDataOnMySQL::DETAIL_TBL    = "perception_neuron_motions_time_series";
-const std::string ManageRecordedDataOnMySQL::SUMMARY_TBL   = "perception_neuron_motions_summary";
-const std::string ManageRecordedDataOnMySQL::IMITATION_TBL = "pms_imitation_info";
+const std::string DatabaseDAO::DETAIL_TBL    = "perception_neuron_motions_time_series";
+const std::string DatabaseDAO::SUMMARY_TBL   = "perception_neuron_motions_summary";
+const std::string DatabaseDAO::IMITATION_TBL = "pms_imitation_info";
 
 
 /*
@@ -29,200 +28,236 @@ void ManageRecordedDataOnMySQL::run()
 		typedef boost::char_separator<char> BOOST_CHAR_SEP;
 		typedef boost::tokenizer< BOOST_CHAR_SEP > BOOST_TOKENIZER;
 
-		boost::regex regexSelectPattern       ("l");
-		boost::regex regexSelectWithNumPattern("l +[0-9]{1,9}");
-		boost::regex regexUpdateMidPattern    ("update +[0-9]{1,9} +mid +[0-9]{1,9}");
-		boost::regex regexUpdateMemoPattern   ("update +[0-9]{1,9} +memo .+");
-		boost::regex regexDeletePattern       ("delete +[0-9]{1,9}");
-		boost::regex regexHelpPattern         ("h");
-		boost::regex regexExitPattern         ("q");
+		boost::regex regexSelectPnPattern       ("select pn");
+		boost::regex regexSelectPnWithNumPattern("select pn +[0-9]{1,9}");
+		boost::regex regexSelectImPattern       ("select im");
+		boost::regex regexSelectImWithNumPattern("select im +[0-9]{1,9}");
+		boost::regex regexUpdateMidPattern      ("update +[0-9]{1,9} +[0-9]{1,9}");
+		//boost::regex regexUpdateMidPattern      ("update +[0-9]{1,9} +rid +[0-9]{1,9}");
+		//boost::regex regexUpdateMemoPattern     ("update +[0-9]{1,9} +memo .+");
+		boost::regex regexDeletePattern         ("delete +[0-9]{1,9}");
+		boost::regex regexHelpPattern           ("h");
+		boost::regex regexExitPattern           ("q");
 
 		DatabaseDAO databaseDAO;
 
-		char inputLineAry[MAX_LINE];
+		char inputLineAry[DatabaseDAO::MAX_LINE];
 		BOOST_CHAR_SEP sep(" ");
 
 		std::string inputLine;
 
-		databaseDAO.printHelp();
+		// 使い方表示
+		this->printHelp();
 
 		while (true)
 		{
-			std::cout << "> コマンドを入力してください" << std::endl;
-			std::cout << "> "; std::cin.getline(inputLineAry, MAX_LINE);
+			std::cout << std::endl;
+			std::cout << "> コマンドを入力してください（h :help）" << std::endl;
+			std::cout << "> "; std::cin.getline(inputLineAry, DatabaseDAO::MAX_LINE);
 
 			std::string inputLine = inputLineAry;
 
 			boost::algorithm::trim(inputLine);
 
 			/*
-			 * select
+			 * select pn
 			 */
-			if (regex_match(inputLine, regexSelectPattern))
+			if (regex_match(inputLine, regexSelectPnPattern))
 			{
 				databaseDAO.select();
 			}
 			/*
-			 * select XXX
+			 * select pn XXX
 			 */
-			else if (regex_match(inputLine, regexSelectWithNumPattern))
+			else if (regex_match(inputLine, regexSelectPnWithNumPattern))
 			{
 				BOOST_TOKENIZER tokens(inputLine, sep);
-
 				boost::tokenizer< BOOST_CHAR_SEP >::iterator it = tokens.begin();
 
-				it++; 
+				it++; it++;
 				int printNum = stoi(*it);
 
 				databaseDAO.select(printNum);
 			}
 			/*
-			 * update MMM mid NNN
+			 * select im
+			 */
+			else if (regex_match(inputLine, regexSelectImPattern))
+			{
+				databaseDAO.selectImitation();
+			}
+			/*
+			 * select im XXX
+			 */
+			else if (regex_match(inputLine, regexSelectImWithNumPattern))
+			{
+				BOOST_TOKENIZER tokens(inputLine, sep);
+				boost::tokenizer< BOOST_CHAR_SEP >::iterator it = tokens.begin();
+
+				it++; it++;
+				int printNum = stoi(*it);
+
+				databaseDAO.selectImitation(printNum);
+			}
+			/*
+			 * update RRR NNN
 			 */
 			else if (regex_match(inputLine, regexUpdateMidPattern))
 			{
 				BOOST_TOKENIZER tokens(inputLine, sep);
-
 				boost::tokenizer< BOOST_CHAR_SEP >::iterator it = tokens.begin();
 
 				it++; 
-				std::string motionId = *it;
-				it++; it++;
-				std::string newMotionId = *it;
+				std::string recId = *it;
+				it++; 
+				std::string newRecId = *it;
 
-				if (databaseDAO.selectCount(SUMMARY_TBL, motionId) == 0)
+				// 事前エラーチェック
+				if (databaseDAO.selectCount(DatabaseDAO::SUMMARY_TBL, "rec_id", recId) == 0)
 				{
-					std::cout << "更新元のmotion_id(" + motionId + ")が存在しません。処理終了します。" << std::endl;
+					std::cout << "更新元のrec_id(" + recId + ")が存在しません。処理終了します。" << std::endl;
 					continue;
 				}
 
-				if (databaseDAO.selectCount(SUMMARY_TBL, newMotionId) != 0)
+				if (databaseDAO.selectCount(DatabaseDAO::SUMMARY_TBL, "rec_id", newRecId) != 0)
 				{
-					std::cout << "更新先のmotion_id(" + newMotionId + ")が" + SUMMARY_TBL + "に既に存在します。処理終了します。" << std::endl;
+					std::cout << "更新先のrec_id(" + newRecId + ")が" + DatabaseDAO::SUMMARY_TBL + "に既に存在します。処理終了します。" << std::endl;
 					continue;
 				}
 
-				if (databaseDAO.selectCount(DETAIL_TBL, newMotionId) != 0)
-				{
-					std::cout << "更新先のmotion_id(" + newMotionId + ")が" + DETAIL_TBL + "に既に存在します。処理終了します。" << std::endl;
-					continue;
-				}
+				std::cout << "時系列データのレコード数は、" << databaseDAO.selectCount(DatabaseDAO::DETAIL_TBL, "rec_id", recId) << "件です。" << std::endl;
 
 
-				std::cout << DETAIL_TBL+"中の更新対象レコード数は、" << databaseDAO.selectCount(DETAIL_TBL, motionId) << "件です。" << std::endl;
-
-
-				char inputYN[MAX_LINE];
+				char inputYN[DatabaseDAO::MAX_LINE];
 				std::string inputKey = "";
 
 				while (inputKey.compare("y") != 0 && inputKey.compare("n") != 0)
 				{
-					std::cout << "> motion_id=[" << motionId << "] new motion_id=[" << newMotionId << "]として" + SUMMARY_TBL + "と" + DETAIL_TBL + "を更新しますが宜しいですか？(y/n)：";
-					std::cin.getline(inputYN, MAX_LINE);
+					std::cout << "> rec_id=[" << recId << "] new rec_id=[" << newRecId << "]として更新しますが宜しいですか？(y/n)：";
+					std::cin.getline(inputYN, DatabaseDAO::MAX_LINE);
 					inputKey = inputYN;
 				}
 
 				if (inputKey.compare("y") == 0)
 				{
-					databaseDAO.updateAndDelete("UPDATE " + SUMMARY_TBL + " SET motion_id=" + newMotionId + " WHERE motion_id=" + motionId);
+					int cnt;
 
-					std::cout << SUMMARY_TBL+"のmotion_idを更新しました。" << std::endl;
+					// 真似情報テーブル更新
+					cnt = databaseDAO.updateAndDelete("UPDATE " + DatabaseDAO::IMITATION_TBL + " SET rec_id=" + newRecId + " WHERE rec_id=" + recId);
+					std::cout << DatabaseDAO::IMITATION_TBL+"のrec_id="+recId+"のレコードを" << cnt << "件更新しました。" << std::endl;
+
+					cnt = databaseDAO.updateAndDelete("UPDATE " + DatabaseDAO::IMITATION_TBL + " SET original_rec_id=" + newRecId + " WHERE original_rec_id=" + recId);
+					std::cout << DatabaseDAO::IMITATION_TBL+"のoriginal_rec_id="+recId+"のレコードを" << cnt << "件更新しました。" << std::endl;
 
 
-					std::cout << DETAIL_TBL+"を更新中です。" << std::endl;
+					// Perception Neuron動作サマリテーブル更新
+					cnt = databaseDAO.updateAndDelete("UPDATE " + DatabaseDAO::SUMMARY_TBL + " SET rec_id=" + newRecId + " WHERE rec_id=" + recId);
+					std::cout << DatabaseDAO::SUMMARY_TBL+"のレコードを" << cnt << "件更新しました。" << std::endl;
 
-					int cnt = databaseDAO.updateAndDelete("UPDATE " + DETAIL_TBL + " SET motion_id=" + newMotionId + " WHERE motion_id=" + motionId);
 
-					std::cout << DETAIL_TBL+"のmotion_id="+motionId+"のレコードを" << cnt << "件更新しました。" << std::endl;
+					// Perception Neuron動作時系列テーブル更新
+//					std::cout << DatabaseDAO::DETAIL_TBL+"を更新中です。" << std::endl;
+					cnt = databaseDAO.updateAndDelete("UPDATE " + DatabaseDAO::DETAIL_TBL + " SET rec_id=" + newRecId + " WHERE rec_id=" + recId);
+					std::cout << DatabaseDAO::DETAIL_TBL+"のレコードを" << cnt << "件更新しました。" << std::endl;
 				}
 			}
+			//メモの更新に関しては、真似情報テーブルにしても、Perception Neuron動作サマリテーブルにしても１行しかないため、MySQL Workbenchで直接編集してもらっても大差ない。
+			///*
+			// * update RRR memo NNN
+			// */
+			//else if (regex_match(inputLine, regexUpdateMemoPattern))
+			//{
+			//	BOOST_TOKENIZER tokens(inputLine, sep);
+			//	boost::tokenizer< BOOST_CHAR_SEP >::iterator it = tokens.begin();
+
+			//	it++; 
+			//	std::string recId = *it;
+			//	it++; it++;
+			//	std::string newMemo;
+
+			//	while(it!=tokens.end())
+			//	{
+			//		newMemo += (*it) + " ";
+			//		it++;
+			//	}
+			//	boost::trim(newMemo);
+
+			//	if (databaseDAO.selectCount(DatabaseDAO::SUMMARY_TBL, "rec_id", recId) == 0)
+			//	{
+			//		std::cout << "対象のrec_id(" + recId + ")が存在しません。処理終了します。" << std::endl;
+			//		continue;
+			//	}
+
+			//	char inputYN[DatabaseDAO::MAX_LINE];
+			//	std::string inputKey = "";
+
+			//	while (inputKey.compare("y") != 0 && inputKey.compare("n") != 0)
+			//	{
+			//		std::cout << "> rec_id=[" << recId << "] new memo=[" << newMemo << "]として" + DatabaseDAO::SUMMARY_TBL + "を更新しますが宜しいですか？(y/n)：";
+			//		std::cin.getline(inputYN, DatabaseDAO::MAX_LINE);
+			//		inputKey = inputYN;
+			//	}
+
+			//	if (inputKey.compare("y") == 0)
+			//	{
+			//		databaseDAO.updateAndDelete("UPDATE " + DatabaseDAO::SUMMARY_TBL + " SET memo='" + newMemo + "' WHERE rec_id=" + recId);
+			//		std::cout << DatabaseDAO::SUMMARY_TBL+"のmemoを更新しました。" << std::endl;
+			//	}
+			//}
 			/*
-			 * update MMM memo NNN
-			 */
-			else if (regex_match(inputLine, regexUpdateMemoPattern))
-			{
-				BOOST_TOKENIZER tokens(inputLine, sep);
-
-				boost::tokenizer< BOOST_CHAR_SEP >::iterator it = tokens.begin();
-
-				it++; 
-				std::string motionId = *it;
-				it++; it++;
-				std::string newMemo;
-
-				while(it!=tokens.end())
-				{
-					newMemo += (*it) + " ";
-					it++;
-				}
-				boost::trim(newMemo);
-
-				if (databaseDAO.selectCount(SUMMARY_TBL, motionId) == 0)
-				{
-					std::cout << "対象のmotion_id(" + motionId + ")が存在しません。処理終了します。" << std::endl;
-					continue;
-				}
-
-				char inputYN[MAX_LINE];
-				std::string inputKey = "";
-
-				while (inputKey.compare("y") != 0 && inputKey.compare("n") != 0)
-				{
-					std::cout << "> motion_id=[" << motionId << "] new memo=[" << newMemo << "]として" + SUMMARY_TBL + "を更新しますが宜しいですか？(y/n)：";
-					std::cin.getline(inputYN, MAX_LINE);
-					inputKey = inputYN;
-				}
-
-				if (inputKey.compare("y") == 0)
-				{
-					databaseDAO.updateAndDelete("UPDATE " + SUMMARY_TBL + " SET memo='" + newMemo + "' WHERE motion_id=" + motionId);
-
-					std::cout << SUMMARY_TBL+"のmemoを更新しました。" << std::endl;
-				}
-			}
-			/*
-			 * delete MMM
+			 * delete RRR
 			 */
 			else if (regex_match(inputLine, regexDeletePattern))
 			{
 				BOOST_TOKENIZER tokens(inputLine, sep);
-
 				boost::tokenizer< BOOST_CHAR_SEP >::iterator it = tokens.begin();
 
 				it++;
-				std::string motionId = *it;
+				std::string recId = *it;
 
-				if (databaseDAO.selectCount(SUMMARY_TBL, motionId) == 0)
+				// 事前エラーチェック
+				if (databaseDAO.selectCount(DatabaseDAO::SUMMARY_TBL, "rec_id", recId) == 0)
 				{
-					std::cout << "削除対象のmotion_id(" + motionId + ")が存在しません。処理終了します。" << std::endl;
+					std::cout << "削除対象のrec_id(" + recId + ")が存在しません。処理終了します。" << std::endl;
+					continue;
+				}
+				if (databaseDAO.selectCount(DatabaseDAO::IMITATION_TBL, "original_rec_id", recId) != 0)
+				{
+					std::cout << "削除対象のrec_id(" + recId + ")を手本動作として使用している収録があります。処理終了します。" << std::endl;
 					continue;
 				}
 
-				std::cout << DETAIL_TBL+"中の削除対象レコード数は、" << databaseDAO.selectCount(DETAIL_TBL, motionId) << "件です。" << std::endl;
+				std::cout << "時系列データのレコード数は、" << databaseDAO.selectCount(DatabaseDAO::DETAIL_TBL, "rec_id", recId) << "件です。" << std::endl;
 
 
-				char inputYN[MAX_LINE];
+				char inputYN[DatabaseDAO::MAX_LINE];
 				std::string inputKey = "";
 
 				while (inputKey.compare("y") != 0 && inputKey.compare("n") != 0)
 				{
-					std::cout << "> " + SUMMARY_TBL + "と" + DETAIL_TBL + "からmotion_id=[" << motionId << "]のレコードを削除しますが宜しいですか？(y/n)：";
-					std::cin.getline(inputYN, MAX_LINE);
+					std::cout << "> rec_id=[" << recId << "]のレコードを削除しますが宜しいですか？(y/n)：";
+					std::cin.getline(inputYN, DatabaseDAO::MAX_LINE);
 					inputKey = inputYN;
 				}
 
 				if (inputKey.compare("y") == 0)
 				{
-					databaseDAO.updateAndDelete("DELETE FROM " + SUMMARY_TBL + " WHERE motion_id=" + motionId);
+					int cnt;
 
-					std::cout << SUMMARY_TBL+"のレコードを削除しました。" << std::endl;
+					// 真似情報テーブル更新
+					cnt = databaseDAO.updateAndDelete("DELETE FROM " + DatabaseDAO::IMITATION_TBL + " WHERE rec_id=" + recId);
+					std::cout << DatabaseDAO::IMITATION_TBL+"のレコードを" << cnt << "件削除しました。" << std::endl;
 
 
-					std::cout << DETAIL_TBL+"を削除中です。" << std::endl;
+					// Perception Neuron動作サマリテーブル更新
+					cnt = databaseDAO.updateAndDelete("DELETE FROM " + DatabaseDAO::SUMMARY_TBL + " WHERE rec_id=" + recId);
+					std::cout << DatabaseDAO::SUMMARY_TBL+"のレコードを" << cnt << "件削除しました。" << std::endl;
 
-					int cnt = databaseDAO.updateAndDelete("DELETE FROM " + DETAIL_TBL + " WHERE motion_id=" + motionId);
 
-					std::cout << DETAIL_TBL+"のmotion_id="+motionId+"のレコードを" << cnt << "件削除しました。" << std::endl;
+					// Perception Neuron動作時系列テーブル更新
+//					std::cout << DatabaseDAO::DETAIL_TBL+"を削除中です。" << std::endl;
+					cnt = databaseDAO.updateAndDelete("DELETE FROM " + DatabaseDAO::DETAIL_TBL + " WHERE rec_id=" + recId);
+					std::cout << DatabaseDAO::DETAIL_TBL+"のレコードを" << cnt << "件削除しました。" << std::endl;
 				}
 			}
 			/*
@@ -230,7 +265,7 @@ void ManageRecordedDataOnMySQL::run()
 			 */
 			else if (regex_match(inputLine, regexHelpPattern))
 			{
-				databaseDAO.printHelp();
+				this->printHelp();
 			}
 			/*
 			 * exit
@@ -256,5 +291,28 @@ void ManageRecordedDataOnMySQL::run()
 }
 
 
+/*
+ * ヘルプ表示
+ */
+void ManageRecordedDataOnMySQL::printHelp()
+{
+	std::string printStr = "\n"
+		"　■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■\n"
+		"　■ モデル動作情報関連テーブル操作方法                           ■\n"
+		"　■   select pn          ：PerceptionNeuron表示(全て)            ■\n"
+		"　■   select pn XXX      ：PerceptionNeuron表示(指定件数XXXずつ) ■\n"
+		"　■   select im          ：真似情報表示(全て)                    ■\n"
+		"　■   select im XXX      ：真似情報表示(指定件数XXXずつ)         ■\n"
+		"　■   update RRR NNN     ：変更(rec_id)                          ■\n"
+//		"　■   update RRR memo NNN：変更(memo)                            ■\n"
+		"　■   delete RRR         ：削除                                  ■\n"
+		"　■   h                  ：本操作方法表示                        ■\n"
+		"　■   q                  ：終了                                  ■\n"
+		"　■                                                              ■\n"
+		"　■     (RRR:rec_id, NNN:new rec_id)                             ■\n"
+		"　■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■\n";
+
+	std::cout << printStr;
 }
+
 
