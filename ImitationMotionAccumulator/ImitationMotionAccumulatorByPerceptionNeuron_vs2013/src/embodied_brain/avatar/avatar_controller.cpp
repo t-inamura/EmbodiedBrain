@@ -141,7 +141,7 @@ void AvatarController::sendMotionDataToSIGVerse()
 {
 	try
 	{
-		std::cout << "◆描画　－開始－◆" << std::endl;
+//		std::cout << "◆描画　－開始－◆" << std::endl;
 
 		if(this->motionInfoTelegramList.size()==0)
 		{
