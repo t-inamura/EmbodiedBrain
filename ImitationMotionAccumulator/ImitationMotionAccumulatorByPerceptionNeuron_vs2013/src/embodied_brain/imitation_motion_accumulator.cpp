@@ -193,7 +193,7 @@ int ImitationMotionAccumulator::run(int argc, char **argv)
 			}
 		}
 
-		std::cout << "■ データベースの重複チェック 開始 ■" << std::endl;
+		std::cout << "■ データベースの重複チェック (PerceptionNeuron関連) 開始 ■" << std::endl;
 		//データベースのID重複チェック
 		if (!PerceptionNeuronDAO::duplicationCheck(Param::getImiRecId())){ continue; }
 
@@ -201,7 +201,7 @@ int ImitationMotionAccumulator::run(int argc, char **argv)
 		// 真似動作収録時は、手本動作をDBから取得したり、SIGServerに接続する必要がある
 		if (Param::getMode() == Param::Mode::Imitation)
 		{
-			std::cout << "■ SIGVerseへの接続 開始 ■" << std::endl;
+			std::cout << "■ データベースの重複チェック (PMS真似情報関連) 開始 ■" << std::endl;
 			//データベースのID重複チェック
 			if (!PmsImitationDAO::duplicationCheck(Param::getImiImitationGroupId(), Param::getImiImitationRecType())){ continue; }
 
@@ -216,6 +216,7 @@ int ImitationMotionAccumulator::run(int argc, char **argv)
 			//不要になった動作情報リストの全要素を削除
 			motionData.clear();
 
+			std::cout << "■ SIGVerseへの接続 開始 ■" << std::endl;
 			/*
 			 * SIGVerseに接続する
 			 */

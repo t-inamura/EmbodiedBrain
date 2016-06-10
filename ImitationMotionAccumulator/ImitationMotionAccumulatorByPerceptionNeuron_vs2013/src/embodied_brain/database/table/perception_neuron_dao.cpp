@@ -73,6 +73,10 @@ bool PerceptionNeuronDAO::duplicationCheck(const int recId)
 		{
 			throw std::exception("DBに接続できないため処理中止します。");
 		}
+		else
+		{
+			return true;
+		}
 	}
 	return false;
 }

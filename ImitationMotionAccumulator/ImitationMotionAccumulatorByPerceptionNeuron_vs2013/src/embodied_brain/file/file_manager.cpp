@@ -44,8 +44,6 @@ int  FileManager::getMotionData(std::list<PerceptionNeuronDAO::TimeSeries_t> &ti
 			std::vector<std::string> results;
 			boost::regex_split(back_inserter(results), lineStr, delimiter);
 
-			PerceptionNeuronDAO::TimeSeries_t motion;
-
 			//１件でも動作IDが異なるデータが存在した場合は、強制終了する
 			if(recId!=results[0])
 			{
@@ -53,16 +51,16 @@ int  FileManager::getMotionData(std::list<PerceptionNeuronDAO::TimeSeries_t> &ti
 				exit(EXIT_FAILURE);
 			}
 
+			PerceptionNeuronDAO::TimeSeries_t motion;
+
 			motion.recId       = std::atoi(results[0].c_str());
 			motion.elapsedTime = std::atoi(results[1].c_str());
 
-			int index = 3;
+			motion.hips_pos.x  = (float)atof(results[2].c_str());
+			motion.hips_pos.y  = (float)atof(results[3].c_str());
+			motion.hips_pos.z  = (float)atof(results[4].c_str());
 
-			motion.hips_pos.x  = (float)atof(results[index+0].c_str());
-			motion.hips_pos.y  = (float)atof(results[index+1].c_str());
-			motion.hips_pos.z  = (float)atof(results[index+2].c_str());
-
-			index += 3;
+			int index = 5;
 
 			this->setJointPosition(motion.links[NeuronBVH::BonesType::Hips],              NeuronBVH::BonesType::Hips,              results, index); index+=jointDataNum;
 			this->setJointPosition(motion.links[NeuronBVH::BonesType::RightUpLeg],        NeuronBVH::BonesType::RightUpLeg,        results, index); index+=jointDataNum;
@@ -133,6 +131,11 @@ int  FileManager::getMotionData(std::list<PerceptionNeuronDAO::TimeSeries_t> &ti
 		diffTime = (endTime-startTime)/1000.0;
 
 		std::cout << "レコード数＝" << timeSeries.size() << std::endl;
+
+		if (timeSeries.size() == 0)
+		{
+			std::cout << "データがありません。ファイルパスも確認してください。" << std::endl;
+		}
 
 		fprintf(stdout, "ファイル入力にかかった時間： %8.3f[ms] \n", diffTime);
 

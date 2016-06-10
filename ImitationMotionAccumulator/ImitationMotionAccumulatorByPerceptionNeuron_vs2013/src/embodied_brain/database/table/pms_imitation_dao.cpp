@@ -73,6 +73,10 @@ bool PmsImitationDAO::duplicationCheck(const int groupId, const int recType)
 		{
 			throw std::exception("DBに接続できないため処理中止します。");
 		}
+		else
+		{
+			return true;
+		}
 	}
 	return false;
 }
