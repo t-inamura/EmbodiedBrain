@@ -9,7 +9,6 @@
 #include <embodied_brain/database/perception_neuron_db.h>
 #include <embodied_brain/database/table/perception_neuron_dao.h>
 #include <embodied_brain/database/table/pms_imitation_dao.h>
-#include <embodied_brain/avatar/avatar_controller.h>
 
 /*
  * 共通データクラス

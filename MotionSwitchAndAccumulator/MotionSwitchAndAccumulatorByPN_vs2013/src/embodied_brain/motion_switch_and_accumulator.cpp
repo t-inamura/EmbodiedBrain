@@ -290,7 +290,7 @@ void __stdcall MotionSwitchAndAccumulator::bvhFrameDataReceived(void* customedOb
 {
 	MotionSwitchAndAccumulator* pthis = (MotionSwitchAndAccumulator*)customedObj;
 
-	pthis->perceptionNeuronData.updateBvhData(header, data);
+	pthis->perceptionNeuronData->updateBvhData(header, data);
 }
 
 
@@ -551,5 +551,5 @@ void MotionSwitchAndAccumulator::accumulate(const int elapsedTime)
 	//memcpy(sensorData.bvhData.data, this->latestSensorData.bvhData.data, this->latestSensorData.bvhData.dataCount * sizeof(float));
 
 	//最新の動作情報を共有メモリのマップに保持する
-	this->accumulatingSensorDataMap.insert( make_pair(elapsedTime, this->perceptionNeuronData.getLatestSensorData()));
+	this->accumulatingSensorDataMap.insert( make_pair(elapsedTime, this->perceptionNeuronData->getLatestSensorData()));
 }
