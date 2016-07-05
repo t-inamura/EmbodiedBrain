@@ -3,12 +3,12 @@
  * 
  *    ・動作情報取得には Perception Neuron を使用する。
  *    ・以下の２つの収録モードを用意する。
- *    　　・手本動作収録モード：ユーザに見せるための手本動作を収録するためのモード
- *    　　・真似動作収録モード：手本を見ながら真似した動作を収録するためのモード
- *    ・手本動作収録モード時はPerception Neuronのみ使用し、真似動作収録モード時は、SIGVerse、Oculus Rift DK2、Perception Neuronを使用する。
+ *    　　・偽動作収録モード：ユーザに見せるための偽動作を収録するためのモード
+ *    　　・真似動作収録モード：偽を見ながら真似した動作を収録するためのモード
+ *    ・偽動作収録モード時はPerception Neuronのみ使用し、真似動作収録モード時は、SIGVerse、Oculus Rift DK2、Perception Neuronを使用する。
  *    
  *    
- * ＜手本動作収録の流れ＞
+ * ＜偽動作収録の流れ＞
  *  1. Axis Neuronを起動し、Perceptoin Neuronを接続しておく。
  *  2. コマンドプロンプトから本プログラムを起動する。
  *  3. 収録を行うかの問いに"y"を押下する。
@@ -30,25 +30,25 @@
  *  5. SIGViewer上のカメラをアバター視点に変更し、SIGViewer画面をOculus Riftのモニターに移動する。
  *  6. コマンドプロンプトから本プログラムを起動する。（第一引数：SIGServerのIPアドレス、第二引数：SIGServerのポート番号）
  *  7. 収録を行うかの問いに"y"を押下する。
- *  8. 10秒後に手本動作の配信が行われるため、ユーザはその動作を真似する。
- *     手本動作配信と同時にPerception Neuronから動作収録が開始される。
- *  9. 手本動作の再生が終了すると、収録も終了する。
+ *  8. 10秒後に偽動作の配信が行われるため、ユーザはその動作を真似する。
+ *     偽動作配信と同時にPerception Neuronから動作収録が開始される。
+ *  9. 偽動作の再生が終了すると、収録も終了する。
  * 10. コンソールに、取得したデータをデータベースに蓄積するかの問いに、"y"を押下すると取得データをデータベースに蓄積する。
  * 11. コンソールに、取得したデータをファイル出力するかの問いに、"y"を押下すると取得データをファイル出力する。
  * 12. 上記で１収録が終了し、再度収録を行うかの問いが表示される。
  *     このとき設定ファイルを修正して"y"を押下すれば、再び収録が可能で、連続収録ができる。
  *  
- *   ※ 設定ファイルを修正すれば、連続収録が可能だが、途中で手本動作収録モードに切り替えることは現状不可能。プログラムの再起動が必要。
+ *   ※ 設定ファイルを修正すれば、連続収録が可能だが、途中で偽動作収録モードに切り替えることは現状不可能。プログラムの再起動が必要。
  *   ※ 現状、プログラムを終了すると、SIGVerse環境の再起動も必要。
  *
  * ＜引数＞
- * ・手本動作収録の場合：無し
+ * ・偽動作収録の場合：無し
  * ・真似動作収録の場合：第1引数：SIGServer IPアドレス、第2引数：SIGServer ポート番号
  * 
  * ＜その他＞
  * ・設定ファイル名は、MotionSwitchAndAccumulator.ini
  * ・収録は基本的に連続で行うことが出来るが、収録モードの変更は不可能なので、プログラムを再起動する必要がある。
- * ・設定ファイルのimitation.motion_data_file_pathにファイルパスを設定した場合、データベースではなく当該ファイルから手本動作を取得する
+ * ・設定ファイルのimitation.motion_data_file_pathにファイルパスを設定した場合、データベースではなく当該ファイルから偽動作を取得する
  */
 #include <SIGService/SIGService.h>
 #include <sigverse/plugin/plugin/common/CheckRecvSIGServiceData.h>
@@ -87,24 +87,24 @@ std::string Param::dbPass;
 std::string Param::generalServiceName;
 int         Param::sigAvatarDispInterval;
 
-int         Param::imiAccumInterval;
-std::string Param::imiMotionDataFilePath;
+int         Param::switchAccumInterval;
+std::string Param::switchMotionDataFilePath;
 
-int         Param::imiRecId;
-int         Param::imiOriginMaxTime;
+int         Param::switchRecId;
+int         Param::switchFakeMaxTime;
 
-int         Param::imiImitationGroupId;
+int         Param::switchGroupId;
 int         Param::imiImitationRecType;
-int         Param::imiUserId;
-int         Param::imiImitationOriginRecId;
+int         Param::switchUserId;
+int         Param::switchFakeRecId;
 
-std::string Param::imiDbPerceptionNeuronMemo;
+std::string Param::switchDbPerceptionNeuronMemo;
 float       Param::imiDbImitationConditionPulsePower;
 float       Param::imiDbImitationConditionPulseFrequency;
 int         Param::imiDbImitationConditionPulseDuration;
 int         Param::imiDbImitationConditionPulseInterval;
 int         Param::imiDbImitationConditionPulseNumber;
-std::string Param::imiDbImitationMemo;
+std::string Param::switchDbMswRecordingInfoMemo;
 
 Param::Mode Param::mode;
 
@@ -201,19 +201,19 @@ int MotionSwitchAndAccumulator::run(int argc, char **argv)
 		if (!PerceptionNeuronDAO::duplicationCheck(Param::getImiRecId())){ continue; }
 
 
-		// 真似動作収録時は、手本動作をDBから取得したり、SIGServerに接続する必要がある
+		// 真似動作収録時は、偽動作をDBから取得したり、SIGServerに接続する必要がある
 		if (Param::getMode() == Param::Mode::Experiment)
 		{
 			std::cout << "■ データベースの重複チェック (PMS真似情報関連) 開始 ■" << std::endl;
 			//データベースのID重複チェック
-			if (!PmsImitationDAO::duplicationCheck(Param::getImiImitationGroupId(), Param::getImiImitationRecType())){ continue; }
+			if (!MswRecordingInfoDAO::duplicationCheck(Param::getImiImitationGroupId(), Param::getImiImitationRecType())){ continue; }
 
 			/*
-			 * 手本の動作情報を取得
+			 * 偽の動作情報を取得
 			 */
 			std::list<PerceptionNeuronDAO::TimeSeries_t> motionData = this->getMotionDataFromDBorFile(std::to_string(Param::getImiImitationOriginRecId()));
 
-			//DBから取得した手本動作情報を使用してSIGVerseへ送信する電文リストを作成する
+			//DBから取得した偽動作情報を使用してSIGVerseへ送信する電文リストを作成する
 			avatarController.makeTelegramForAvatar(motionData);
 
 			//不要になった動作情報リストの全要素を削除
@@ -236,19 +236,23 @@ int MotionSwitchAndAccumulator::run(int argc, char **argv)
 
 		std::cout << "■ 開始 ■" << std::endl;
 
-		if (Param::getMode() == Param::Mode::RecFake) { std::cout << "('q'キー押下で終了)" << std::endl; }
+		if (Param::getMode() == Param::Mode::RecFake)
+		{
+			std::cout << "('q'キー押下で終了)" << std::endl;
+		}
+		else
+		{
+			std::cout << "('f'キー押下で fake 動作に切替。'q'キー押下で終了することも可能)" << std::endl;
+		}
 
 
 		/*
-		 * 真似動作収録時は、別スレッドでSIGVerseアバターに手本動作を送信する
+		 * 真似動作収録時は、別スレッドでSIGVerseアバターに偽動作を送信する
 		 */
 		boost::thread thSendMotionDataToSIGVerse;
 
 		if (Param::getMode() == Param::Mode::Experiment)
 		{
-			avatarController.switched  = false;
-			avatarController.replaying = true;
-
 			//アバターに電文を送って操作
 			thSendMotionDataToSIGVerse = boost::thread(&AvatarController::sendMotionDataToSIGVerse, &avatarController);
 		}
@@ -317,7 +321,7 @@ void __stdcall MotionSwitchAndAccumulator::bvhFrameDataReceived(void* customedOb
 
 
 /*
- * 手本動作情報をDB (or ファイル) から取得する
+ * 偽動作情報をDB (or ファイル) から取得する
  */
 std::list<PerceptionNeuronDAO::TimeSeries_t> MotionSwitchAndAccumulator::getMotionDataFromDBorFile(const std::string &recIdStr)
 {
@@ -414,7 +418,17 @@ void MotionSwitchAndAccumulator::accumulateMotionData(AvatarController &avatarCo
 		if (elapsedTime >= accumNextTime)
 		{
 			//動作情報をメモリに蓄積
-			this->accumulate((int)elapsedTime);
+	//		this->accumulate((int)elapsedTime);
+			//最新の動作情報を共有メモリのマップに保持する
+			if (!avatarController.isSwitched)
+			{
+				this->accumulatingBeforeDataMap.insert( make_pair((int)elapsedTime, this->perceptionNeuronData->getLatestSensorData()));
+			}
+			else
+			{
+				this->accumulatingAfterDataMap.insert( make_pair((int)elapsedTime, this->perceptionNeuronData->getLatestSensorData()));
+			}
+
 
 			//次回データ蓄積時間を算出
 			while (elapsedTime >= accumNextTime)
@@ -428,10 +442,16 @@ void MotionSwitchAndAccumulator::accumulateMotionData(AvatarController &avatarCo
 		if (elapsedTime >= waitKeyNextTime)
 		{
 			//キー"q"が入力されたら処理終了
-			if (GetAsyncKeyState('Q'))
+			if (avatarController.isSwitched && GetAsyncKeyState('Q'))
 			{
 				while (_kbhit() != 0){ _getch(); } //キー入力をクリア
 				break;
+			}
+
+			//キー"f"が入力されたら、fake 動作に切替
+			if (GetAsyncKeyState('F'))
+			{
+				avatarController.isSwitched = true;
 			}
 
 			//次回キー入力待ち時間を算出
@@ -442,8 +462,8 @@ void MotionSwitchAndAccumulator::accumulateMotionData(AvatarController &avatarCo
 			}
 		}
 
-		//最大収録時間を経過するか、手本動作の送信が終了したら、蓄積終了
-		if (elapsedTime > maxTime || !avatarController.replaying)
+		//最大収録時間を経過するか、偽動作の送信が終了したら、蓄積終了
+		if (elapsedTime > maxTime || !avatarController.isReplaying)
 		{
 			break;
 		}
@@ -459,9 +479,9 @@ void MotionSwitchAndAccumulator::accumulateMotionData(AvatarController &avatarCo
 	/*
 	 * 取得したモーションデータを、DataSet型に入れなおす
 	 */
-	std::map<int, PerceptionNeuronSensorData>::iterator it = this->accumulatingSensorDataMap.begin();
+	std::map<int, PerceptionNeuronSensorData>::iterator it = this->accumulatingBeforeDataMap.begin();
 
-	while (it != this->accumulatingSensorDataMap.end())
+	while (it != this->accumulatingBeforeDataMap.end())
 	{
 		PerceptionNeuronDAO::TimeSeries_t posture;
 		posture.recId       = Param::getImiRecId();
@@ -483,17 +503,19 @@ void MotionSwitchAndAccumulator::accumulateMotionData(AvatarController &avatarCo
 		it++;
 	}
 
-	PmsImitationDAO::DataSet imitationInfo;
-	imitationInfo.groupId = Param::getImiImitationGroupId();
-	imitationInfo.recType = Param::getImiImitationRecType();
-	imitationInfo.recId = Param::getImiRecId();
-	imitationInfo.originalRecId = Param::getImiImitationOriginRecId();
-	imitationInfo.conditionPulsePower     = Param::getImiDbImitationConditionPulsePower();
-	imitationInfo.conditionPulseFrequency = Param::getImiDbImitationConditionPulseFrequency();
-	imitationInfo.conditionPulseDuration  = Param::getImiDbImitationConditionPulseDuration();
-	imitationInfo.conditionPulseInterval  = Param::getImiDbImitationConditionPulseInterval();
-	imitationInfo.conditionPulseNumber    = Param::getImiDbImitationConditionPulseNumber();
-	imitationInfo.memo                    = Param::getImiDbImitationMemo();
+	/*
+	 * 動作切替情報作成
+	 */
+	MswRecordingInfoDAO::DataSet imitationInfo;
+
+	if (Param::getMode() == Param::Mode::Experiment)
+	{
+		imitationInfo.groupId = Param::getImiImitationGroupId();
+		imitationInfo.beforeSwitchingRecId = Param::getImiImitationRecType();
+		imitationInfo.afterSwitchingRecId = Param::getImiRecId();
+		imitationInfo.afterSwitchingFakeRecId = Param::getImiImitationOriginRecId();
+		imitationInfo.memo = Param::getImiDbImitationMemo();
+	}
 
 	// 少しだけキー入力待機
 	Sleep(500);
@@ -517,7 +539,7 @@ void MotionSwitchAndAccumulator::accumulateMotionData(AvatarController &avatarCo
 		if (Param::getMode() == Param::Mode::Experiment)
 		{
 			// 真似動作関連
-			PmsImitationDAO::insertDatabaseExec(imitationInfo);
+			MswRecordingInfoDAO::insertDatabaseExec(imitationInfo);
 		}
 	}
 	else
@@ -532,24 +554,24 @@ void MotionSwitchAndAccumulator::accumulateMotionData(AvatarController &avatarCo
 	FileManager fileManager;
 	fileManager.outputDataFile(motionSet, imitationInfo);
 
-	this->accumulatingSensorDataMap.clear();
+	this->accumulatingBeforeDataMap.clear();
 }
 
 
-/*
- * 最新の動作情報を共有メモリに保存
- */
-void MotionSwitchAndAccumulator::accumulate(const int elapsedTime)
-{
-	//// スレッド排他制御
-	//std::lock_guard<std::mutex> lock(this->mtx4LatestSensorData);
-
-	//PerceptionNeuronSensorData sensorData;
-	//sensorData.bvhData.data = (float *)malloc(this->latestSensorData.bvhData.dataCount * sizeof(float));
-
-	//sensorData.bvhData.dataCount = this->latestSensorData.bvhData.dataCount;
-	//memcpy(sensorData.bvhData.data, this->latestSensorData.bvhData.data, this->latestSensorData.bvhData.dataCount * sizeof(float));
-
-	//最新の動作情報を共有メモリのマップに保持する
-	this->accumulatingSensorDataMap.insert( make_pair(elapsedTime, this->perceptionNeuronData->getLatestSensorData()));
-}
+///*
+// * 最新の動作情報を共有メモリに保存
+// */
+//void MotionSwitchAndAccumulator::accumulate(const int elapsedTime)
+//{
+//	//// スレッド排他制御
+//	//std::lock_guard<std::mutex> lock(this->mtx4LatestSensorData);
+//
+//	//PerceptionNeuronSensorData sensorData;
+//	//sensorData.bvhData.data = (float *)malloc(this->latestSensorData.bvhData.dataCount * sizeof(float));
+//
+//	//sensorData.bvhData.dataCount = this->latestSensorData.bvhData.dataCount;
+//	//memcpy(sensorData.bvhData.data, this->latestSensorData.bvhData.data, this->latestSensorData.bvhData.dataCount * sizeof(float));
+//
+//	//最新の動作情報を共有メモリのマップに保持する
+//	this->accumulatingSensorDataMap.insert( make_pair(elapsedTime, this->perceptionNeuronData->getLatestSensorData()));
+//}

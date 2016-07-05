@@ -53,8 +53,8 @@ public:
 
 	std::string latestMotionInfoStr;
 
-	bool switched;
-	bool replaying;
+	bool isSwitched;
+	bool isReplaying;
 };
 
 #endif //EMBODIED_BRAIN_AVATAR_CONTROLLER_H

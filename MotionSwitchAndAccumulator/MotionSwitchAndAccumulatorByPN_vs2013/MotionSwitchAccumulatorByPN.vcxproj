@@ -77,7 +77,7 @@ copy "$(MYSQL_CONN_CPP_DIR)\lib\mysqlcppconn.dll" "..\Release"
     <ClCompile Include="src\embodied_brain\avatar\avatar_controller.cpp" />
     <ClCompile Include="src\embodied_brain\avatar\check_recv_sigservice_data.cpp" />
     <ClCompile Include="src\embodied_brain\common\perception_neuron_data.cpp" />
-    <ClCompile Include="src\embodied_brain\database\table\pms_imitation_dao.cpp" />
+    <ClCompile Include="src\embodied_brain\database\table\msw_recording_info_dao.cpp" />
     <ClCompile Include="src\embodied_brain\database\table\perception_neuron_dao.cpp" />
     <ClCompile Include="src\embodied_brain\motion_switch_and_accumulator.cpp" />
     <ClCompile Include="src\embodied_brain\common\param.cpp" />
@@ -88,7 +88,7 @@ copy "$(MYSQL_CONN_CPP_DIR)\lib\mysqlcppconn.dll" "..\Release"
     <ClInclude Include="src\embodied_brain\avatar\avatar_controller.h" />
     <ClInclude Include="src\embodied_brain\avatar\check_recv_sigservice_data.h" />
     <ClInclude Include="src\embodied_brain\common\perception_neuron_data.h" />
-    <ClInclude Include="src\embodied_brain\database\table\pms_imitation_dao.h" />
+    <ClInclude Include="src\embodied_brain\database\table\msw_recording_info_dao.h" />
     <ClInclude Include="src\embodied_brain\database\table\perception_neuron_dao.h" />
     <ClInclude Include="src\embodied_brain\motion_switch_and_accumulator.h" />
     <ClInclude Include="src\embodied_brain\common\param.h" />

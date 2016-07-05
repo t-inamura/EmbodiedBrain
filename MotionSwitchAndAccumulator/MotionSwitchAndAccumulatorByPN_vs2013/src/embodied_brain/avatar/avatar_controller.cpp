@@ -23,6 +23,8 @@ AvatarController::AvatarController(std::string messageHeader, PerceptionNeuronDa
 {
 	this->messageHeader        = messageHeader;
 	this->perceptionNeuronData = perceptionNeuronData;
+	this->isSwitched  = false;
+	this->isReplaying = true;
 }
 
 /*
@@ -171,7 +173,7 @@ void AvatarController::sendMotionDataToSIGVerse()
 
 		while (true)
 		{
-			if (!this->switched)
+			if (!this->isSwitched)
 			{
 				PerceptionNeuronSensorData sensorData = this->perceptionNeuronData->getLatestSensorData();
 
@@ -203,7 +205,7 @@ void AvatarController::sendMotionDataToSIGVerse()
 
 			totalCnt++;
 
-			if (this->switched)
+			if (this->isSwitched)
 			{
 				fakeCnt++;
 
@@ -232,7 +234,7 @@ void AvatarController::sendMotionDataToSIGVerse()
 			}
 		}
 
-		this->replaying = false;
+		this->isReplaying = false;
 
 		this->motionInfoTelegramList.clear();
 

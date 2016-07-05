@@ -166,7 +166,7 @@ void FileManager::setJointPosition(PerceptionNeuronSensorData::PerceptionNeuronB
 /*
  * 動作情報をファイル出力
  */
-void FileManager::outputDataFile(const PerceptionNeuronDAO::DataSet &motionData, const PmsImitationDAO::DataSet &imitationInfo)
+void FileManager::outputDataFile(const PerceptionNeuronDAO::DataSet &motionData, const MswRecordingInfoDAO::DataSet &imitationInfo)
 {
 	try
 	{
@@ -195,7 +195,7 @@ void FileManager::outputDataFile(const PerceptionNeuronDAO::DataSet &motionData,
 /*
  * 動作情報をファイル出力（実行部）
  */
-void FileManager::outputDataFileExec(const PerceptionNeuronDAO::DataSet &motionData, const PmsImitationDAO::DataSet &imitationInfo)
+void FileManager::outputDataFileExec(const PerceptionNeuronDAO::DataSet &motionData, const MswRecordingInfoDAO::DataSet &imitationInfo)
 {
 	std::cout << "◆ファイル出力　－開始－◆" << std::endl;
 
@@ -284,9 +284,9 @@ void FileManager::outputDataFileExec(const PerceptionNeuronDAO::DataSet &motionD
 		ofs.open(filePath);
 
 		ofs << imitationInfo.groupId << "\t"
-			<< imitationInfo.recType << "\t"
-			<< imitationInfo.recId << "\t"
-			<< imitationInfo.originalRecId << "\t"
+			<< imitationInfo.beforeSwitchingRecId << "\t"
+			<< imitationInfo.afterSwitchingRecId << "\t"
+			<< imitationInfo.afterSwitchingFakeRecId << "\t"
 			<< imitationInfo.conditionPulsePower << "\t"
 			<< imitationInfo.conditionPulseFrequency << "\t"
 			<< imitationInfo.conditionPulseDuration << "\t"

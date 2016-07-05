@@ -29,28 +29,28 @@ private:
 	static std::string dbUser;
 	static std::string dbPass;
 
-	static std::string    generalServiceName;
-	static int            sigAvatarDispInterval;
+	static std::string generalServiceName;
+	static int         sigAvatarDispInterval;
 
-	static int         imiAccumInterval;
-	static std::string imiMotionDataFilePath;
+	static int         switchAccumInterval;
+	static std::string switchMotionDataFilePath;
 
-	static int         imiRecId;
-	static int         imiUserId;
+	static int         switchRecId;
+	static int         switchUserId;
 
-	static int         imiOriginMaxTime;
+	static int         switchFakeMaxTime;
 
-	static int         imiImitationGroupId;
+	static int         switchGroupId;
 	static int         imiImitationRecType;
-	static int         imiImitationOriginRecId;
+	static int         switchFakeRecId;
 
-	static std::string imiDbPerceptionNeuronMemo;
+	static std::string switchDbPerceptionNeuronMemo;
 	static float       imiDbImitationConditionPulsePower;
 	static float       imiDbImitationConditionPulseFrequency;
 	static int         imiDbImitationConditionPulseDuration;
 	static int         imiDbImitationConditionPulseInterval;
 	static int         imiDbImitationConditionPulseNumber;
-	static std::string imiDbImitationMemo;
+	static std::string switchDbMswRecordingInfoMemo;
 
 	static Mode mode;
 

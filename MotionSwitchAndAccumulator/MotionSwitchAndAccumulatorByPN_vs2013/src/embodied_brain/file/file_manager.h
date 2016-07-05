@@ -6,7 +6,7 @@
 #include <windows.h>
 #include <embodied_brain/common/param.h>
 #include <embodied_brain/database/table/perception_neuron_dao.h>
-#include <embodied_brain/database/table/pms_imitation_dao.h>
+#include <embodied_brain/database/table/msw_recording_info_dao.h>
 
 /*
  * ファイル管理クラス
@@ -19,8 +19,8 @@ private:
 public:
 	int  getMotionData(std::list<PerceptionNeuronDAO::TimeSeries_t> &timeSeries, const std::string &fileName, const std::string &motionId);
 
-	void outputDataFile(const PerceptionNeuronDAO::DataSet &motionData, const PmsImitationDAO::DataSet &imitationInfo);
-	void outputDataFileExec(const PerceptionNeuronDAO::DataSet &motionData, const PmsImitationDAO::DataSet &imitationInfo);
+	void outputDataFile(const PerceptionNeuronDAO::DataSet &motionData, const MswRecordingInfoDAO::DataSet &imitationInfo);
+	void outputDataFileExec(const PerceptionNeuronDAO::DataSet &motionData, const MswRecordingInfoDAO::DataSet &imitationInfo);
 	std::string getJointStr(const SigCmn::Vector3 &rotation);
 };
 

@@ -14,12 +14,12 @@
 #include <boost/property_tree/ini_parser.hpp>
 
 #include <embodied_brain/common/param.h>
-#include <embodied_brain/database/table/pms_imitation_dao.h>
+#include <embodied_brain/database/table/msw_recording_info_dao.h>
 
 /*
  * IDの重複チェック
  */
-bool PmsImitationDAO::duplicationCheck(const int groupId, const int recType)
+bool MswRecordingInfoDAO::duplicationCheck(const int groupId)
 {
 	sql::mysql::MySQL_Driver *driver;
 	sql::Connection *con;
@@ -36,7 +36,7 @@ bool PmsImitationDAO::duplicationCheck(const int groupId, const int recType)
 		con->setSchema(Param::getDbSchema());
 
 		//真似情報テーブルから、指定IDの件数を取得するSQL
-		sql::SQLString selectSQL = "SELECT COUNT(*) AS cnt FROM pms_imitation_info WHERE group_id=" + std::to_string(groupId) + " AND rec_type=" + std::to_string(recType) + ";";
+		sql::SQLString selectSQL = "SELECT COUNT(*) AS cnt FROM motion_switching_recording_info WHERE group_id=" + std::to_string(groupId) + " ;";
 
 		stmt = con->createStatement();
 		rs = stmt->executeQuery(selectSQL);
@@ -46,7 +46,7 @@ bool PmsImitationDAO::duplicationCheck(const int groupId, const int recType)
 			//指定IDの件数が0件でなかった場合は、エラー
 			if (rs->getInt("cnt") != 0)
 			{
-				std::cout << "データベース上に同じ主キー(group_id=" + std::to_string(groupId) + ",rec_type="+std::to_string(recType)+")の情報が存在します。処理終了します。" << std::endl;
+				std::cout << "データベース上に同じ主キー(group_id=" + std::to_string(groupId) + ")の情報が存在します。処理終了します。" << std::endl;
 				return false;
 			}
 		}
@@ -86,7 +86,7 @@ bool PmsImitationDAO::duplicationCheck(const int groupId, const int recType)
 /*
  * データベースへのレコード追加
  */
-void PmsImitationDAO::insertDatabase(const PmsImitationDAO::DataSet &motionInfo)
+void MswRecordingInfoDAO::insertDatabase(const MswRecordingInfoDAO::DataSet &motionInfo)
 {
 	try
 	{
@@ -99,7 +99,7 @@ void PmsImitationDAO::insertDatabase(const PmsImitationDAO::DataSet &motionInfo)
 
 		if (inputKey.compare("y") == 0)
 		{
-			PmsImitationDAO::insertDatabaseExec(motionInfo);
+			MswRecordingInfoDAO::insertDatabaseExec(motionInfo);
 		}
 		else
 		{
@@ -116,9 +116,9 @@ void PmsImitationDAO::insertDatabase(const PmsImitationDAO::DataSet &motionInfo)
 /*
  * データベースへの情報追加（実行部）
  */
-void PmsImitationDAO::insertDatabaseExec(const PmsImitationDAO::DataSet &motionInfo)
+void MswRecordingInfoDAO::insertDatabaseExec(const MswRecordingInfoDAO::DataSet &motionInfo)
 {
-	std::cout << "◆データベース(PMS情報関連)蓄積　－開始－◆" << std::endl;
+	std::cout << "◆データベース(動作切替実験_収録情報関連)蓄積　－開始－◆" << std::endl;
 
 	sql::mysql::MySQL_Driver *driver;
 	sql::Connection *con;
@@ -135,7 +135,7 @@ void PmsImitationDAO::insertDatabaseExec(const PmsImitationDAO::DataSet &motionI
 	time(&start_time);
 
 	//Insert into the General tables.
-	PmsImitationDAO::insert(con, motionInfo);
+	MswRecordingInfoDAO::insert(con, motionInfo);
 
 	time(&end_time);
 
@@ -143,17 +143,17 @@ void PmsImitationDAO::insertDatabaseExec(const PmsImitationDAO::DataSet &motionI
 
 	con->close();
 
-	std::cout << "◆データベース(PMS情報関連)蓄積　－終了－◆" << std::endl << std::endl;
+	std::cout << "◆データベース(動作切替実験_収録情報関連)蓄積　－終了－◆" << std::endl << std::endl;
 }
 
 
 /*
  * データベースへの情報追加（クエリ発行）
  */
-void PmsImitationDAO::insert(sql::Connection *con, const PmsImitationDAO::DataSet &motionInfo)
+void MswRecordingInfoDAO::insert(sql::Connection *con, const MswRecordingInfoDAO::DataSet &motionInfo)
 {
 	/*
-	 * 真似情報テーブルへのINSERT処理（1件のみ）
+	 * 収録情報テーブルへのINSERT処理（1件のみ）
 	 */
 	sql::Statement *stmt;
 
@@ -161,25 +161,15 @@ void PmsImitationDAO::insert(sql::Connection *con, const PmsImitationDAO::DataSe
 		=
 		"INSERT INTO pms_imitation_info ("
 			"group_id, "
-			"rec_type, "
-			"rec_id, "
-			"original_rec_id, "
-			"condition_pulse_power, "
-			"condition_pulse_frequency, "
-			"condition_pulse_duration, "
-			"condition_pulse_interval, "
-			"condition_pulse_number, "
+			"before_switching_rec_id, "
+			"after_switching_rec_id, "
+			"after_switching_fake_rec_id, "
 			"memo "
 		")VALUES ("
 			+ std::to_string(motionInfo.groupId) + ","
-			+ std::to_string(motionInfo.recType) + ","
-			+ std::to_string(motionInfo.recId) + ","
-			+ std::to_string(motionInfo.originalRecId) + ","
-			+ std::to_string(motionInfo.conditionPulsePower) + ","
-			+ std::to_string(motionInfo.conditionPulseFrequency) + ","
-			+ std::to_string(motionInfo.conditionPulseDuration) + ","
-			+ std::to_string(motionInfo.conditionPulseInterval) + ","
-			+ std::to_string(motionInfo.conditionPulseNumber) + ","
+			+ std::to_string(motionInfo.beforeSwitchingRecId) + ","
+			+ std::to_string(motionInfo.afterSwitchingRecId) + ","
+			+ std::to_string(motionInfo.afterSwitchingFakeRecId) + ","
 			+ "'" + motionInfo.memo + "'" +
 		") ";
 
@@ -187,7 +177,7 @@ void PmsImitationDAO::insert(sql::Connection *con, const PmsImitationDAO::DataSe
 	stmt->executeUpdate(insertQuery);
 	con->commit();
 
-	std::cout << "PMS実験_真似情報テーブルへのINSERT終了" << std::endl;
+	std::cout << "動作切替実験_収録情報テーブルへのINSERT終了" << std::endl;
 
 	stmt->close();
 }

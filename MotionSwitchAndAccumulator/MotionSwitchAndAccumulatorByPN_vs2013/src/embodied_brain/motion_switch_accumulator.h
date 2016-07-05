@@ -7,9 +7,8 @@
 #include <sigverse/plugin/plugin/PerceptionNeuron/PerceptionNeuronDevice.h>
 #include <embodied_brain/common/param.h>
 #include <embodied_brain/common/perception_neuron_data.h>
-#include <embodied_brain/database/perception_neuron_db.h>
 #include <embodied_brain/database/table/perception_neuron_dao.h>
-#include <embodied_brain/database/table/pms_imitation_dao.h>
+#include <embodied_brain/database/table/msw_recording_info_dao.h>
 #include <embodied_brain/avatar/avatar_controller.h>
 
 /*
@@ -23,10 +22,11 @@ protected :
 	std::list<PerceptionNeuronDAO::TimeSeries_t> getMotionDataFromDBorFile(const std::string &recIdStr);
 
 	void accumulateMotionData(AvatarController &avatarController);
-	void accumulate(const int elapsedTime);
+//	void accumulate(const int elapsedTime);
 
 //	PerceptionNeuronSensorData latestSensorData;
-	std::map<int, PerceptionNeuronSensorData> accumulatingSensorDataMap;
+	std::map<int, PerceptionNeuronSensorData> accumulatingBeforeDataMap;
+	std::map<int, PerceptionNeuronSensorData> accumulatingAfterDataMap;
 
 	PerceptionNeuronData *perceptionNeuronData;
 

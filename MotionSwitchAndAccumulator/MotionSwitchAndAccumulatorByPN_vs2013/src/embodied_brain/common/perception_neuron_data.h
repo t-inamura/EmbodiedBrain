@@ -6,9 +6,8 @@
 #include <SIGService/SIGService.h>
 #include <sigverse/plugin/plugin/PerceptionNeuron/PerceptionNeuronDevice.h>
 #include <embodied_brain/common/param.h>
-#include <embodied_brain/database/perception_neuron_db.h>
 #include <embodied_brain/database/table/perception_neuron_dao.h>
-#include <embodied_brain/database/table/pms_imitation_dao.h>
+#include <embodied_brain/database/table/msw_recording_info_dao.h>
 
 /*
  * 共通データクラス
