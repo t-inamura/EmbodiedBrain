@@ -298,7 +298,7 @@ void ManageRecordedDataOnMySQL::printHelp()
 {
 	std::string printStr = "\n"
 		"　■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■\n"
-		"　■ モデル動作情報関連テーブル操作方法                           ■\n"
+		"　■ 真似動作情報関連テーブル操作方法                             ■\n"
 		"　■   select pn          ：PerceptionNeuron表示(全て)            ■\n"
 		"　■   select pn XXX      ：PerceptionNeuron表示(指定件数XXXずつ) ■\n"
 		"　■   select im          ：真似情報表示(全て)                    ■\n"

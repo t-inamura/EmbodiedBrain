@@ -4,7 +4,7 @@
 #include <string>
 
 /*
- * モデル動作情報関連テーブル管理クラス
+ * 真似動作情報関連テーブル管理クラス
  */
 class DatabaseDAO
 {
