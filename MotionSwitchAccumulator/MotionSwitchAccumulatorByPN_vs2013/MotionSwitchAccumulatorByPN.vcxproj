@@ -12,7 +12,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{325C0DF8-1C39-4F8B-ADDC-155F5EE8C7F4}</ProjectGuid>
-    <RootNamespace>MotionSwitchAndAccumulatorByPN</RootNamespace>
+    <RootNamespace>MotionSwitchAccumulatorByPN</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -40,7 +40,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <TargetExt>.exe</TargetExt>
-    <TargetName>MotionSwitchAndAccumulator</TargetName>
+    <TargetName>MotionSwitchAccumulator</TargetName>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -67,7 +67,7 @@
       <AdditionalDependencies>ws2_32.lib;winmm.lib;mysqlcppconn.lib;SIGService.lib;NeuronDataReader.lib;PerceptionNeuron_vs2013.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
-      <Command>copy "config\MotionSwitchAndAccumulator.ini" "..\Release"
+      <Command>copy "config\MotionSwitchAccumulator.ini" "..\Release"
 copy "C:\SIGVerse\ext\NeuronDataReader_SDK_b15\Windows\lib\x86\NeuronDataReader.dll" "..\Release"
 copy "$(MYSQL_CONN_CPP_DIR)\lib\mysqlcppconn.dll" "..\Release"
 </Command>
@@ -79,7 +79,7 @@ copy "$(MYSQL_CONN_CPP_DIR)\lib\mysqlcppconn.dll" "..\Release"
     <ClCompile Include="src\embodied_brain\common\perception_neuron_data.cpp" />
     <ClCompile Include="src\embodied_brain\database\table\msw_recording_info_dao.cpp" />
     <ClCompile Include="src\embodied_brain\database\table\perception_neuron_dao.cpp" />
-    <ClCompile Include="src\embodied_brain\motion_switch_and_accumulator.cpp" />
+    <ClCompile Include="src\embodied_brain\motion_switch_accumulator.cpp" />
     <ClCompile Include="src\embodied_brain\common\param.cpp" />
     <ClCompile Include="src\embodied_brain\file\file_manager.cpp" />
     <ClCompile Include="src\embodied_brain\main.cpp" />
@@ -90,12 +90,12 @@ copy "$(MYSQL_CONN_CPP_DIR)\lib\mysqlcppconn.dll" "..\Release"
     <ClInclude Include="src\embodied_brain\common\perception_neuron_data.h" />
     <ClInclude Include="src\embodied_brain\database\table\msw_recording_info_dao.h" />
     <ClInclude Include="src\embodied_brain\database\table\perception_neuron_dao.h" />
-    <ClInclude Include="src\embodied_brain\motion_switch_and_accumulator.h" />
+    <ClInclude Include="src\embodied_brain\motion_switch_accumulator.h" />
     <ClInclude Include="src\embodied_brain\common\param.h" />
     <ClInclude Include="src\embodied_brain\file\file_manager.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="config\MotionSwitchAndAccumulator.ini" />
+    <None Include="config\MotionSwitchAccumulator.ini" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\PerceptionNeuron_vs2013.lib" />

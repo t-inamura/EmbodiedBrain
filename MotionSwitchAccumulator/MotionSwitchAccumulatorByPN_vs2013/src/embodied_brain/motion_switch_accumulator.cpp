@@ -46,13 +46,13 @@
  * ・真似動作収録の場合：第1引数：SIGServer IPアドレス、第2引数：SIGServer ポート番号
  * 
  * ＜その他＞
- * ・設定ファイル名は、MotionSwitchAndAccumulator.ini
+ * ・設定ファイル名は、MotionSwitchAccumulator.ini
  * ・収録は基本的に連続で行うことが出来るが、収録モードの変更は不可能なので、プログラムを再起動する必要がある。
  * ・設定ファイルのimitation.motion_data_file_pathにファイルパスを設定した場合、データベースではなく当該ファイルから偽動作を取得する
  */
 #include <SIGService/SIGService.h>
 #include <sigverse/plugin/plugin/common/CheckRecvSIGServiceData.h>
-#include <embodied_brain/motion_switch_and_accumulator.h>
+#include <embodied_brain/motion_switch_accumulator.h>
 
 #include <embodied_brain/common/param.h>
 #include <embodied_brain/file/file_manager.h>
@@ -76,7 +76,7 @@
 #include <boost/bind.hpp>
 
 ///@brief Parameter file name.
-const std::string Param::PARAM_FILE_NAME = "MotionSwitchAndAccumulator.ini";
+const std::string Param::PARAM_FILE_NAME = "MotionSwitchAccumulator.ini";
 
 std::string Param::dbHost;
 int         Param::dbPort;
@@ -112,7 +112,7 @@ Param::Mode Param::mode;
 /*
  * メイン処理
  */
-int MotionSwitchAndAccumulator::run(int argc, char **argv)
+int MotionSwitchAccumulator::run(int argc, char **argv)
 {
 	/*
 	 * Perception Neuron関連の初期化
@@ -135,10 +135,10 @@ int MotionSwitchAndAccumulator::run(int argc, char **argv)
 	this->connect4Bvh(sockRefBvh);
 
 	// Receive BVH data by the callback function.
-	BRRegisterFrameDataCallback(this, MotionSwitchAndAccumulator::bvhFrameDataReceived);
+	BRRegisterFrameDataCallback(this, MotionSwitchAccumulator::bvhFrameDataReceived);
 
 	// Receive Socket status by the callback function.
-	BRRegisterSocketStatusCallback(this, MotionSwitchAndAccumulator::socketStatusChanged);
+	BRRegisterSocketStatusCallback(this, MotionSwitchAccumulator::socketStatusChanged);
 
 
 	AvatarController avatarController(this->generateMessageHeader(), this->perceptionNeuronData);
@@ -290,9 +290,9 @@ int MotionSwitchAndAccumulator::run(int argc, char **argv)
 /*
  * Perception Neuronから動作情報を受信する、コールバック関数
  */
-void __stdcall MotionSwitchAndAccumulator::bvhFrameDataReceived(void* customedObj, SOCKET_REF sender, BvhDataHeader* header, float* data)
+void __stdcall MotionSwitchAccumulator::bvhFrameDataReceived(void* customedObj, SOCKET_REF sender, BvhDataHeader* header, float* data)
 {
-	MotionSwitchAndAccumulator* pthis = (MotionSwitchAndAccumulator*)customedObj;
+	MotionSwitchAccumulator* pthis = (MotionSwitchAccumulator*)customedObj;
 
 	pthis->perceptionNeuronData->updateBvhData(header, data);
 }
@@ -301,9 +301,9 @@ void __stdcall MotionSwitchAndAccumulator::bvhFrameDataReceived(void* customedOb
 ///*
 // * Perception Neuronから受信した最新の動作情報を、共有メモリに保存する
 // */
-//void MotionSwitchAndAccumulator::updateBvhData(void* customedObj, SOCKET_REF sender, BvhDataHeader* header, float* data)
+//void MotionSwitchAccumulator::updateBvhData(void* customedObj, SOCKET_REF sender, BvhDataHeader* header, float* data)
 //{
-//	MotionSwitchAndAccumulator* pthis = (MotionSwitchAndAccumulator*)customedObj;
+//	MotionSwitchAccumulator* pthis = (MotionSwitchAccumulator*)customedObj;
 //
 //	// 排他制御
 //	std::lock_guard<std::mutex> lock(pthis->mtx4LatestSensorData);
@@ -323,7 +323,7 @@ void __stdcall MotionSwitchAndAccumulator::bvhFrameDataReceived(void* customedOb
 /*
  * 偽動作情報をDB (or ファイル) から取得する
  */
-std::list<PerceptionNeuronDAO::TimeSeries_t> MotionSwitchAndAccumulator::getMotionDataFromDBorFile(const std::string &recIdStr)
+std::list<PerceptionNeuronDAO::TimeSeries_t> MotionSwitchAccumulator::getMotionDataFromDBorFile(const std::string &recIdStr)
 {
 	std::list<PerceptionNeuronDAO::TimeSeries_t> motionInfo;
 	int motionDataNum;
@@ -352,7 +352,7 @@ std::list<PerceptionNeuronDAO::TimeSeries_t> MotionSwitchAndAccumulator::getMoti
 /*
  * Perception Neuronから動作情報を取得・蓄積し、データベースへの追加とファイル出力を行う
  */
-void MotionSwitchAndAccumulator::accumulateMotionData(AvatarController &avatarController)
+void MotionSwitchAccumulator::accumulateMotionData(AvatarController &avatarController)
 {
 	PerceptionNeuronDAO::DataSet motionSet;
 
@@ -561,7 +561,7 @@ void MotionSwitchAndAccumulator::accumulateMotionData(AvatarController &avatarCo
 ///*
 // * 最新の動作情報を共有メモリに保存
 // */
-//void MotionSwitchAndAccumulator::accumulate(const int elapsedTime)
+//void MotionSwitchAccumulator::accumulate(const int elapsedTime)
 //{
 //	//// スレッド排他制御
 //	//std::lock_guard<std::mutex> lock(this->mtx4LatestSensorData);

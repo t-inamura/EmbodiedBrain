@@ -7,12 +7,12 @@
     <ClCompile Include="src\embodied_brain\avatar\check_recv_sigservice_data.cpp" />
     <ClCompile Include="src\embodied_brain\avatar\avatar_controller.cpp" />
     <ClCompile Include="src\embodied_brain\database\table\perception_neuron_dao.cpp" />
-    <ClCompile Include="src\embodied_brain\motion_switch_and_accumulator.cpp" />
+    <ClCompile Include="src\embodied_brain\motion_switch_accumulator.cpp" />
     <ClCompile Include="src\embodied_brain\common\perception_neuron_data.cpp" />
     <ClCompile Include="src\embodied_brain\database\table\msw_recording_info_dao.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\embodied_brain\motion_switch_and_accumulator.h" />
+    <ClInclude Include="src\embodied_brain\motion_switch_accumulator.h" />
     <ClInclude Include="src\embodied_brain\common\param.h" />
     <ClInclude Include="src\embodied_brain\file\file_manager.h" />
     <ClInclude Include="src\embodied_brain\avatar\check_recv_sigservice_data.h" />
@@ -22,7 +22,7 @@
     <ClInclude Include="src\embodied_brain\database\table\msw_recording_info_dao.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="config\MotionSwitchAndAccumulator.ini" />
+    <None Include="config\MotionSwitchAccumulator.ini" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\PerceptionNeuron_vs2013.lib" />

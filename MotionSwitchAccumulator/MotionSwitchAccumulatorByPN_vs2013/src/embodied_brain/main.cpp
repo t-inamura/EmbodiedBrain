@@ -6,7 +6,7 @@
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/property_tree/ptree.hpp>
 
-#include <embodied_brain/motion_switch_and_accumulator.h>
+#include <embodied_brain/motion_switch_accumulator.h>
 #include <embodied_brain/common/param.h>
 
 
@@ -19,7 +19,7 @@ int main(int argc, char **argv)
 {
 	try
 	{
-		MotionSwitchAndAccumulator mainApp;
+		MotionSwitchAccumulator mainApp;
 
 		//メイン処理
 		return mainApp.run(argc, argv);

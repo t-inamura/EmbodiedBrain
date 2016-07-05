@@ -1,5 +1,5 @@
-﻿#ifndef EMBODIED_BRAIN_motion_switch_and_accumulator_H
-#define EMBODIED_BRAIN_motion_switch_and_accumulator_H
+﻿#ifndef EMBODIED_BRAIN_MOTION_SWITCH_ACCUMULATOR_H
+#define EMBODIED_BRAIN_MOTION_SWITCH_ACCUMULATOR_H
 
 #include <mutex>
 #include "NeuronDataReader.h"
@@ -14,7 +14,7 @@
 /*
  * 真似動作収録クラス
  */
-class MotionSwitchAndAccumulator : public PerceptionNeuronDevice
+class MotionSwitchAccumulator : public PerceptionNeuronDevice
 {
 protected :
 //	void initialize(const int argMotionId, const std::string &memo, const int argMaxRecordTime);
@@ -43,4 +43,4 @@ public:
 };
 
 
-#endif // EMBODIED_BRAIN_motion_switch_and_accumulator_H 
+#endif // EMBODIED_BRAIN_MOTION_SWITCH_ACCUMULATOR_H 
