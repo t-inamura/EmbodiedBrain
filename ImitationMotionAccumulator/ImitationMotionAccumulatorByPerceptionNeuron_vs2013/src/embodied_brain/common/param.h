@@ -15,8 +15,8 @@ class Param
 public :
 	enum Mode
 	{
-		Origin,
-		Imitation,
+		RecOrigin,
+		Experiment,
 	};
 
 	//パラメータファイル名

@@ -277,7 +277,7 @@ void FileManager::outputDataFileExec(const PerceptionNeuronDAO::DataSet &motionD
 	/*
 	 * PMS実験_真似情報ファイル出力
 	 */
-	if (Param::getMode() == Param::Mode::Imitation)
+	if (Param::getMode() == Param::Mode::Experiment)
 	{
 		strftime(filePath, sizeof(filePath), "data\\pms_imitation_info_%Y%m%d_%H%M%S.dat", &nowTm);
 

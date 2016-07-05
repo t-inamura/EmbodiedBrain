@@ -3,9 +3,9 @@
  * 
  *    ・動作情報取得には Perception Neuron を使用する。
  *    ・以下の２つの収録モードを用意する。
- *    　　・手本動作収録モード：ユーザに見せるための手本動作を収録するためのモード
- *    　　・真似動作収録モード：手本を見ながら真似した動作を収録するためのモード
- *    ・手本動作収録モード時はPerception Neuronのみ使用し、真似動作収録モード時は、SIGVerse、Oculus Rift DK2、Perception Neuronを使用する。
+ *    　　・手本動作収録モード      ：ユーザに見せるための手本動作を収録するためのモード
+ *    　　・実験(真似動作収録)モード：手本を見ながら真似した動作を収録するためのモード
+ *    ・手本動作収録モード時はPerception Neuronのみ使用し、実験(真似動作収録)モード時は、SIGVerse、Oculus Rift DK2、Perception Neuronを使用する。
  *    
  *    
  * ＜手本動作収録の流れ＞
@@ -19,7 +19,7 @@
  *  8. 上記で１収録が終了し、再度収録を行うかの問いが表示される。
  *     このとき設定ファイルを修正して"y"を押下すれば、再び収録が可能で、連続収録ができる。
  * 
- *   ※ 設定ファイルを修正すれば、連続収録が可能だが、途中で真似動作収録モードに切り替えることは現状不可能。プログラムの再起動が必要。
+ *   ※ 設定ファイルを修正すれば、連続収録が可能だが、途中で実験(真似動作収録)モードに切り替えることは現状不可能。プログラムの再起動が必要。
  *   ※ AXIS NEURON上で動作を保存してから、AXIS NEURON上でその動作を再生・確認し、その後それを再生させつつ動作収録プログラムを実行することも可能。
  * 
  * ＜真似動作収録の流れ＞
@@ -176,7 +176,7 @@ int ImitationMotionAccumulator::run(int argc, char **argv)
 		char argSigAddr[128]; //SIGVerse IPアドレス
 		int  argSigPortNum;   //SIGVerse ポート番号
 
-		if (Param::getMode()==Param::Imitation)
+		if (Param::getMode()==Param::Experiment)
 		{
 			if(argc == 3) 
 			{
@@ -199,7 +199,7 @@ int ImitationMotionAccumulator::run(int argc, char **argv)
 
 
 		// 真似動作収録時は、手本動作をDBから取得したり、SIGServerに接続する必要がある
-		if (Param::getMode() == Param::Mode::Imitation)
+		if (Param::getMode() == Param::Mode::Experiment)
 		{
 			std::cout << "■ データベースの重複チェック (PMS真似情報関連) 開始 ■" << std::endl;
 			//データベースのID重複チェック
@@ -248,7 +248,15 @@ int ImitationMotionAccumulator::run(int argc, char **argv)
 		}
 
 		std::cout << "収録開始！" << std::endl;
-		if (Param::getMode() == Param::Mode::Origin) { std::cout << "('q'キー押下で終了)" << std::endl; }
+
+		if (Param::getMode() == Param::Mode::RecOrigin)
+		{
+			std::cout << "('q'キー押下で終了)" << std::endl;
+		}
+		else
+		{
+			std::cout << "('q'キー押下で終了することも可能)" << std::endl;
+		}
 
 
 		/*
@@ -256,7 +264,7 @@ int ImitationMotionAccumulator::run(int argc, char **argv)
 		 */
 		boost::thread thSendMotionDataToSIGVerse;
 
-		if (Param::getMode() == Param::Mode::Imitation)
+		if (Param::getMode() == Param::Mode::Experiment)
 		{
 			avatarController.replaying = true;
 
@@ -269,7 +277,7 @@ int ImitationMotionAccumulator::run(int argc, char **argv)
 		 */
 		this->accumulateMotionData(avatarController);
 
-		if (Param::getMode() == Param::Mode::Imitation){ thSendMotionDataToSIGVerse.join(); }
+		if (Param::getMode() == Param::Mode::Experiment){ thSendMotionDataToSIGVerse.join(); }
 
 		std::cout << "■ 収録終了 ■" << std::endl;
 	}
@@ -279,7 +287,7 @@ int ImitationMotionAccumulator::run(int argc, char **argv)
 	std::cout << "★★ プログラム終了 ★★" << std::endl << std::endl;
 
 	//SIGServerからの切断
-	if (Param::getMode() == Param::Mode::Imitation) { avatarController.disconnectFromAllController(); }
+	if (Param::getMode() == Param::Mode::Experiment) { avatarController.disconnectFromAllController(); }
 
 	// close socket
 	BRCloseSocket(sockRefBvh);
@@ -369,11 +377,11 @@ void ImitationMotionAccumulator::accumulateMotionData(AvatarController &avatarCo
 
 	double maxTime;
 
-	if (Param::getMode() == Param::Mode::Origin)
+	if (Param::getMode() == Param::Mode::RecOrigin)
 	{
 		maxTime = (double)(Param::getImiOriginMaxTime()*1000.0); //単位はms
 	}
-	else if (Param::getMode() == Param::Mode::Imitation)
+	else if (Param::getMode() == Param::Mode::Experiment)
 	{
 		maxTime = (std::numeric_limits<double>::max)();
 	}
@@ -493,17 +501,24 @@ void ImitationMotionAccumulator::accumulateMotionData(AvatarController &avatarCo
 		it++;
 	}
 
+	/*
+	 * 真似情報作成
+	 */
 	PmsImitationDAO::DataSet imitationInfo;
-	imitationInfo.groupId = Param::getImiImitationGroupId();
-	imitationInfo.recType = Param::getImiImitationRecType();
-	imitationInfo.recId = Param::getImiRecId();
-	imitationInfo.originalRecId = Param::getImiImitationOriginRecId();
-	imitationInfo.conditionPulsePower     = Param::getImiDbImitationConditionPulsePower();
-	imitationInfo.conditionPulseFrequency = Param::getImiDbImitationConditionPulseFrequency();
-	imitationInfo.conditionPulseDuration  = Param::getImiDbImitationConditionPulseDuration();
-	imitationInfo.conditionPulseInterval  = Param::getImiDbImitationConditionPulseInterval();
-	imitationInfo.conditionPulseNumber    = Param::getImiDbImitationConditionPulseNumber();
-	imitationInfo.memo                    = Param::getImiDbImitationMemo();
+
+	if (Param::getMode() == Param::Mode::Experiment)
+	{
+		imitationInfo.groupId = Param::getImiImitationGroupId();
+		imitationInfo.recType = Param::getImiImitationRecType();
+		imitationInfo.recId = Param::getImiRecId();
+		imitationInfo.originalRecId = Param::getImiImitationOriginRecId();
+		imitationInfo.conditionPulsePower = Param::getImiDbImitationConditionPulsePower();
+		imitationInfo.conditionPulseFrequency = Param::getImiDbImitationConditionPulseFrequency();
+		imitationInfo.conditionPulseDuration = Param::getImiDbImitationConditionPulseDuration();
+		imitationInfo.conditionPulseInterval = Param::getImiDbImitationConditionPulseInterval();
+		imitationInfo.conditionPulseNumber = Param::getImiDbImitationConditionPulseNumber();
+		imitationInfo.memo = Param::getImiDbImitationMemo();
+	}
 
 	// 少しだけキー入力待機
 	Sleep(500);
@@ -524,7 +539,7 @@ void ImitationMotionAccumulator::accumulateMotionData(AvatarController &avatarCo
 		// Perception Neuron動作関連
 		PerceptionNeuronDAO::insertDatabaseExec(motionSet);
 
-		if (Param::getMode() == Param::Mode::Imitation)
+		if (Param::getMode() == Param::Mode::Experiment)
 		{
 			// 真似動作関連
 			PmsImitationDAO::insertDatabaseExec(imitationInfo);

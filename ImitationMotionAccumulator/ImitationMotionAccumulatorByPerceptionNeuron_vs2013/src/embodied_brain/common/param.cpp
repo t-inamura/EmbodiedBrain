@@ -101,14 +101,14 @@ void Param::readConfigFile()
 	std::cout << "[imitation]rec_id                    = " << imiRecId << std::endl;
 	std::cout << "[imitation]user_id                   = " << imiUserId << std::endl;
 
-	if (imiMode=="origin")
+	if (imiMode=="RecOrigin")
 	{
-		Param::mode = Mode::Origin;
+		Param::mode = Mode::RecOrigin;
 		std::cout << "[imitation]origin_max_time           = " << imiOriginMaxTime << std::endl;
 	}
-	else if (imiMode == "imitation")
+	else if (imiMode == "Experiment")
 	{
-		Param::mode = Mode::Imitation;
+		Param::mode = Mode::Experiment;
 		std::cout << "[imitation]imitation_group_id        = " << imiImitationGroupId << std::endl;
 		std::cout << "[imitation]imitation_rec_type        = " << imiImitationRecType << std::endl;
 		std::cout << "[imitation]imitation_origin_rec_id   = " << imiImitationOriginRecId << std::endl;
