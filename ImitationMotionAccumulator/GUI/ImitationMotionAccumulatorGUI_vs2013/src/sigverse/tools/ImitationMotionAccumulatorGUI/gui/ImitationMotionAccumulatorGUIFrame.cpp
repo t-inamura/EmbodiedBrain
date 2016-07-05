@@ -39,7 +39,7 @@ MainFrame::MainFrame( wxWindow* parent, wxWindowID id, const wxString& title, co
 	fgSizer1->SetFlexibleDirection( wxBOTH );
 	fgSizer1->SetNonFlexibleGrowMode( wxFLEX_GROWMODE_SPECIFIED );
 	
-	wxString m_radioBox_modeChoices[] = { wxT("ORIGIN"), wxT("IMITATION") };
+	wxString m_radioBox_modeChoices[] = { wxT("RecOrigin"), wxT("Experiment") };
 	int m_radioBox_modeNChoices = sizeof( m_radioBox_modeChoices ) / sizeof( wxString );
 	m_radioBox_mode = new wxRadioBox( this, wxID_ANY, wxT("mode"), wxDefaultPosition, wxDefaultSize, m_radioBox_modeNChoices, m_radioBox_modeChoices, 1, wxRA_SPECIFY_COLS );
 	m_radioBox_mode->SetSelection( 0 );
