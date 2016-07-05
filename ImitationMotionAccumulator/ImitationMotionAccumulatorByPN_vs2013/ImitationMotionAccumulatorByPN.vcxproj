@@ -12,7 +12,7 @@
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <ProjectGuid>{325C0DF8-1C39-4F8B-ADDC-155F5EE8C7F4}</ProjectGuid>
-    <RootNamespace>ImitationMotionAccumulatorByPerceptionNeuron</RootNamespace>
+    <RootNamespace>ImitationMotionAccumulatorByPN</RootNamespace>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
