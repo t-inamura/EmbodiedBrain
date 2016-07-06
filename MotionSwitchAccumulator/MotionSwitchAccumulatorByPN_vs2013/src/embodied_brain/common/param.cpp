@@ -10,29 +10,22 @@ std::string Param::getDbSchema() { return dbSchema; }
 std::string Param::getDbUser()   { return dbUser; }
 std::string Param::getDbPass()   { return dbPass; }
 
-std::string    Param::getGeneralServiceName()       { return generalServiceName; }
+std::string    Param::getGeneralServiceName()   { return generalServiceName; }
 int            Param::getSigAvatarDispInterval(){ return sigAvatarDispInterval; }
-//double         Param::getSigAvatarMoveSpeed()   { return sigAvatarMoveSpeed; }
 
-int         Param::getImiAccumInterval()     { return switchAccumInterval; }
-std::string Param::getImiMotionDataFilePath(){ return switchMotionDataFilePath; };
+int         Param::getSwitchAccumInterval()     { return switchAccumInterval; }
+std::string Param::getSwitchMotionDataFilePath(){ return switchMotionDataFilePath; };
 
-int         Param::getImiRecId()  { return switchRecId; }
-int         Param::getImiUserId() { return switchUserId; }
+int         Param::getSwitchRecId()  { return switchRecId; }
+int         Param::getSwitchUserId() { return switchUserId; }
 
-int         Param::getImiOriginMaxTime(){ return switchFakeMaxTime; }
+int         Param::getSwitchFakeMaxTime(){ return switchFakeMaxTime; }
 
-int         Param::getImiImitationGroupId()    { return switchGroupId; }
-int         Param::getImiImitationRecType()    { return imiImitationRecType; }
-int         Param::getImiImitationOriginRecId(){ return switchFakeRecId; }
+int         Param::getSwitchGroupId()  { return switchGroupId; }
+int         Param::getSwitchFakeRecId(){ return switchFakeRecId; }
 
-std::string Param::getImiDbPerceptionNeuronMemo()            { return switchDbPerceptionNeuronMemo; }
-float       Param::getImiDbImitationConditionPulsePower()    { return imiDbImitationConditionPulsePower; }
-float       Param::getImiDbImitationConditionPulseFrequency(){ return imiDbImitationConditionPulseFrequency; }
-int         Param::getImiDbImitationConditionPulseDuration() { return imiDbImitationConditionPulseDuration; }
-int         Param::getImiDbImitationConditionPulseInterval() { return imiDbImitationConditionPulseInterval; }
-int         Param::getImiDbImitationConditionPulseNumber()   { return imiDbImitationConditionPulseNumber; }
-std::string Param::getImiDbImitationMemo()                   { return switchDbMswRecordingInfoMemo; }
+std::string Param::getSwitchDbPerceptionNeuronMemo() { return switchDbPerceptionNeuronMemo; }
+std::string Param::getSwitchDbMswRecordingInfoMemo() { return switchDbMswRecordingInfoMemo; }
 
 Param::Mode Param::getMode(){ return mode; }
 
@@ -56,31 +49,23 @@ void Param::readConfigFile()
 	generalServiceName = pt.get<std::string>("General.service_name");
 	//アバター表示更新間隔
 	sigAvatarDispInterval = pt.get<int> ("sigverse.avatar_disp_interval");
-	////アバター移動速度 (1.0で通常速度)
-	//sigAvatarMoveSpeed = pt.get<double> ("sigverse.avatar_move_speed");
 
-	switchAccumInterval           = pt.get<int>  ("imitation.accum_interval");
+	switchAccumInterval           = pt.get<int>  ("switch.accum_interval");
 	//動作データファイルパス(動作データをファイル入力する場合のみ指定)
-	switchMotionDataFilePath = pt.get<std::string>("imitation.motion_data_file_path");
+	switchMotionDataFilePath = pt.get<std::string>("switch.motion_data_file_path");
 
-	std::string imiMode  = pt.get<std::string>("imitation.mode");
+	std::string switchMode  = pt.get<std::string>("switch.mode");
 	
-	switchRecId   = pt.get<int>  ("imitation.rec_id");
-	switchUserId  = pt.get<int>  ("imitation.user_id");
+	switchRecId   = pt.get<int>  ("switch.rec_id");
+	switchUserId  = pt.get<int>  ("switch.user_id");
 
-	switchFakeMaxTime = pt.get<int>  ("imitation.origin_max_time");
+	switchFakeMaxTime = pt.get<int>  ("switch.fake_max_time");
 
-	switchGroupId                   = pt.get<int>  ("imitation.imitation_group_id");
-	imiImitationRecType                   = pt.get<int>  ("imitation.imitation_rec_type");
-	switchFakeRecId               = pt.get<int>  ("imitation.imitation_origin_rec_id");
+	switchGroupId     = pt.get<int>  ("switch.group_id");
+	switchFakeRecId   = pt.get<int>  ("switch.fake_rec_id");
 
-	switchDbPerceptionNeuronMemo             = pt.get<std::string>("imitation.db_perception_neuron_memo");
-	imiDbImitationConditionPulsePower     = pt.get<float>      ("imitation.db_imitation_condition_pulse_power");
-	imiDbImitationConditionPulseFrequency = pt.get<float>      ("imitation.db_imitation_condition_pulse_frequency");
-	imiDbImitationConditionPulseDuration  = pt.get<int>        ("imitation.db_imitation_condition_pulse_duration");
-	imiDbImitationConditionPulseInterval  = pt.get<int>        ("imitation.db_imitation_condition_pulse_interval");
-	imiDbImitationConditionPulseNumber    = pt.get<int>        ("imitation.db_imitation_condition_pulse_number");
-	switchDbMswRecordingInfoMemo                    = pt.get<std::string>("imitation.db_imitation_memo");
+	switchDbPerceptionNeuronMemo  = pt.get<std::string>("switch.db_perception_neuron_memo");
+	switchDbMswRecordingInfoMemo  = pt.get<std::string>("switch.db_msw_recording_info_memo");
 
 
 	//表示
@@ -90,42 +75,36 @@ void Param::readConfigFile()
 	std::cout << "[db]schema          = " << dbSchema << std::endl;
 	std::cout << "[db]user            = " << dbUser << std::endl;
 
-	std::cout << "[General]service_name         = "         << generalServiceName << std::endl;
+	std::cout << "[General]service_name          = " << generalServiceName << std::endl;
 
 	std::cout << "[sigverse]avatar_disp_interval = " << sigAvatarDispInterval << std::endl;
 
-	std::cout << "[imitation]accum_interval            = " << switchAccumInterval << std::endl;
-	std::cout << "[imitation]motion_data_file_path     = " << switchMotionDataFilePath << std::endl;
+	std::cout << "[switch]accum_interval         = " << switchAccumInterval << std::endl;
+	std::cout << "[switch]motion_data_file_path  = " << switchMotionDataFilePath << std::endl;
 
-	std::cout << "[imitation]mode                      = " << imiMode << std::endl;
-	std::cout << "[imitation]rec_id                    = " << switchRecId << std::endl;
-	std::cout << "[imitation]user_id                   = " << switchUserId << std::endl;
+	std::cout << "[switch]mode                   = " << switchMode << std::endl;
+	std::cout << "[switch]rec_id                 = " << switchRecId << std::endl;
+	std::cout << "[switch]user_id                = " << switchUserId << std::endl;
 
-	if (imiMode=="origin")
+	if (switchMode=="RecFake")
 	{
 		Param::mode = Mode::RecFake;
-		std::cout << "[imitation]origin_max_time           = " << switchFakeMaxTime << std::endl;
+		std::cout << "[switch]fake_max_time = " << switchFakeMaxTime << std::endl;
 	}
-	else if (imiMode == "imitation")
+	else if (switchMode == "Experiment")
 	{
 		Param::mode = Mode::Experiment;
-		std::cout << "[imitation]imitation_group_id        = " << switchGroupId << std::endl;
-		std::cout << "[imitation]imitation_rec_type        = " << imiImitationRecType << std::endl;
-		std::cout << "[imitation]imitation_origin_rec_id   = " << switchFakeRecId << std::endl;
+		std::cout << "[switch]group_id      = " << switchGroupId << std::endl;
+		std::cout << "[switch]fake_rec_id   = " << switchFakeRecId << std::endl;
 	}
 	else
 	{
-		std::cout << "illegal imitation mode! mode=" << imiMode << std::endl;
+		std::cout << "illegal switch mode! mode=" << switchMode << std::endl;
 		exit(EXIT_FAILURE);
 	}
 
-	std::cout << "[imitation]db_perception_neuron_memo              = " << switchDbPerceptionNeuronMemo << std::endl;
-	std::cout << "[imitation]db_imitation_condition_pulse_power     = " << imiDbImitationConditionPulsePower << std::endl;
-	std::cout << "[imitation]db_imitation_condition_pulse_frequency = " << imiDbImitationConditionPulseFrequency << std::endl;
-	std::cout << "[imitation]db_imitation_condition_pulse_duration  = " << imiDbImitationConditionPulseDuration << std::endl;
-	std::cout << "[imitation]db_imitation_condition_pulse_interval  = " << imiDbImitationConditionPulseInterval << std::endl;
-	std::cout << "[imitation]db_imitation_condition_pulse_number    = " << imiDbImitationConditionPulseNumber << std::endl;
-	std::cout << "[imitation]db_imitation_memo                      = " << switchDbMswRecordingInfoMemo << std::endl;
+	std::cout << "[switch]db_perception_neuron_memo   = " << switchDbPerceptionNeuronMemo << std::endl;
+	std::cout << "[switch]db_msw_recording_info_memo  = " << switchDbMswRecordingInfoMemo << std::endl;
 }
 
 

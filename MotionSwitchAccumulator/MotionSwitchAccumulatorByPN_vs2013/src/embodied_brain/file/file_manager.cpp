@@ -166,7 +166,7 @@ void FileManager::setJointPosition(PerceptionNeuronSensorData::PerceptionNeuronB
 /*
  * 動作情報をファイル出力
  */
-void FileManager::outputDataFile(const PerceptionNeuronDAO::DataSet &motionData, const MswRecordingInfoDAO::DataSet &imitationInfo)
+void FileManager::outputDataFile(const PerceptionNeuronDAO::DataSet &motionDataBeforeSwitching, const PerceptionNeuronDAO::DataSet &motionDataAfterSwitching, const MswRecordingInfoDAO::DataSet &recordingInfo)
 {
 	try
 	{
@@ -179,7 +179,27 @@ void FileManager::outputDataFile(const PerceptionNeuronDAO::DataSet &motionData,
 
 		if (inputKey.compare("y") == 0)
 		{
-			this->outputDataFileExec(motionData, imitationInfo);
+			std::cout << "◆ファイル出力　－開始－◆" << std::endl;
+
+			//dataディレクトリの作成
+			if (!boost::filesystem::exists("data"))
+			{
+				if (!boost::filesystem::create_directory("data"))
+				{
+					std::cout << "data ディレクトリの作成に失敗しました。ファイル出力を中止します。" << std::endl;
+					return;
+				}
+			}
+
+			this->outputDataFilePerceptionNeuron(motionDataBeforeSwitching);
+			this->outputDataFilePerceptionNeuron(motionDataAfterSwitching);
+
+			if (Param::getMode() == Param::Mode::Experiment)
+			{
+				this->outputDataFileSwitching(recordingInfo);
+			}
+
+			std::cout << "◆ファイル出力　－終了－◆" << std::endl << std::endl;
 		}
 		else
 		{
@@ -192,25 +212,54 @@ void FileManager::outputDataFile(const PerceptionNeuronDAO::DataSet &motionData,
 	}
 }
 
-/*
- * 動作情報をファイル出力（実行部）
- */
-void FileManager::outputDataFileExec(const PerceptionNeuronDAO::DataSet &motionData, const MswRecordingInfoDAO::DataSet &imitationInfo)
-{
-	std::cout << "◆ファイル出力　－開始－◆" << std::endl;
 
-	/*
-		* dataディレクトリの作成
-		*/
-	if (!boost::filesystem::exists("data"))
+void FileManager::outputDataFile(const PerceptionNeuronDAO::DataSet &motionData)
+{
+	try
 	{
-		if (!boost::filesystem::create_directory("data"))
+		std::string inputKey;
+
+		while (inputKey.compare("y") != 0 && inputKey.compare("n") != 0)
 		{
-			std::cout << "data ディレクトリの作成に失敗しました。ファイル出力を中止します。" << std::endl;
-			return;
+			std::cout << "収録データをファイル出力しますか？(y/n)："; std::cin >> inputKey;
+		}
+
+		if (inputKey.compare("y") == 0)
+		{
+			std::cout << "◆ファイル出力　－開始－◆" << std::endl;
+
+			//dataディレクトリの作成
+			if (!boost::filesystem::exists("data"))
+			{
+				if (!boost::filesystem::create_directory("data"))
+				{
+					std::cout << "data ディレクトリの作成に失敗しました。ファイル出力を中止します。" << std::endl;
+					return;
+				}
+			}
+
+			this->outputDataFilePerceptionNeuron(motionData);
+
+			std::cout << "◆ファイル出力　－終了－◆" << std::endl << std::endl;
+		}
+		else
+		{
+			std::cout << "◆ファイル出力しません◆" << std::endl << std::endl;
 		}
 	}
+	catch (std::exception& ex)
+	{
+		std::cout << ex.what() << std::endl;
+	}
+}
 
+
+
+/*
+ * PerceptionNeuron情報をファイル出力
+ */
+void FileManager::outputDataFilePerceptionNeuron(const PerceptionNeuronDAO::DataSet &motionData)
+{
 	//出力ファイルパスを作成
 	struct tm nowTm;
 	time_t timet;
@@ -273,36 +322,44 @@ void FileManager::outputDataFileExec(const PerceptionNeuronDAO::DataSet &motionD
 	ofs.clear();
 
 	std::cout << "　Perception Neuron動作時系列出力 完了(" << filePath << ")" << std::endl;
+}
+
+/*
+ * 切替動作・収録情報をファイル出力
+ */
+void FileManager::outputDataFileSwitching(const MswRecordingInfoDAO::DataSet &recordingInfo)
+{
+	std::cout << "◆ファイル出力　－開始－◆" << std::endl;
+
+	//出力ファイルパスを作成
+	struct tm nowTm;
+	time_t timet;
+	char filePath[250];
+
+	timet = time(NULL);
+	localtime_s(&nowTm, &timet);
+
+	std::ofstream ofs;
 
 	/*
-	 * PMS実験_真似情報ファイル出力
+	 * 動作切替実験_収録情報ファイル出力
 	 */
-	if (Param::getMode() == Param::Mode::Experiment)
-	{
-		strftime(filePath, sizeof(filePath), "data\\pms_imitation_info_%Y%m%d_%H%M%S.dat", &nowTm);
+	strftime(filePath, sizeof(filePath), "data\\motion_switching_recording_info_%Y%m%d_%H%M%S.dat", &nowTm);
 
-		ofs.open(filePath);
+	ofs.open(filePath);
 
-		ofs << imitationInfo.groupId << "\t"
-			<< imitationInfo.beforeSwitchingRecId << "\t"
-			<< imitationInfo.afterSwitchingRecId << "\t"
-			<< imitationInfo.afterSwitchingFakeRecId << "\t"
-			<< imitationInfo.conditionPulsePower << "\t"
-			<< imitationInfo.conditionPulseFrequency << "\t"
-			<< imitationInfo.conditionPulseDuration << "\t"
-			<< imitationInfo.conditionPulseInterval << "\t"
-			<< imitationInfo.conditionPulseNumber << "\t"
-			<< "'" << imitationInfo.memo << "'"
-			<< std::endl;
+	ofs << recordingInfo.groupId << "\t"
+		<< recordingInfo.beforeSwitchingRecId << "\t"
+		<< recordingInfo.afterSwitchingRecId << "\t"
+		<< recordingInfo.fakeRecId << "\t"
+		<< "'" << recordingInfo.memo << "'"
+		<< std::endl;
 
-		ofs.flush();
-		ofs.close();
-		ofs.clear();
+	ofs.flush();
+	ofs.close();
+	ofs.clear();
 
-		std::cout << "　PMS実験_真似情報ファイル出力 完了(" << filePath << ")" << std::endl;
-	}
-
-	std::cout << "◆ファイル出力　－終了－◆" << std::endl << std::endl;
+	std::cout << "　動作切替実験_収録情報ファイル出力 完了(" << filePath << ")" << std::endl;
 }
 
 

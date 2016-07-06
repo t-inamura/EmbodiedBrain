@@ -15,7 +15,7 @@
 
 const std::string DatabaseDAO::DETAIL_TBL    = "perception_neuron_motions_time_series";
 const std::string DatabaseDAO::SUMMARY_TBL   = "perception_neuron_motions_summary";
-const std::string DatabaseDAO::IMITATION_TBL = "pms_imitation_info";
+const std::string DatabaseDAO::SWITCHING_TBL = "msw_recording_info";
 
 
 /*
@@ -30,12 +30,12 @@ void ManageRecordedDataOnMySQL::run()
 
 		boost::regex regexSelectPnPattern       ("select pn");
 		boost::regex regexSelectPnWithNumPattern("select pn +[0-9]{1,9}");
-		boost::regex regexSelectImPattern       ("select im");
-		boost::regex regexSelectImWithNumPattern("select im +[0-9]{1,9}");
-		boost::regex regexUpdateMidPattern      ("update +[0-9]{1,9} +[0-9]{1,9}");
-		//boost::regex regexUpdateMidPattern      ("update +[0-9]{1,9} +rid +[0-9]{1,9}");
-		//boost::regex regexUpdateMemoPattern     ("update +[0-9]{1,9} +memo .+");
-		boost::regex regexDeletePattern         ("delete +[0-9]{1,9}");
+		boost::regex regexSelectSwPattern       ("select sw");
+		boost::regex regexSelectSwWithNumPattern("select sw +[0-9]{1,9}");
+		boost::regex regexUpdateMidPattern      ("update pn +[0-9]{1,9} +[0-9]{1,9}");
+		//boost::regex regexUpdateMidPattern      ("update pn +[0-9]{1,9} +rid +[0-9]{1,9}");
+		//boost::regex regexUpdateMemoPattern     ("update pn +[0-9]{1,9} +memo .+");
+		boost::regex regexDeletePattern         ("delete pn +[0-9]{1,9}");
 		boost::regex regexHelpPattern           ("h");
 		boost::regex regexExitPattern           ("q");
 
@@ -80,16 +80,16 @@ void ManageRecordedDataOnMySQL::run()
 				databaseDAO.select(printNum);
 			}
 			/*
-			 * select im
+			 * select sw
 			 */
-			else if (regex_match(inputLine, regexSelectImPattern))
+			else if (regex_match(inputLine, regexSelectSwPattern))
 			{
-				databaseDAO.selectImitation();
+				databaseDAO.selectSwitching();
 			}
 			/*
-			 * select im XXX
+			 * select sw XXX
 			 */
-			else if (regex_match(inputLine, regexSelectImWithNumPattern))
+			else if (regex_match(inputLine, regexSelectSwWithNumPattern))
 			{
 				BOOST_TOKENIZER tokens(inputLine, sep);
 				boost::tokenizer< BOOST_CHAR_SEP >::iterator it = tokens.begin();
@@ -97,17 +97,17 @@ void ManageRecordedDataOnMySQL::run()
 				it++; it++;
 				int printNum = stoi(*it);
 
-				databaseDAO.selectImitation(printNum);
+				databaseDAO.selectSwitching(printNum);
 			}
 			/*
-			 * update RRR NNN
+			 * update pn RRR NNN
 			 */
 			else if (regex_match(inputLine, regexUpdateMidPattern))
 			{
 				BOOST_TOKENIZER tokens(inputLine, sep);
 				boost::tokenizer< BOOST_CHAR_SEP >::iterator it = tokens.begin();
 
-				it++; 
+				it++; it++;
 				std::string recId = *it;
 				it++; 
 				std::string newRecId = *it;
@@ -142,12 +142,12 @@ void ManageRecordedDataOnMySQL::run()
 				{
 					int cnt;
 
-					// 真似情報テーブル更新
-					cnt = databaseDAO.updateAndDelete("UPDATE " + DatabaseDAO::IMITATION_TBL + " SET rec_id=" + newRecId + " WHERE rec_id=" + recId);
-					std::cout << DatabaseDAO::IMITATION_TBL+"のrec_id="+recId+"のレコードを" << cnt << "件更新しました。" << std::endl;
+					// 動作切替・収録情報テーブル更新
+					cnt = databaseDAO.updateAndDelete("UPDATE " + DatabaseDAO::SWITCHING_TBL + " SET rec_id=" + newRecId + " WHERE rec_id=" + recId);
+					std::cout << DatabaseDAO::SWITCHING_TBL+"のrec_id="+recId+"のレコードを" << cnt << "件更新しました。" << std::endl;
 
-					cnt = databaseDAO.updateAndDelete("UPDATE " + DatabaseDAO::IMITATION_TBL + " SET original_rec_id=" + newRecId + " WHERE original_rec_id=" + recId);
-					std::cout << DatabaseDAO::IMITATION_TBL+"のoriginal_rec_id="+recId+"のレコードを" << cnt << "件更新しました。" << std::endl;
+					cnt = databaseDAO.updateAndDelete("UPDATE " + DatabaseDAO::SWITCHING_TBL + " SET original_rec_id=" + newRecId + " WHERE original_rec_id=" + recId);
+					std::cout << DatabaseDAO::SWITCHING_TBL+"のoriginal_rec_id="+recId+"のレコードを" << cnt << "件更新しました。" << std::endl;
 
 
 					// Perception Neuron動作サマリテーブル更新
@@ -161,7 +161,7 @@ void ManageRecordedDataOnMySQL::run()
 					std::cout << DatabaseDAO::DETAIL_TBL+"のレコードを" << cnt << "件更新しました。" << std::endl;
 				}
 			}
-			//メモの更新に関しては、真似情報テーブルにしても、Perception Neuron動作サマリテーブルにしても１行しかないため、MySQL Workbenchで直接編集してもらっても大差ない。
+			//メモの更新に関しては、動作切替・収録情報テーブルにしても、Perception Neuron動作サマリテーブルにしても１行しかないため、MySQL Workbenchで直接編集してもらっても大差ない。
 			///*
 			// * update RRR memo NNN
 			// */
@@ -205,14 +205,14 @@ void ManageRecordedDataOnMySQL::run()
 			//	}
 			//}
 			/*
-			 * delete RRR
+			 * delete pn RRR
 			 */
 			else if (regex_match(inputLine, regexDeletePattern))
 			{
 				BOOST_TOKENIZER tokens(inputLine, sep);
 				boost::tokenizer< BOOST_CHAR_SEP >::iterator it = tokens.begin();
 
-				it++;
+				it++; it++;
 				std::string recId = *it;
 
 				// 事前エラーチェック
@@ -221,7 +221,7 @@ void ManageRecordedDataOnMySQL::run()
 					std::cout << "削除対象のrec_id(" + recId + ")が存在しません。処理終了します。" << std::endl;
 					continue;
 				}
-				if (databaseDAO.selectCount(DatabaseDAO::IMITATION_TBL, "original_rec_id", recId) != 0)
+				if (databaseDAO.selectCount(DatabaseDAO::SWITCHING_TBL, "original_rec_id", recId) != 0)
 				{
 					std::cout << "削除対象のrec_id(" + recId + ")を手本動作として使用している収録があります。処理終了します。" << std::endl;
 					continue;
@@ -245,8 +245,8 @@ void ManageRecordedDataOnMySQL::run()
 					int cnt;
 
 					// 真似情報テーブル更新
-					cnt = databaseDAO.updateAndDelete("DELETE FROM " + DatabaseDAO::IMITATION_TBL + " WHERE rec_id=" + recId);
-					std::cout << DatabaseDAO::IMITATION_TBL+"のレコードを" << cnt << "件削除しました。" << std::endl;
+					cnt = databaseDAO.updateAndDelete("DELETE FROM " + DatabaseDAO::SWITCHING_TBL + " WHERE rec_id=" + recId);
+					std::cout << DatabaseDAO::SWITCHING_TBL+"のレコードを" << cnt << "件削除しました。" << std::endl;
 
 
 					// Perception Neuron動作サマリテーブル更新
@@ -298,14 +298,16 @@ void ManageRecordedDataOnMySQL::printHelp()
 {
 	std::string printStr = "\n"
 		"　■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■\n"
-		"　■ モデル動作情報関連テーブル操作方法                           ■\n"
+		"　■ 動作切替情報関連テーブル操作方法                             ■\n"
+		"　■   （現状、Perception Neuron関連テーブルのみ変更・削除可能）  ■\n"
+		"　■                                                              ■\n"
 		"　■   select pn          ：PerceptionNeuron表示(全て)            ■\n"
 		"　■   select pn XXX      ：PerceptionNeuron表示(指定件数XXXずつ) ■\n"
-		"　■   select im          ：真似情報表示(全て)                    ■\n"
-		"　■   select im XXX      ：真似情報表示(指定件数XXXずつ)         ■\n"
-		"　■   update RRR NNN     ：変更(rec_id)                          ■\n"
-//		"　■   update RRR memo NNN：変更(memo)                            ■\n"
-		"　■   delete RRR         ：削除                                  ■\n"
+		"　■   select sw          ：動作切替情報表示(全て)                ■\n"
+		"　■   select sw XXX      ：動作切替情報表示(指定件数XXXずつ)     ■\n"
+		"　■   update pn RRR NNN  ：PerceptionNeuron 変更(rec_id)         ■\n"
+//		"　■   update pn RRR memo NNN：変更(memo)                         ■\n"
+		"　■   delete pn RRR      ：PerceptionNeuron 削除                 ■\n"
 		"　■   h                  ：本操作方法表示                        ■\n"
 		"　■   q                  ：終了                                  ■\n"
 		"　■                                                              ■\n"

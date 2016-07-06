@@ -94,16 +94,10 @@ int         Param::switchRecId;
 int         Param::switchFakeMaxTime;
 
 int         Param::switchGroupId;
-int         Param::imiImitationRecType;
 int         Param::switchUserId;
 int         Param::switchFakeRecId;
 
 std::string Param::switchDbPerceptionNeuronMemo;
-float       Param::imiDbImitationConditionPulsePower;
-float       Param::imiDbImitationConditionPulseFrequency;
-int         Param::imiDbImitationConditionPulseDuration;
-int         Param::imiDbImitationConditionPulseInterval;
-int         Param::imiDbImitationConditionPulseNumber;
 std::string Param::switchDbMswRecordingInfoMemo;
 
 Param::Mode Param::mode;
@@ -198,20 +192,20 @@ int MotionSwitchAccumulator::run(int argc, char **argv)
 
 		std::cout << "■ データベースの重複チェック (PerceptionNeuron関連) 開始 ■" << std::endl;
 		//データベースのID重複チェック
-		if (!PerceptionNeuronDAO::duplicationCheck(Param::getImiRecId())){ continue; }
-
+		if (!PerceptionNeuronDAO::duplicationCheck(Param::getSwitchRecId())){ continue; }
+		if (!PerceptionNeuronDAO::duplicationCheck(Param::getSwitchRecId()+additionalId4before)){ continue; } //切替前ID
 
 		// 真似動作収録時は、偽動作をDBから取得したり、SIGServerに接続する必要がある
 		if (Param::getMode() == Param::Mode::Experiment)
 		{
-			std::cout << "■ データベースの重複チェック (PMS真似情報関連) 開始 ■" << std::endl;
+			std::cout << "■ データベースの重複チェック (動作切替・収録情報関連) 開始 ■" << std::endl;
 			//データベースのID重複チェック
-			if (!MswRecordingInfoDAO::duplicationCheck(Param::getImiImitationGroupId(), Param::getImiImitationRecType())){ continue; }
+			if (!MswRecordingInfoDAO::duplicationCheck(Param::getSwitchGroupId())){ continue; }
 
 			/*
 			 * 偽の動作情報を取得
 			 */
-			std::list<PerceptionNeuronDAO::TimeSeries_t> motionData = this->getMotionDataFromDBorFile(std::to_string(Param::getImiImitationOriginRecId()));
+			std::list<PerceptionNeuronDAO::TimeSeries_t> motionData = this->getMotionDataFromDBorFile(std::to_string(Param::getSwitchFakeRecId()));
 
 			//DBから取得した偽動作情報を使用してSIGVerseへ送信する電文リストを作成する
 			avatarController.makeTelegramForAvatar(motionData);
@@ -260,7 +254,14 @@ int MotionSwitchAccumulator::run(int argc, char **argv)
 		/*
 		 * 動作情報取得、データベースへの蓄積、ファイル出力処理の開始
 		 */
-		this->accumulateMotionData(avatarController);
+		if (Param::getMode() == Param::Mode::RecFake)
+		{
+			this->accumulateMotionData4RecFake();
+		}
+		else
+		{
+			this->accumulateMotionData4Experiment(avatarController);
+		}
 
 		if (Param::getMode() == Param::Mode::Experiment){ thSendMotionDataToSIGVerse.join(); }
 
@@ -323,21 +324,21 @@ void __stdcall MotionSwitchAccumulator::bvhFrameDataReceived(void* customedObj, 
 /*
  * 偽動作情報をDB (or ファイル) から取得する
  */
-std::list<PerceptionNeuronDAO::TimeSeries_t> MotionSwitchAccumulator::getMotionDataFromDBorFile(const std::string &recIdStr)
+std::list<PerceptionNeuronDAO::TimeSeries_t> MotionSwitchAccumulator::getMotionDataFromDBorFile(const std::string &fakeRecIdStr)
 {
 	std::list<PerceptionNeuronDAO::TimeSeries_t> motionInfo;
 	int motionDataNum;
 
-	if(Param::getImiMotionDataFilePath()=="")
+	if(Param::getSwitchMotionDataFilePath()=="")
 	{
 		//データベースから動作情報を取得
-		motionDataNum = PerceptionNeuronDAO::selectMotionData(motionInfo, recIdStr);
+		motionDataNum = PerceptionNeuronDAO::selectMotionData(motionInfo, fakeRecIdStr);
 	}
 	else
 	{
 		//ファイルから動作情報を取得
 		FileManager fileManager;
-		motionDataNum = fileManager.getMotionData(motionInfo, Param::getImiMotionDataFilePath(), recIdStr);
+		motionDataNum = fileManager.getMotionData(motionInfo, Param::getSwitchMotionDataFilePath(), fakeRecIdStr);
 	}
 	if(motionDataNum==0)
 	{
@@ -352,20 +353,133 @@ std::list<PerceptionNeuronDAO::TimeSeries_t> MotionSwitchAccumulator::getMotionD
 /*
  * Perception Neuronから動作情報を取得・蓄積し、データベースへの追加とファイル出力を行う
  */
-void MotionSwitchAccumulator::accumulateMotionData(AvatarController &avatarController)
+void MotionSwitchAccumulator::accumulateMotionData4RecFake()
+{
+	AvatarController dummyAvatarController(this->generateMessageHeader(), this->perceptionNeuronData);
+
+	//動作
+	PerceptionNeuronDAO::DataSet pnDataSet = this->accumulateMotionDataAfterSwitching(dummyAvatarController);
+
+	std::cout << "収録を終了します" << std::endl;
+
+	//モーションデータを、DataSet型に入れなおす
+	this->setMotionData(pnDataSet,  this->accumulatedDataMapAfterSwitching);
+
+	// 少しだけキー入力待機
+	Sleep(500);
+
+
+	/*
+	 * 取得したPerception Neuronの動作情報をデータベースに追加
+	 */
+	std::string inputKey;
+
+	while (inputKey.compare("y") != 0 && inputKey.compare("n") != 0)
+	{
+		std::cout << "収録データをデータベースに蓄積しますか？(y/n)："; std::cin >> inputKey;
+	}
+
+	if (inputKey.compare("y") == 0)
+	{
+		// Perception Neuron動作関連
+		PerceptionNeuronDAO::insertDatabaseExec(pnDataSet);
+	}
+	else
+	{
+		std::cout << "◆データベースに蓄積しません◆" << std::endl << std::endl;
+	}
+
+
+	/*
+	 * 取得したPerception Neuronの動作情報をファイル出力
+	 */
+	FileManager fileManager;
+	fileManager.outputDataFile(pnDataSet);
+
+	this->accumulatedDataMapBeforeSwitching.clear();
+	this->accumulatedDataMapAfterSwitching.clear();
+}
+
+
+/*
+ * Perception Neuronから動作情報を取得・蓄積し、データベースへの追加とファイル出力を行う
+ */
+void MotionSwitchAccumulator::accumulateMotionData4Experiment(AvatarController &avatarController)
+{
+	//切替前後の動作
+	PerceptionNeuronDAO::DataSet pnDataSetBeforeSwitching = this->accumulateMotionDataBeforeSwitching(avatarController);
+	PerceptionNeuronDAO::DataSet pnDataSetAfterSwitching  = this->accumulateMotionDataAfterSwitching(avatarController);
+
+	std::cout << "収録を終了します" << std::endl;
+
+	//切替前後のモーションデータを、DataSet型に入れなおす
+	this->setMotionData(pnDataSetBeforeSwitching, this->accumulatedDataMapBeforeSwitching);
+	this->setMotionData(pnDataSetAfterSwitching,  this->accumulatedDataMapAfterSwitching);
+
+	/*
+	 * 動作切替情報作成
+	 */
+	MswRecordingInfoDAO::DataSet recordingInfo;
+
+	recordingInfo.groupId                 = Param::getSwitchGroupId();
+	recordingInfo.beforeSwitchingRecId    = Param::getSwitchRecId() + additionalId4before;
+	recordingInfo.afterSwitchingRecId     = Param::getSwitchRecId();
+	recordingInfo.fakeRecId               = Param::getSwitchFakeRecId();
+	recordingInfo.memo                    = Param::getSwitchDbMswRecordingInfoMemo();
+
+	// 少しだけキー入力待機
+	Sleep(500);
+
+
+	/*
+	 * 取得したPerception Neuronの動作情報をデータベースに追加
+	 */
+	std::string inputKey;
+
+	while (inputKey.compare("y") != 0 && inputKey.compare("n") != 0)
+	{
+		std::cout << "収録データをデータベースに蓄積しますか？(y/n)："; std::cin >> inputKey;
+	}
+
+	if (inputKey.compare("y") == 0)
+	{
+		// Perception Neuron動作関連
+		PerceptionNeuronDAO::insertDatabaseExec(pnDataSetBeforeSwitching);
+		PerceptionNeuronDAO::insertDatabaseExec(pnDataSetAfterSwitching);
+
+		// 動作切替関連
+		MswRecordingInfoDAO::insertDatabaseExec(recordingInfo);
+	}
+	else
+	{
+		std::cout << "◆データベースに蓄積しません◆" << std::endl << std::endl;
+	}
+
+	/*
+	 * 取得したPerception Neuronの動作情報をファイル出力
+	 */
+	FileManager fileManager;
+	fileManager.outputDataFile(pnDataSetBeforeSwitching, pnDataSetAfterSwitching, recordingInfo);
+
+	this->accumulatedDataMapBeforeSwitching.clear();
+	this->accumulatedDataMapAfterSwitching.clear();
+}
+
+
+PerceptionNeuronDAO::DataSet MotionSwitchAccumulator::accumulateMotionDataBeforeSwitching(AvatarController &avatarController)
 {
 	PerceptionNeuronDAO::DataSet motionSet;
 
-	motionSet.summary.recId       = Param::getImiRecId();
-	motionSet.summary.userId      = Param::getImiUserId();
-	motionSet.summary.recInterval = Param::getImiAccumInterval();
-	motionSet.summary.memo        = Param::getImiDbPerceptionNeuronMemo();
+	motionSet.summary.recId       = Param::getSwitchRecId();
+	motionSet.summary.userId      = Param::getSwitchUserId();
+	motionSet.summary.recInterval = Param::getSwitchAccumInterval();
+	motionSet.summary.memo        = Param::getSwitchDbPerceptionNeuronMemo();
 
 	double maxTime;
 
 	if (Param::getMode() == Param::Mode::RecFake)
 	{
-		maxTime = (double)(Param::getImiOriginMaxTime()*1000.0); //単位はms
+		maxTime = (double)(Param::getSwitchFakeMaxTime()*1000.0); //単位はms
 	}
 	else if (Param::getMode() == Param::Mode::Experiment)
 	{
@@ -390,7 +504,7 @@ void MotionSwitchAccumulator::accumulateMotionData(AvatarController &avatarContr
 	int waitKeyCnt = 1;
 
 	//次回データ蓄積時間
-	double accumNextTime = (double)(Param::getImiAccumInterval() * accumCnt);
+	double accumNextTime = (double)(Param::getSwitchAccumInterval() * accumCnt);
 	//次回キー入力待ち時間
 	double waitKeyNextTime = (double)(waitKeyInterval * waitKeyCnt);
 
@@ -420,21 +534,118 @@ void MotionSwitchAccumulator::accumulateMotionData(AvatarController &avatarContr
 			//動作情報をメモリに蓄積
 	//		this->accumulate((int)elapsedTime);
 			//最新の動作情報を共有メモリのマップに保持する
-			if (!avatarController.isSwitched)
-			{
-				this->accumulatingBeforeDataMap.insert( make_pair((int)elapsedTime, this->perceptionNeuronData->getLatestSensorData()));
-			}
-			else
-			{
-				this->accumulatingAfterDataMap.insert( make_pair((int)elapsedTime, this->perceptionNeuronData->getLatestSensorData()));
-			}
-
+			this->accumulatedDataMapBeforeSwitching.insert( make_pair((int)elapsedTime, this->perceptionNeuronData->getLatestSensorData()));
 
 			//次回データ蓄積時間を算出
 			while (elapsedTime >= accumNextTime)
 			{
 				accumCnt++;
-				accumNextTime = (double)(Param::getImiAccumInterval() * accumCnt);
+				accumNextTime = (double)(Param::getSwitchAccumInterval() * accumCnt);
+			}
+		}
+
+		//100msに1回キー入力待ちする
+		if (elapsedTime >= waitKeyNextTime)
+		{
+			//キー"s"が入力されたら、偽動作にSwitch
+			if (GetAsyncKeyState('S'))
+			{
+				avatarController.isSwitched = true;
+			}
+
+			//次回キー入力待ち時間を算出
+			while (elapsedTime >= waitKeyNextTime)
+			{
+				waitKeyCnt++;
+				waitKeyNextTime = (double)(waitKeyInterval  * waitKeyCnt);
+			}
+		}
+	}
+
+	time(&end_time);
+
+	//収録時間をセットする
+	motionSet.summary.recTotalTime = (int)(difftime(end_time, start_time)); //秒
+
+	return motionSet;
+}
+
+
+PerceptionNeuronDAO::DataSet MotionSwitchAccumulator::accumulateMotionDataAfterSwitching(AvatarController &avatarController)
+{
+	PerceptionNeuronDAO::DataSet motionSet;
+
+	motionSet.summary.recId       = Param::getSwitchRecId();
+	motionSet.summary.userId      = Param::getSwitchUserId();
+	motionSet.summary.recInterval = Param::getSwitchAccumInterval();
+	motionSet.summary.memo        = Param::getSwitchDbPerceptionNeuronMemo();
+
+	double maxTime;
+
+	if (Param::getMode() == Param::Mode::RecFake)
+	{
+		maxTime = (double)(Param::getSwitchFakeMaxTime()*1000.0); //単位はms
+	}
+	else if (Param::getMode() == Param::Mode::Experiment)
+	{
+		maxTime = (std::numeric_limits<double>::max)();
+	}
+
+
+	//時間計測関連変数
+	LARGE_INTEGER startLi, nowLi, freqLi;
+	double freq, freqMilli;
+
+	QueryPerformanceFrequency(&freqLi);
+	freq = (double)freqLi.QuadPart;
+	freqMilli = (double)freqLi.QuadPart / 1000.0;
+
+	//キー入力待ち間隔[ms]
+	int waitKeyInterval = 100;
+
+	//データ蓄積カウンタ
+	int accumCnt = 0;
+	//キー入力待ちカウンタ
+	int waitKeyCnt = 1;
+
+	//次回データ蓄積時間
+	double accumNextTime = (double)(Param::getSwitchAccumInterval() * accumCnt);
+	//次回キー入力待ち時間
+	double waitKeyNextTime = (double)(waitKeyInterval * waitKeyCnt);
+
+	//収録開始時間をセットする
+	time_t timet = time(NULL);
+	localtime_s(&motionSet.summary.recStartTime, &timet);
+
+	time_t start_time, end_time;
+
+	time(&start_time);
+
+	QueryPerformanceCounter(&startLi);
+
+	/*
+	 * 特定の条件が満たされるまで、Perception Neuronの動作情報をメモリに蓄積し続ける
+	 */
+	while (true)
+	{
+		QueryPerformanceCounter(&nowLi);
+
+		//経過時間
+		double elapsedTime = (double)(nowLi.QuadPart - startLi.QuadPart) / freqMilli; //ms単位
+
+		//データ蓄積
+		if (elapsedTime >= accumNextTime)
+		{
+			//動作情報をメモリに蓄積
+	//		this->accumulate((int)elapsedTime);
+			//最新の動作情報を共有メモリのマップに保持する
+			this->accumulatedDataMapAfterSwitching.insert( make_pair((int)elapsedTime, this->perceptionNeuronData->getLatestSensorData()));
+
+			//次回データ蓄積時間を算出
+			while (elapsedTime >= accumNextTime)
+			{
+				accumCnt++;
+				accumNextTime = (double)(Param::getSwitchAccumInterval() * accumCnt);
 			}
 		}
 
@@ -442,16 +653,10 @@ void MotionSwitchAccumulator::accumulateMotionData(AvatarController &avatarContr
 		if (elapsedTime >= waitKeyNextTime)
 		{
 			//キー"q"が入力されたら処理終了
-			if (avatarController.isSwitched && GetAsyncKeyState('Q'))
+			if (GetAsyncKeyState('Q'))
 			{
 				while (_kbhit() != 0){ _getch(); } //キー入力をクリア
 				break;
-			}
-
-			//キー"f"が入力されたら、fake 動作に切替
-			if (GetAsyncKeyState('F'))
-			{
-				avatarController.isSwitched = true;
 			}
 
 			//次回キー入力待ち時間を算出
@@ -474,17 +679,17 @@ void MotionSwitchAccumulator::accumulateMotionData(AvatarController &avatarContr
 	//収録時間をセットする
 	motionSet.summary.recTotalTime = (int)(difftime(end_time, start_time)); //秒
 
-	std::cout << "収録を終了します" << std::endl;
+	return motionSet;
+}
 
-	/*
-	 * 取得したモーションデータを、DataSet型に入れなおす
-	 */
-	std::map<int, PerceptionNeuronSensorData>::iterator it = this->accumulatingBeforeDataMap.begin();
+void MotionSwitchAccumulator::setMotionData(PerceptionNeuronDAO::DataSet &motionSet, const std::map<int, PerceptionNeuronSensorData> &accumulatedDataMap)
+{
+	std::map<int, PerceptionNeuronSensorData>::const_iterator it = accumulatedDataMap.begin();
 
-	while (it != this->accumulatingBeforeDataMap.end())
+	while (it != accumulatedDataMap.end())
 	{
 		PerceptionNeuronDAO::TimeSeries_t posture;
-		posture.recId       = Param::getImiRecId();
+		posture.recId       = Param::getSwitchRecId();
 		posture.elapsedTime = (*it).first;
 		posture.hips_pos.x  = ((*it).second).bvhData.data[0];
 		posture.hips_pos.y  = ((*it).second).bvhData.data[1];
@@ -502,59 +707,6 @@ void MotionSwitchAccumulator::accumulateMotionData(AvatarController &avatarContr
 
 		it++;
 	}
-
-	/*
-	 * 動作切替情報作成
-	 */
-	MswRecordingInfoDAO::DataSet imitationInfo;
-
-	if (Param::getMode() == Param::Mode::Experiment)
-	{
-		imitationInfo.groupId = Param::getImiImitationGroupId();
-		imitationInfo.beforeSwitchingRecId = Param::getImiImitationRecType();
-		imitationInfo.afterSwitchingRecId = Param::getImiRecId();
-		imitationInfo.afterSwitchingFakeRecId = Param::getImiImitationOriginRecId();
-		imitationInfo.memo = Param::getImiDbImitationMemo();
-	}
-
-	// 少しだけキー入力待機
-	Sleep(500);
-
-
-	/*
-	 * 取得したPerception Neuronの動作情報をデータベースに追加
-	 */
-	std::string inputKey;
-
-	while (inputKey.compare("y") != 0 && inputKey.compare("n") != 0)
-	{
-		std::cout << "収録データをデータベースに蓄積しますか？(y/n)："; std::cin >> inputKey;
-	}
-
-	if (inputKey.compare("y") == 0)
-	{
-		// Perception Neuron動作関連
-		PerceptionNeuronDAO::insertDatabaseExec(motionSet);
-
-		if (Param::getMode() == Param::Mode::Experiment)
-		{
-			// 真似動作関連
-			MswRecordingInfoDAO::insertDatabaseExec(imitationInfo);
-		}
-	}
-	else
-	{
-		std::cout << "◆データベースに蓄積しません◆" << std::endl << std::endl;
-	}
-
-
-	/*
-	 * 取得したPerception Neuronの動作情報をファイル出力
-	 */
-	FileManager fileManager;
-	fileManager.outputDataFile(motionSet, imitationInfo);
-
-	this->accumulatingBeforeDataMap.clear();
 }
 
 

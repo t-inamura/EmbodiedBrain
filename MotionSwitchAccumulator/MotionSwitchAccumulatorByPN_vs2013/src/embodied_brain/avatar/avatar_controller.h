@@ -29,8 +29,6 @@ private:
 		std::string motionInfoStr;
 	};
 
-//	std::string floatToString(const float x);
-
 	//SIGService
 	sigverse::SIGService *m_srv = NULL;
 

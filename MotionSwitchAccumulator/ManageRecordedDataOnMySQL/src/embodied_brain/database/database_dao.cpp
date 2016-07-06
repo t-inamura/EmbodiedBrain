@@ -158,9 +158,9 @@ void DatabaseDAO::select()
 
 
 /*
- * 指定件数ずつ表示（真似情報）
+ * 指定件数ずつ表示（動作切替・収録情報）
  */
-void DatabaseDAO::selectImitation(const int printNum)
+void DatabaseDAO::selectSwitching(const int printNum)
 {
 	try
 	{
@@ -174,22 +174,22 @@ void DatabaseDAO::selectImitation(const int printNum)
 		con = driver->connect("tcp://" + Param::getDbHost() + ":" + std::to_string((long long)Param::getDbPort()), Param::getDbUser(), Param::getDbPass());
 		con->setSchema(Param::getDbSchema());
 
-		sql::SQLString selectSQL = "select * from " + IMITATION_TBL;
+		sql::SQLString selectSQL = "select * from " + SWITCHING_TBL;
 
 		stmt = con->createStatement();
 		rs = stmt->executeQuery(selectSQL);
 		
-		std::cout << " GroupId | RecType | RecId  | OriginalRecId | Memo                                   " << std::endl;
+		std::cout << " GroupId | BeforeRecId | AfterRecId  | FakeRecId   | Memo                                   " << std::endl;
 
 		int cnt = 0;
 
 		while(rs->next())
 		{
 			std::cout <<
-				std::setfill(' ') << std::setw(8)  << std::right << rs->getInt("group_id")        << " | " <<
-				std::setfill(' ') << std::setw(7)  << std::right << rs->getInt("rec_type")        << " | " <<
-				std::setfill(' ') << std::setw(6)  << std::right << rs->getInt("rec_id")          << " | " <<
-				std::setfill(' ') << std::setw(13) << std::right << rs->getInt("original_rec_id") << " | " <<
+				std::setfill(' ') << std::setw(8)  << std::right << rs->getInt("group_id")      << " | " <<
+				std::setfill(' ') << std::setw(12) << std::right << rs->getInt("before_rec_id") << " | " <<
+				std::setfill(' ') << std::setw(12) << std::right << rs->getInt("after_rec_id")  << " | " <<
+				std::setfill(' ') << std::setw(12) << std::right << rs->getInt("fake_rec_id")   << " | " <<
 				std::setfill(' ') << std::setw(38) << std::left  << rs->getString("memo")  << 
 				std::endl;
 
@@ -220,9 +220,9 @@ void DatabaseDAO::selectImitation(const int printNum)
 /*
  * 全件表示（真似情報）
  */
-void DatabaseDAO::selectImitation()
+void DatabaseDAO::selectSwitching()
 {
-	this->selectImitation(99999);
+	this->selectSwitching(99999);
 }
 
 

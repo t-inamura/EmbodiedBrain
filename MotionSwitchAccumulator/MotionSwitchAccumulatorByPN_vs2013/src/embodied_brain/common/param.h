@@ -41,15 +41,9 @@ private:
 	static int         switchFakeMaxTime;
 
 	static int         switchGroupId;
-	static int         imiImitationRecType;
 	static int         switchFakeRecId;
 
 	static std::string switchDbPerceptionNeuronMemo;
-	static float       imiDbImitationConditionPulsePower;
-	static float       imiDbImitationConditionPulseFrequency;
-	static int         imiDbImitationConditionPulseDuration;
-	static int         imiDbImitationConditionPulseInterval;
-	static int         imiDbImitationConditionPulseNumber;
 	static std::string switchDbMswRecordingInfoMemo;
 
 	static Mode mode;
@@ -62,29 +56,23 @@ public:
 	static std::string getDbUser();
 	static std::string getDbPass();
 
-	static std::string      getGeneralServiceName();
+	static std::string getGeneralServiceName();
 
-	static int              getSigAvatarDispInterval();
+	static int         getSigAvatarDispInterval();
 
-	static int         getImiAccumInterval();
-	static std::string getImiMotionDataFilePath();
+	static int         getSwitchAccumInterval();
+	static std::string getSwitchMotionDataFilePath();
 
-	static int         getImiRecId();
-	static int         getImiUserId();
+	static int         getSwitchRecId();
+	static int         getSwitchUserId();
 
-	static int         getImiOriginMaxTime();
+	static int         getSwitchFakeMaxTime();
 
-	static int         getImiImitationGroupId();
-	static int         getImiImitationRecType();
-	static int         getImiImitationOriginRecId();
+	static int         getSwitchGroupId();
+	static int         getSwitchFakeRecId();
 
-	static std::string getImiDbPerceptionNeuronMemo();
-	static float       getImiDbImitationConditionPulsePower();
-	static float       getImiDbImitationConditionPulseFrequency();
-	static int         getImiDbImitationConditionPulseDuration();
-	static int         getImiDbImitationConditionPulseInterval();
-	static int         getImiDbImitationConditionPulseNumber();
-	static std::string getImiDbImitationMemo();
+	static std::string getSwitchDbPerceptionNeuronMemo();
+	static std::string getSwitchDbMswRecordingInfoMemo();
 
 	static Mode getMode();
 

@@ -159,17 +159,17 @@ void MswRecordingInfoDAO::insert(sql::Connection *con, const MswRecordingInfoDAO
 
 	sql::SQLString insertQuery
 		=
-		"INSERT INTO pms_imitation_info ("
+		"INSERT INTO msw_recording_info ("
 			"group_id, "
 			"before_switching_rec_id, "
 			"after_switching_rec_id, "
-			"after_switching_fake_rec_id, "
+			"fake_rec_id, "
 			"memo "
 		")VALUES ("
 			+ std::to_string(motionInfo.groupId) + ","
 			+ std::to_string(motionInfo.beforeSwitchingRecId) + ","
 			+ std::to_string(motionInfo.afterSwitchingRecId) + ","
-			+ std::to_string(motionInfo.afterSwitchingFakeRecId) + ","
+			+ std::to_string(motionInfo.fakeRecId) + ","
 			+ "'" + motionInfo.memo + "'" +
 		") ";
 

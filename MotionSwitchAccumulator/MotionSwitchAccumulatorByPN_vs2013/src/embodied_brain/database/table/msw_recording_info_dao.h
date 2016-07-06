@@ -1,5 +1,5 @@
-﻿#ifndef EMBODIED_BRAIN_IMITATION_DAO_H
-#define EMBODIED_BRAIN_IMITATION_DAO_H
+﻿#ifndef EMBODIED_BRAIN_MSW_RECORDING_INFO_DAO_H
+#define EMBODIED_BRAIN_MSW_RECORDING_INFO_DAO_H
 
 #pragma warning(disable:4251)
 
@@ -9,7 +9,7 @@
 #include <cppconn/prepared_statement.h>
 
 /*
- * 真似情報関連テーブル操作クラス
+ * 動作切替実験・収録情報関連テーブル操作クラス
  */
 class MswRecordingInfoDAO
 {
@@ -19,7 +19,7 @@ public:
 		int          groupId;
 		int          beforeSwitchingRecId;
 		int          afterSwitchingRecId;
-		int          afterSwitchingFakeRecId;
+		int          fakeRecId;
 		std::string  memo;
 	};
 
@@ -30,4 +30,4 @@ public:
 	static void insert(sql::Connection *con, const MswRecordingInfoDAO::DataSet &motionInfo);
 };
 
-#endif //EMBODIED_BRAIN_IMITATION_DAO_H
+#endif //EMBODIED_BRAIN_MSW_RECORDING_INFO_DAO_H

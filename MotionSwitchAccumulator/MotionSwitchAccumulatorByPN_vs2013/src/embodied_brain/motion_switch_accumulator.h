@@ -12,21 +12,29 @@
 #include <embodied_brain/avatar/avatar_controller.h>
 
 /*
- * 真似動作収録クラス
+ * 動作切替・収録クラス
  */
 class MotionSwitchAccumulator : public PerceptionNeuronDevice
 {
 protected :
+	// 切替前の動作IDは切替後動作ID＋100万とする
+	static const int additionalId4before = 1000000;
+
 //	void initialize(const int argMotionId, const std::string &memo, const int argMaxRecordTime);
 
 	std::list<PerceptionNeuronDAO::TimeSeries_t> getMotionDataFromDBorFile(const std::string &recIdStr);
 
-	void accumulateMotionData(AvatarController &avatarController);
+	void accumulateMotionData4RecFake();
+	void accumulateMotionData4Experiment(AvatarController &avatarController);
+	PerceptionNeuronDAO::DataSet accumulateMotionDataBeforeSwitching(AvatarController &avatarController);
+	PerceptionNeuronDAO::DataSet accumulateMotionDataAfterSwitching(AvatarController &avatarController);
 //	void accumulate(const int elapsedTime);
 
+	void setMotionData(PerceptionNeuronDAO::DataSet &motionSet, const std::map<int, PerceptionNeuronSensorData> &accumulatedDataMap);
+
 //	PerceptionNeuronSensorData latestSensorData;
-	std::map<int, PerceptionNeuronSensorData> accumulatingBeforeDataMap;
-	std::map<int, PerceptionNeuronSensorData> accumulatingAfterDataMap;
+	std::map<int, PerceptionNeuronSensorData> accumulatedDataMapBeforeSwitching;
+	std::map<int, PerceptionNeuronSensorData> accumulatedDataMapAfterSwitching;
 
 	PerceptionNeuronData *perceptionNeuronData;
 
