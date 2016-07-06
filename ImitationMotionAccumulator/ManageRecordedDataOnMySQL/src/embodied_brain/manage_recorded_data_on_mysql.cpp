@@ -32,10 +32,10 @@ void ManageRecordedDataOnMySQL::run()
 		boost::regex regexSelectPnWithNumPattern("select pn +[0-9]{1,9}");
 		boost::regex regexSelectImPattern       ("select im");
 		boost::regex regexSelectImWithNumPattern("select im +[0-9]{1,9}");
-		boost::regex regexUpdateMidPattern      ("update +[0-9]{1,9} +[0-9]{1,9}");
-		//boost::regex regexUpdateMidPattern      ("update +[0-9]{1,9} +rid +[0-9]{1,9}");
-		//boost::regex regexUpdateMemoPattern     ("update +[0-9]{1,9} +memo .+");
-		boost::regex regexDeletePattern         ("delete +[0-9]{1,9}");
+		boost::regex regexUpdateMidPattern      ("update pn +[0-9]{1,9} +[0-9]{1,9}");
+		//boost::regex regexUpdateMidPattern      ("update pn +[0-9]{1,9} +rid +[0-9]{1,9}");
+		//boost::regex regexUpdateMemoPattern     ("update pn +[0-9]{1,9} +memo .+");
+		boost::regex regexDeletePattern         ("delete pn +[0-9]{1,9}");
 		boost::regex regexHelpPattern           ("h");
 		boost::regex regexExitPattern           ("q");
 
@@ -100,14 +100,14 @@ void ManageRecordedDataOnMySQL::run()
 				databaseDAO.selectImitation(printNum);
 			}
 			/*
-			 * update RRR NNN
+			 * update pn RRR NNN
 			 */
 			else if (regex_match(inputLine, regexUpdateMidPattern))
 			{
 				BOOST_TOKENIZER tokens(inputLine, sep);
 				boost::tokenizer< BOOST_CHAR_SEP >::iterator it = tokens.begin();
 
-				it++; 
+				it++; it++;
 				std::string recId = *it;
 				it++; 
 				std::string newRecId = *it;
@@ -205,14 +205,14 @@ void ManageRecordedDataOnMySQL::run()
 			//	}
 			//}
 			/*
-			 * delete RRR
+			 * delete pn RRR
 			 */
 			else if (regex_match(inputLine, regexDeletePattern))
 			{
 				BOOST_TOKENIZER tokens(inputLine, sep);
 				boost::tokenizer< BOOST_CHAR_SEP >::iterator it = tokens.begin();
 
-				it++;
+				it++; it++;
 				std::string recId = *it;
 
 				// 事前エラーチェック
@@ -299,13 +299,15 @@ void ManageRecordedDataOnMySQL::printHelp()
 	std::string printStr = "\n"
 		"　■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■■\n"
 		"　■ 真似動作情報関連テーブル操作方法                             ■\n"
-		"　■   select pn          ：PerceptionNeuron表示(全て)            ■\n"
-		"　■   select pn XXX      ：PerceptionNeuron表示(指定件数XXXずつ) ■\n"
+		"　■   （現状、Perception Neuron関連テーブルのみ変更・削除可能）  ■\n"
+		"　■                                                              ■\n"
+		"　■   select pn          ：PerceptionNeuron 表示(全て)           ■\n"
+		"　■   select pn XXX      ：PerceptionNeuron 表示(指定件数XXXずつ)■\n"
 		"　■   select im          ：真似情報表示(全て)                    ■\n"
 		"　■   select im XXX      ：真似情報表示(指定件数XXXずつ)         ■\n"
-		"　■   update RRR NNN     ：変更(rec_id)                          ■\n"
-//		"　■   update RRR memo NNN：変更(memo)                            ■\n"
-		"　■   delete RRR         ：削除                                  ■\n"
+		"　■   update pn RRR NNN  ：PerceptionNeuron 変更(rec_id)         ■\n"
+//		"　■   update pn RRR memo NNN：変更(memo)                         ■\n"
+		"　■   delete pn RRR      ：PerceptionNeuron 削除                 ■\n"
 		"　■   h                  ：本操作方法表示                        ■\n"
 		"　■   q                  ：終了                                  ■\n"
 		"　■                                                              ■\n"
