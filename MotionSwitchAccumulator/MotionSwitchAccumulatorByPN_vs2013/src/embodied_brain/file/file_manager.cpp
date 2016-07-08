@@ -164,7 +164,7 @@ void FileManager::setJointPosition(PerceptionNeuronSensorData::PerceptionNeuronB
 
 
 /*
- * 動作情報をファイル出力
+ * 動作情報をファイル出力（実験(動作切替・収録)モード用）
  */
 void FileManager::outputDataFile(const PerceptionNeuronDAO::DataSet &motionDataBeforeSwitching, const PerceptionNeuronDAO::DataSet &motionDataAfterSwitching, const MswRecordingInfoDAO::DataSet &recordingInfo)
 {
@@ -194,10 +194,7 @@ void FileManager::outputDataFile(const PerceptionNeuronDAO::DataSet &motionDataB
 			this->outputDataFilePerceptionNeuron(motionDataBeforeSwitching);
 			this->outputDataFilePerceptionNeuron(motionDataAfterSwitching);
 
-			if (Param::getMode() == Param::Mode::Experiment)
-			{
-				this->outputDataFileSwitching(recordingInfo);
-			}
+			this->outputDataFileSwitching(recordingInfo);
 
 			std::cout << "◆ファイル出力　－終了－◆" << std::endl << std::endl;
 		}
@@ -213,6 +210,9 @@ void FileManager::outputDataFile(const PerceptionNeuronDAO::DataSet &motionDataB
 }
 
 
+/*
+ * 動作情報をファイル出力（偽動作収録モード用）
+ */
 void FileManager::outputDataFile(const PerceptionNeuronDAO::DataSet &motionData)
 {
 	try
@@ -348,9 +348,8 @@ void FileManager::outputDataFileSwitching(const MswRecordingInfoDAO::DataSet &re
 
 	ofs.open(filePath);
 
-	ofs << recordingInfo.groupId << "\t"
+	ofs << recordingInfo.afterSwitchingRecId << "\t"
 		<< recordingInfo.beforeSwitchingRecId << "\t"
-		<< recordingInfo.afterSwitchingRecId << "\t"
 		<< recordingInfo.fakeRecId << "\t"
 		<< "'" << recordingInfo.memo << "'"
 		<< std::endl;

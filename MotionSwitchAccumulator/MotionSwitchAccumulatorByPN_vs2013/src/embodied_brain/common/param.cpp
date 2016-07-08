@@ -21,7 +21,6 @@ int         Param::getSwitchUserId() { return switchUserId; }
 
 int         Param::getSwitchFakeMaxTime(){ return switchFakeMaxTime; }
 
-int         Param::getSwitchGroupId()  { return switchGroupId; }
 int         Param::getSwitchFakeRecId(){ return switchFakeRecId; }
 
 std::string Param::getSwitchDbPerceptionNeuronMemo() { return switchDbPerceptionNeuronMemo; }
@@ -61,7 +60,6 @@ void Param::readConfigFile()
 
 	switchFakeMaxTime = pt.get<int>  ("switch.fake_max_time");
 
-	switchGroupId     = pt.get<int>  ("switch.group_id");
 	switchFakeRecId   = pt.get<int>  ("switch.fake_rec_id");
 
 	switchDbPerceptionNeuronMemo  = pt.get<std::string>("switch.db_perception_neuron_memo");
@@ -94,7 +92,6 @@ void Param::readConfigFile()
 	else if (switchMode == "Experiment")
 	{
 		Param::mode = Mode::Experiment;
-		std::cout << "[switch]group_id      = " << switchGroupId << std::endl;
 		std::cout << "[switch]fake_rec_id   = " << switchFakeRecId << std::endl;
 	}
 	else

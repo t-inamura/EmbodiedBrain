@@ -221,9 +221,15 @@ void ManageRecordedDataOnMySQL::run()
 					std::cout << "削除対象のrec_id(" + recId + ")が存在しません。処理終了します。" << std::endl;
 					continue;
 				}
+				if (databaseDAO.selectCount(DatabaseDAO::IMITATION_TBL, "rec_id", recId) != 0)
+				{
+					std::cout << "削除対象のrec_id(" + recId + ")は真似情報テーブルで収録IDとして使用されています。処理終了します。" << std::endl;
+					continue;
+				}
+
 				if (databaseDAO.selectCount(DatabaseDAO::IMITATION_TBL, "original_rec_id", recId) != 0)
 				{
-					std::cout << "削除対象のrec_id(" + recId + ")を手本動作として使用している収録があります。処理終了します。" << std::endl;
+					std::cout << "削除対象のrec_id(" + recId + ")は真似情報テーブルで手本動作として使用されています。処理終了します。" << std::endl;
 					continue;
 				}
 
@@ -244,15 +250,9 @@ void ManageRecordedDataOnMySQL::run()
 				{
 					int cnt;
 
-					// 真似情報テーブル更新
-					cnt = databaseDAO.updateAndDelete("DELETE FROM " + DatabaseDAO::IMITATION_TBL + " WHERE rec_id=" + recId);
-					std::cout << DatabaseDAO::IMITATION_TBL+"のレコードを" << cnt << "件削除しました。" << std::endl;
-
-
 					// Perception Neuron動作サマリテーブル更新
 					cnt = databaseDAO.updateAndDelete("DELETE FROM " + DatabaseDAO::SUMMARY_TBL + " WHERE rec_id=" + recId);
 					std::cout << DatabaseDAO::SUMMARY_TBL+"のレコードを" << cnt << "件削除しました。" << std::endl;
-
 
 					// Perception Neuron動作時系列テーブル更新
 //					std::cout << DatabaseDAO::DETAIL_TBL+"を削除中です。" << std::endl;

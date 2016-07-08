@@ -16,15 +16,14 @@ class MswRecordingInfoDAO
 public:
 	struct DataSet
 	{
-		int          groupId;
-		int          beforeSwitchingRecId;
 		int          afterSwitchingRecId;
+		int          beforeSwitchingRecId;
 		int          fakeRecId;
 		std::string  memo;
 	};
 
 public:
-	static bool duplicationCheck(const int groupId);
+	static bool duplicationCheck(const int recId);
 	static void insertDatabase(const MswRecordingInfoDAO::DataSet &motionInfo);
 	static void insertDatabaseExec(const MswRecordingInfoDAO::DataSet &motionInfo);
 	static void insert(sql::Connection *con, const MswRecordingInfoDAO::DataSet &motionInfo);

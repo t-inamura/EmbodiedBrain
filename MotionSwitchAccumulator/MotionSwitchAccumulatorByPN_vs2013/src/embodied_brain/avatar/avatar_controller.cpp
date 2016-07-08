@@ -19,10 +19,21 @@
 #include <boost/thread/thread.hpp>
 
 
+/*
+ * コンストラクタ
+ */
 AvatarController::AvatarController(std::string messageHeader, PerceptionNeuronData *perceptionNeuronData)
 {
 	this->messageHeader        = messageHeader;
-	this->perceptionNeuronData = perceptionNeuronData;
+	this->perceptionNeuronData = perceptionNeuronData; // Shared data. Latest Perception Neuron data.
+	this->reset();
+}
+
+/*
+ * パラメータのリセット
+ */
+void AvatarController::reset()
+{
 	this->isSwitched  = false;
 	this->isReplaying = true;
 }
@@ -173,6 +184,12 @@ void AvatarController::sendMotionDataToSIGVerse()
 
 		while (true)
 		{
+			//'Q'を押下されて強制終了された場合
+			if (!this->isReplaying)
+			{
+				break;
+			}
+
 			if (!this->isSwitched)
 			{
 				PerceptionNeuronSensorData sensorData = this->perceptionNeuronData->getLatestSensorData();
@@ -239,6 +256,8 @@ void AvatarController::sendMotionDataToSIGVerse()
 		this->motionInfoTelegramList.clear();
 
 		std::cout << "◆描画　－終了－◆" << std::endl;
+
+//		Sleep(100000);
 	}
 	catch (std::exception& ex)
 	{

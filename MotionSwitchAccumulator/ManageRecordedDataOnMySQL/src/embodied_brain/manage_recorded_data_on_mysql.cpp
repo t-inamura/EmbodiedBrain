@@ -15,7 +15,7 @@
 
 const std::string DatabaseDAO::DETAIL_TBL    = "perception_neuron_motions_time_series";
 const std::string DatabaseDAO::SUMMARY_TBL   = "perception_neuron_motions_summary";
-const std::string DatabaseDAO::SWITCHING_TBL = "msw_recording_info";
+const std::string DatabaseDAO::SWITCHING_TBL = "motion_switching_recording_info";
 
 
 /*
@@ -143,17 +143,19 @@ void ManageRecordedDataOnMySQL::run()
 					int cnt;
 
 					// 動作切替・収録情報テーブル更新
-					cnt = databaseDAO.updateAndDelete("UPDATE " + DatabaseDAO::SWITCHING_TBL + " SET rec_id=" + newRecId + " WHERE rec_id=" + recId);
-					std::cout << DatabaseDAO::SWITCHING_TBL+"のrec_id="+recId+"のレコードを" << cnt << "件更新しました。" << std::endl;
+					cnt = databaseDAO.updateAndDelete("UPDATE " + DatabaseDAO::SWITCHING_TBL + " SET after_switching_rec_id=" + newRecId + " WHERE after_switching_rec_id=" + recId);
+					std::cout << DatabaseDAO::SWITCHING_TBL+"のafter_switching_rec_id="+recId+"のレコードを" << cnt << "件更新しました。" << std::endl;
 
-					cnt = databaseDAO.updateAndDelete("UPDATE " + DatabaseDAO::SWITCHING_TBL + " SET original_rec_id=" + newRecId + " WHERE original_rec_id=" + recId);
-					std::cout << DatabaseDAO::SWITCHING_TBL+"のoriginal_rec_id="+recId+"のレコードを" << cnt << "件更新しました。" << std::endl;
+					cnt = databaseDAO.updateAndDelete("UPDATE " + DatabaseDAO::SWITCHING_TBL + " SET before_switching_rec_id=" + newRecId + " WHERE before_switching_rec_id=" + recId);
+					std::cout << DatabaseDAO::SWITCHING_TBL+"のbefore_switching_rec_id="+recId+"のレコードを" << cnt << "件更新しました。" << std::endl;
+
+					cnt = databaseDAO.updateAndDelete("UPDATE " + DatabaseDAO::SWITCHING_TBL + " SET fake_rec_id=" + newRecId + " WHERE fake_rec_id=" + recId);
+					std::cout << DatabaseDAO::SWITCHING_TBL+"のfake_rec_id="+recId+"のレコードを" << cnt << "件更新しました。" << std::endl;
 
 
 					// Perception Neuron動作サマリテーブル更新
 					cnt = databaseDAO.updateAndDelete("UPDATE " + DatabaseDAO::SUMMARY_TBL + " SET rec_id=" + newRecId + " WHERE rec_id=" + recId);
 					std::cout << DatabaseDAO::SUMMARY_TBL+"のレコードを" << cnt << "件更新しました。" << std::endl;
-
 
 					// Perception Neuron動作時系列テーブル更新
 //					std::cout << DatabaseDAO::DETAIL_TBL+"を更新中です。" << std::endl;
@@ -221,9 +223,19 @@ void ManageRecordedDataOnMySQL::run()
 					std::cout << "削除対象のrec_id(" + recId + ")が存在しません。処理終了します。" << std::endl;
 					continue;
 				}
-				if (databaseDAO.selectCount(DatabaseDAO::SWITCHING_TBL, "original_rec_id", recId) != 0)
+				if (databaseDAO.selectCount(DatabaseDAO::SWITCHING_TBL, "after_switching_rec_id", recId) != 0)
 				{
-					std::cout << "削除対象のrec_id(" + recId + ")を手本動作として使用している収録があります。処理終了します。" << std::endl;
+					std::cout << "削除対象のrec_id(" + recId + ")は動作切替・収録テーブルで切替後収録IDとして使用されています。処理終了します。" << std::endl;
+					continue;
+				}
+				if (databaseDAO.selectCount(DatabaseDAO::SWITCHING_TBL, "before_switching_rec_id", recId) != 0)
+				{
+					std::cout << "削除対象のrec_id(" + recId + ")は動作切替・収録テーブルで切替前収録IDとして使用されています。処理終了します。" << std::endl;
+					continue;
+				}
+				if (databaseDAO.selectCount(DatabaseDAO::SWITCHING_TBL, "fake_rec_id", recId) != 0)
+				{
+					std::cout << "削除対象のrec_id(" + recId + ")は動作切替・収録テーブルで偽動作収録IDとして使用されています。処理終了します。" << std::endl;
 					continue;
 				}
 
@@ -243,11 +255,6 @@ void ManageRecordedDataOnMySQL::run()
 				if (inputKey.compare("y") == 0)
 				{
 					int cnt;
-
-					// 真似情報テーブル更新
-					cnt = databaseDAO.updateAndDelete("DELETE FROM " + DatabaseDAO::SWITCHING_TBL + " WHERE rec_id=" + recId);
-					std::cout << DatabaseDAO::SWITCHING_TBL+"のレコードを" << cnt << "件削除しました。" << std::endl;
-
 
 					// Perception Neuron動作サマリテーブル更新
 					cnt = databaseDAO.updateAndDelete("DELETE FROM " + DatabaseDAO::SUMMARY_TBL + " WHERE rec_id=" + recId);

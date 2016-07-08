@@ -179,17 +179,16 @@ void DatabaseDAO::selectSwitching(const int printNum)
 		stmt = con->createStatement();
 		rs = stmt->executeQuery(selectSQL);
 		
-		std::cout << " GroupId | BeforeRecId | AfterRecId  | FakeRecId   | Memo                                   " << std::endl;
+		std::cout << "AfterRecId | BeforeRecId| FakeRecId| Memo                                   " << std::endl;
 
 		int cnt = 0;
 
 		while(rs->next())
 		{
 			std::cout <<
-				std::setfill(' ') << std::setw(8)  << std::right << rs->getInt("group_id")      << " | " <<
-				std::setfill(' ') << std::setw(12) << std::right << rs->getInt("before_rec_id") << " | " <<
-				std::setfill(' ') << std::setw(12) << std::right << rs->getInt("after_rec_id")  << " | " <<
-				std::setfill(' ') << std::setw(12) << std::right << rs->getInt("fake_rec_id")   << " | " <<
+				std::setfill(' ') << std::setw(10) << std::right << rs->getInt("after_switching_rec_id")  << " | " <<
+				std::setfill(' ') << std::setw(10) << std::right << rs->getInt("before_switching_rec_id") << " | " <<
+				std::setfill(' ') << std::setw(8)  << std::right << rs->getInt("fake_rec_id")   << " | " <<
 				std::setfill(' ') << std::setw(38) << std::left  << rs->getString("memo")  << 
 				std::endl;
 

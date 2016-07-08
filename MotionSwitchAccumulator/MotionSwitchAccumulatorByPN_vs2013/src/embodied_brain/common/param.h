@@ -40,7 +40,6 @@ private:
 
 	static int         switchFakeMaxTime;
 
-	static int         switchGroupId;
 	static int         switchFakeRecId;
 
 	static std::string switchDbPerceptionNeuronMemo;
@@ -68,7 +67,6 @@ public:
 
 	static int         getSwitchFakeMaxTime();
 
-	static int         getSwitchGroupId();
 	static int         getSwitchFakeRecId();
 
 	static std::string getSwitchDbPerceptionNeuronMemo();

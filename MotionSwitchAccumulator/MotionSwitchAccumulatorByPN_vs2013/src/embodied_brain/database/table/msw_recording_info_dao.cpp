@@ -19,7 +19,7 @@
 /*
  * IDの重複チェック
  */
-bool MswRecordingInfoDAO::duplicationCheck(const int groupId)
+bool MswRecordingInfoDAO::duplicationCheck(const int recId)
 {
 	sql::mysql::MySQL_Driver *driver;
 	sql::Connection *con;
@@ -36,7 +36,7 @@ bool MswRecordingInfoDAO::duplicationCheck(const int groupId)
 		con->setSchema(Param::getDbSchema());
 
 		//真似情報テーブルから、指定IDの件数を取得するSQL
-		sql::SQLString selectSQL = "SELECT COUNT(*) AS cnt FROM motion_switching_recording_info WHERE group_id=" + std::to_string(groupId) + " ;";
+		sql::SQLString selectSQL = "SELECT COUNT(*) AS cnt FROM motion_switching_recording_info WHERE after_switching_rec_id=" + std::to_string(recId) + " ;";
 
 		stmt = con->createStatement();
 		rs = stmt->executeQuery(selectSQL);
@@ -46,7 +46,7 @@ bool MswRecordingInfoDAO::duplicationCheck(const int groupId)
 			//指定IDの件数が0件でなかった場合は、エラー
 			if (rs->getInt("cnt") != 0)
 			{
-				std::cout << "データベース上に同じ主キー(group_id=" + std::to_string(groupId) + ")の情報が存在します。処理終了します。" << std::endl;
+				std::cout << "データベース上に同じ主キー(after_switching_rec_id=" + std::to_string(recId) + ")の情報が存在します。処理終了します。" << std::endl;
 				return false;
 			}
 		}
@@ -159,16 +159,14 @@ void MswRecordingInfoDAO::insert(sql::Connection *con, const MswRecordingInfoDAO
 
 	sql::SQLString insertQuery
 		=
-		"INSERT INTO msw_recording_info ("
-			"group_id, "
-			"before_switching_rec_id, "
+		"INSERT INTO motion_switching_recording_info ("
 			"after_switching_rec_id, "
+			"before_switching_rec_id, "
 			"fake_rec_id, "
 			"memo "
 		")VALUES ("
-			+ std::to_string(motionInfo.groupId) + ","
-			+ std::to_string(motionInfo.beforeSwitchingRecId) + ","
 			+ std::to_string(motionInfo.afterSwitchingRecId) + ","
+			+ std::to_string(motionInfo.beforeSwitchingRecId) + ","
 			+ std::to_string(motionInfo.fakeRecId) + ","
 			+ "'" + motionInfo.memo + "'" +
 		") ";

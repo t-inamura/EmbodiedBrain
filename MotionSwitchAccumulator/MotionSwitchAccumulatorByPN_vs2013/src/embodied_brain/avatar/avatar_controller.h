@@ -40,6 +40,7 @@ private:
 
 public:
 	AvatarController(std::string messageHeader, PerceptionNeuronData *perceptionNeuronData);
+	void reset();
 
 	void connectSIGServer(const std::string &ipAddress, const int portNum);
 	void disconnectFromAllController();
