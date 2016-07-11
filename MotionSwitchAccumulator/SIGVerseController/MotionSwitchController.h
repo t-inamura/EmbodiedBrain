@@ -4,8 +4,8 @@
  *  Created on: 2016/07/08
  *      Author: Yamada
  */
-#ifndef SIGVERSE_MOTION_SWITCH_H
-#define SIGVERSE_MOTION_SWITCH_H
+#ifndef SIGVERSE_MOTION_SWITCH_CONTROLLER_H
+#define SIGVERSE_MOTION_SWITCH_CONTROLLER_H
 
 #include <sigverse/commonlib/Controller.h>
 #include <sigverse/commonlib/ControllerEvent.h>
@@ -44,6 +44,9 @@ public:
 
 	PerceptionNeuronDeviceManager perceptionNeuronDeviceManager;
 	OculusDK2DeviceManager oculusDK2DeviceManager;
+
+	double waistX = 20;
+	double shoulderZ = 30;
 };
 
 ///@brief Parameter file name.
@@ -58,4 +61,4 @@ const std::string MotionSwitchController::paramFileKeyOculusDK2Devicetype    = "
 const std::string MotionSwitchController::paramFileKeyOculusDK2DeviceUniqueID= "OculusDK2.device_unique_id";
 
 
-#endif //SIGVERSE_MOTION_SWITCH_H
+#endif // SIGVERSE_MOTION_SWITCH_CONTROLLER_H

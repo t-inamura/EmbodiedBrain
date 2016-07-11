@@ -7,6 +7,8 @@
 
 #include "MotionSwitchController.h"
 
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/exception/diagnostic_information.hpp>
@@ -21,6 +23,25 @@ void MotionSwitchController::onInit(InitEvent &evt)
 	SimObj *myself = getObj(myname());
 
 	this->perceptionNeuronDeviceManager.getInitialPositionAndRotation(myself);
+
+	myself->setJointAngle("RHIP_JOINT_X", SigCmn::deg2rad(-90.0));
+	myself->setJointAngle("LHIP_JOINT_X", SigCmn::deg2rad(-90.0));
+
+	myself->setJointAngle("RKNEE_JOINT_X", SigCmn::deg2rad(+90.0));
+	myself->setJointAngle("LKNEE_JOINT_X", SigCmn::deg2rad(+90.0));
+
+	myself->setJointAngle("WAIST_JOINT_X", SigCmn::deg2rad(+this->waistX));
+
+	myself->setJointAngle("RSHOULDER_JOINT_Y", SigCmn::deg2rad(+110.0));
+	myself->setJointAngle("LSHOULDER_JOINT_Y", SigCmn::deg2rad(-110.0));
+	myself->setJointAngle("RSHOULDER_JOINT_Z", SigCmn::deg2rad(+this->shoulderZ));
+	myself->setJointAngle("LSHOULDER_JOINT_Z", SigCmn::deg2rad(-this->shoulderZ));
+
+	myself->setJointAngle("RELBOW_JOINT_Z", SigCmn::deg2rad(-(this->waistX+this->shoulderZ)));
+	myself->setJointAngle("LELBOW_JOINT_Z", SigCmn::deg2rad(+(this->waistX+this->shoulderZ)));
+	// 先にZ軸を動かしたいがOnInitでまとめて実行すると、YXZの順になってしまう。面倒なのでとりあえずY軸はコメントアウト。
+	//	myself->setJointAngle("RELBOW_JOINT_Y", SigCmn::deg2rad(+20.0));
+	//	myself->setJointAngle("LELBOW_JOINT_Y", SigCmn::deg2rad(-20.0));
 }
 
 
@@ -71,6 +92,56 @@ void MotionSwitchController::onRecvMsg(RecvMsgEvent &evt)
 	{
 		std::string allMsg = evt.getMsg();
 
+		if(allMsg=="roll")
+		{
+			SimObj *myself = getObj(myname());
+
+			double angle = myself->getJointAngle("RELBOW_JOINT_X");
+
+			//if angle==0 deg
+			if(angle < SigCmn::deg2rad(90))
+			{
+				myself->setJointAngle("RELBOW_JOINT_X", SigCmn::deg2rad(+180));
+				myself->setJointAngle("LELBOW_JOINT_X", SigCmn::deg2rad(+180));
+				myself->setJointAngle("RELBOW_JOINT_Z", SigCmn::deg2rad(+(this->waistX+this->shoulderZ)));
+				myself->setJointAngle("LELBOW_JOINT_Z", SigCmn::deg2rad(-(this->waistX+this->shoulderZ)));
+
+			}
+			// if angle==180 deg
+			else
+			{
+				myself->setJointAngle("RELBOW_JOINT_X", SigCmn::deg2rad(+0));
+				myself->setJointAngle("LELBOW_JOINT_X", SigCmn::deg2rad(+0));
+				myself->setJointAngle("RELBOW_JOINT_Z", SigCmn::deg2rad(-(this->waistX+this->shoulderZ)));
+				myself->setJointAngle("LELBOW_JOINT_Z", SigCmn::deg2rad(+(this->waistX+this->shoulderZ)));
+			}
+
+			return;
+		}
+
+//		// Tool of setPosition and setJointAngle
+//		SimObj *myself = getObj(myname());
+//
+//		std::vector<std::string> items;
+//		boost::split(items, allMsg, boost::is_any_of(","));
+//
+//		for(int i = 0; i < (int)items.size(); i++)
+//		{
+//
+//			if (items[i] == "") continue ;
+//
+//			if(items[0]=="pos")
+//			{
+//				myself->setPosition(std::stof(items[1]), std::stof(items[2]), std::stof(items[3]));
+//			}
+//			else
+//			{
+//				myself->setJointAngle((items[0]+"_JOINT_"+items[1]).c_str(), SigCmn::deg2rad(std::stof(items[2])));
+//			}
+//		}
+//
+//		return;
+
 //		std::cout << "msg:" << allMsg << std::endl;
 
 		// Decode message to sensor data of Perception Neuron.
@@ -96,10 +167,24 @@ void MotionSwitchController::onRecvMsg(RecvMsgEvent &evt)
 
 				ManBvhPosture posture = this->perceptionNeuronDeviceManager.convertSensorData2ManBvhPosture(sensorData);
 
-				if (this->usingOculus)
-				{
-					posture.joint[ManBvhPosture::NECK_JOINT].isValid = false;
-				}
+				posture.joint[ManBvhPosture::HIP_JOINT  ].isValid = false;
+				posture.joint[ManBvhPosture::WAIST_JOINT].isValid = false;
+				posture.joint[ManBvhPosture::NECK_JOINT ].isValid = false;
+
+				posture.joint[ManBvhPosture::LHIP_JOINT  ].isValid = false;
+				posture.joint[ManBvhPosture::LKNEE_JOINT ].isValid = false;
+				posture.joint[ManBvhPosture::LANKLE_JOINT].isValid = false;
+				posture.joint[ManBvhPosture::RHIP_JOINT  ].isValid = false;
+				posture.joint[ManBvhPosture::RANKLE_JOINT].isValid = false;
+
+				posture.joint[ManBvhPosture::LCHEST_JOINT   ].isValid = false;
+				posture.joint[ManBvhPosture::LSHOULDER_JOINT].isValid = false;
+				posture.joint[ManBvhPosture::LELBOW_JOINT   ].isValid = false;
+				posture.joint[ManBvhPosture::LWRIST_JOINT   ].isValid = false;
+				posture.joint[ManBvhPosture::RCHEST_JOINT   ].isValid = false;
+				posture.joint[ManBvhPosture::RSHOULDER_JOINT].isValid = false;
+				posture.joint[ManBvhPosture::RELBOW_JOINT   ].isValid = false;
+				posture.joint[ManBvhPosture::RWRIST_JOINT   ].isValid = false;
 
 				// Set the posture to avatar.
 				SimObj *obj = getObj(myname());
@@ -127,9 +212,9 @@ void MotionSwitchController::onRecvMsg(RecvMsgEvent &evt)
 
 				if(!this->usingOculus)
 				{
-					obj->setJointAngle("NECK_JOINT_X", 0.0);
-					obj->setJointAngle("NECK_JOINT_Y", 0.0);
-					obj->setJointAngle("NECK_JOINT_Z", 0.0);
+//					obj->setJointAngle("NECK_JOINT_X", 0.0);
+//					obj->setJointAngle("NECK_JOINT_Y", 0.0);
+//					obj->setJointAngle("NECK_JOINT_Z", 0.0);
 
 					this->usingOculus = true;
 				}
