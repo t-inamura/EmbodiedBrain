@@ -1,5 +1,5 @@
 /*
- * MotionSwitch
+ * MotionSwitchController
  *
  *  Created on: 2016/07/08
  *      Author: Yamada
@@ -17,7 +17,7 @@
 #include <sigverse/plugin/common/sensor/PerceptionNeuronSensorData.h>
 #include <sigverse/plugin/common/sensor/OculusRiftDK2SensorData.h>
 
-class MotionSwitch : public AgentController
+class MotionSwitchController : public AgentController
 {
 public:
 	static const std::string paramFileKeyPerceptionNeuronServiceName;
@@ -47,15 +47,15 @@ public:
 };
 
 ///@brief Parameter file name.
-const std::string AgentController::parameterFileName = "MotionSwitch.ini";
+const std::string AgentController::parameterFileName = "MotionSwitchController.ini";
 
-const std::string MotionSwitch::paramFileKeyPerceptionNeuronServiceName   = "PerceptionNeuron.service_name";
-const std::string MotionSwitch::paramFileKeyPerceptionNeuronDevicetype    = "PerceptionNeuron.device_type";
-const std::string MotionSwitch::paramFileKeyPerceptionNeuronDeviceUniqueID= "PerceptionNeuron.device_unique_id";
+const std::string MotionSwitchController::paramFileKeyPerceptionNeuronServiceName   = "PerceptionNeuron.service_name";
+const std::string MotionSwitchController::paramFileKeyPerceptionNeuronDevicetype    = "PerceptionNeuron.device_type";
+const std::string MotionSwitchController::paramFileKeyPerceptionNeuronDeviceUniqueID= "PerceptionNeuron.device_unique_id";
 
-const std::string MotionSwitch::paramFileKeyOculusDK2ServiceName   = "OculusDK2.service_name";
-const std::string MotionSwitch::paramFileKeyOculusDK2Devicetype    = "OculusDK2.device_type";
-const std::string MotionSwitch::paramFileKeyOculusDK2DeviceUniqueID= "OculusDK2.device_unique_id";
+const std::string MotionSwitchController::paramFileKeyOculusDK2ServiceName   = "OculusDK2.service_name";
+const std::string MotionSwitchController::paramFileKeyOculusDK2Devicetype    = "OculusDK2.device_type";
+const std::string MotionSwitchController::paramFileKeyOculusDK2DeviceUniqueID= "OculusDK2.device_unique_id";
 
 
 #endif //SIGVERSE_MOTION_SWITCH_H

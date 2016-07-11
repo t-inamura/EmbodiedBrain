@@ -1,11 +1,11 @@
 /*
- * MotionSwitch
+ * MotionSwitchController
  *
  *  Created on: 2016/07/08
  *      Author: Yamada
  */
 
-#include "MotionSwitch.h"
+#include "MotionSwitchController.h"
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
@@ -14,7 +14,7 @@
 #include <cmath>
 
 ///@brief Initialize this controller.
-void MotionSwitch::onInit(InitEvent &evt)
+void MotionSwitchController::onInit(InitEvent &evt)
 {
 	this->readIniFileAndInitialize();
 
@@ -24,7 +24,7 @@ void MotionSwitch::onInit(InitEvent &evt)
 }
 
 
-double MotionSwitch::onAction(ActionEvent &evt)
+double MotionSwitchController::onAction(ActionEvent &evt)
 {
 	static int roopCnt = 0;
 
@@ -65,7 +65,7 @@ double MotionSwitch::onAction(ActionEvent &evt)
 }
 
 ///@brief Receive Message.
-void MotionSwitch::onRecvMsg(RecvMsgEvent &evt)
+void MotionSwitchController::onRecvMsg(RecvMsgEvent &evt)
 {
 	try
 	{
@@ -155,7 +155,7 @@ void MotionSwitch::onRecvMsg(RecvMsgEvent &evt)
 
 ///@brief Read parameter file.
 ///@return When couldn't read parameter file, return false;
-void MotionSwitch::readIniFileAndInitialize()
+void MotionSwitchController::readIniFileAndInitialize()
 {
 	try
 	{
@@ -210,6 +210,6 @@ void MotionSwitch::readIniFileAndInitialize()
 
 extern "C" Controller * createController()
 {
-	return new MotionSwitch;
+	return new MotionSwitchController;
 }
 

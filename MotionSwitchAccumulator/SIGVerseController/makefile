@@ -1,8 +1,8 @@
 # target file (.so)
-TARGET = ./MotionSwitch.so
+TARGET = ./MotionSwitchController.so
 
 # sources
-SRCS = MotionSwitch.cpp \
+SRCS = MotionSwitchController.cpp \
 
 # compiler
 CXX = g++
