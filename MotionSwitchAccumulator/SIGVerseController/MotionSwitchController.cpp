@@ -24,24 +24,16 @@ void MotionSwitchController::onInit(InitEvent &evt)
 
 	this->perceptionNeuronDeviceManager.getInitialPositionAndRotation(myself);
 
-	myself->setJointAngle("RHIP_JOINT_X", SigCmn::deg2rad(-90.0));
-	myself->setJointAngle("LHIP_JOINT_X", SigCmn::deg2rad(-90.0));
+	ManBvhPosture posture;
+	myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrX(ManBvhPosture::RHIP_JOINT).c_str(), SigCmn::deg2rad(-90.0));
+	myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrX(ManBvhPosture::LHIP_JOINT).c_str(), SigCmn::deg2rad(-90.0));
 
-	myself->setJointAngle("RKNEE_JOINT_X", SigCmn::deg2rad(+90.0));
-	myself->setJointAngle("LKNEE_JOINT_X", SigCmn::deg2rad(+90.0));
+	myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrX(ManBvhPosture::RKNEE_JOINT).c_str(), SigCmn::deg2rad(+90.0));
+	myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrX(ManBvhPosture::LKNEE_JOINT).c_str(), SigCmn::deg2rad(+90.0));
 
-	myself->setJointAngle("WAIST_JOINT_X", SigCmn::deg2rad(+this->waistX));
+	myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrX(ManBvhPosture::WAIST_JOINT).c_str(), SigCmn::deg2rad(+this->waistX));
 
-	myself->setJointAngle("RSHOULDER_JOINT_Y", SigCmn::deg2rad(+110.0));
-	myself->setJointAngle("LSHOULDER_JOINT_Y", SigCmn::deg2rad(-110.0));
-	myself->setJointAngle("RSHOULDER_JOINT_Z", SigCmn::deg2rad(+this->shoulderZ));
-	myself->setJointAngle("LSHOULDER_JOINT_Z", SigCmn::deg2rad(-this->shoulderZ));
-
-	myself->setJointAngle("RELBOW_JOINT_Z", SigCmn::deg2rad(-(this->waistX+this->shoulderZ)));
-	myself->setJointAngle("LELBOW_JOINT_Z", SigCmn::deg2rad(+(this->waistX+this->shoulderZ)));
-	// 先にZ軸を動かしたいがOnInitでまとめて実行すると、YXZの順になってしまう。面倒なのでとりあえずY軸はコメントアウト。
-	//	myself->setJointAngle("RELBOW_JOINT_Y", SigCmn::deg2rad(+20.0));
-	//	myself->setJointAngle("LELBOW_JOINT_Y", SigCmn::deg2rad(-20.0));
+	this->resetArmPosture("lin");
 }
 
 
@@ -92,32 +84,7 @@ void MotionSwitchController::onRecvMsg(RecvMsgEvent &evt)
 	{
 		std::string allMsg = evt.getMsg();
 
-		if(allMsg=="roll")
-		{
-			SimObj *myself = getObj(myname());
-
-			double angle = myself->getJointAngle("RELBOW_JOINT_X");
-
-			//if angle==0 deg
-			if(angle < SigCmn::deg2rad(90))
-			{
-				myself->setJointAngle("RELBOW_JOINT_X", SigCmn::deg2rad(+180));
-				myself->setJointAngle("LELBOW_JOINT_X", SigCmn::deg2rad(+180));
-				myself->setJointAngle("RELBOW_JOINT_Z", SigCmn::deg2rad(+(this->waistX+this->shoulderZ)));
-				myself->setJointAngle("LELBOW_JOINT_Z", SigCmn::deg2rad(-(this->waistX+this->shoulderZ)));
-
-			}
-			// if angle==180 deg
-			else
-			{
-				myself->setJointAngle("RELBOW_JOINT_X", SigCmn::deg2rad(+0));
-				myself->setJointAngle("LELBOW_JOINT_X", SigCmn::deg2rad(+0));
-				myself->setJointAngle("RELBOW_JOINT_Z", SigCmn::deg2rad(-(this->waistX+this->shoulderZ)));
-				myself->setJointAngle("LELBOW_JOINT_Z", SigCmn::deg2rad(+(this->waistX+this->shoulderZ)));
-			}
-
-			return;
-		}
+		if(this->resetArmPosture(allMsg)){ return; };
 
 //		// Tool of setPosition and setJointAngle
 //		SimObj *myself = getObj(myname());
@@ -156,7 +123,7 @@ void MotionSwitchController::onRecvMsg(RecvMsgEvent &evt)
 			std::string deviceUniqueId  = sensorDataMap[MSG_KEY_DEV_UNIQUE_ID][0];
 
 			/*
-			 * Kinect V2
+			 * Perception Neuron
 			 */
 			if (deviceTypeValue == this->perceptionNeuronDeviceManager.deviceType && deviceUniqueId == this->perceptionNeuronDeviceManager.deviceUniqueID)
 			{
@@ -178,13 +145,19 @@ void MotionSwitchController::onRecvMsg(RecvMsgEvent &evt)
 				posture.joint[ManBvhPosture::RANKLE_JOINT].isValid = false;
 
 				posture.joint[ManBvhPosture::LCHEST_JOINT   ].isValid = false;
-				posture.joint[ManBvhPosture::LSHOULDER_JOINT].isValid = false;
-				posture.joint[ManBvhPosture::LELBOW_JOINT   ].isValid = false;
-				posture.joint[ManBvhPosture::LWRIST_JOINT   ].isValid = false;
 				posture.joint[ManBvhPosture::RCHEST_JOINT   ].isValid = false;
-				posture.joint[ManBvhPosture::RSHOULDER_JOINT].isValid = false;
-				posture.joint[ManBvhPosture::RELBOW_JOINT   ].isValid = false;
-				posture.joint[ManBvhPosture::RWRIST_JOINT   ].isValid = false;
+
+				if(!this->isFree)
+				{
+					posture.joint[ManBvhPosture::LSHOULDER_JOINT].isValid = false;
+					posture.joint[ManBvhPosture::RSHOULDER_JOINT].isValid = false;
+
+					posture.joint[ManBvhPosture::LELBOW_JOINT   ].isValid = false;
+					posture.joint[ManBvhPosture::RELBOW_JOINT   ].isValid = false;
+
+					posture.joint[ManBvhPosture::LWRIST_JOINT   ].isValid = false;
+					posture.joint[ManBvhPosture::RWRIST_JOINT   ].isValid = false;
+				}
 
 				// Set the posture to avatar.
 				SimObj *obj = getObj(myname());
@@ -236,6 +209,94 @@ void MotionSwitchController::onRecvMsg(RecvMsgEvent &evt)
 		std::cout << "some error occurred." << std::endl;
 	}
 }
+
+
+bool MotionSwitchController::resetArmPosture(const std::string command)
+{
+	SimObj *myself = getObj(myname());
+
+	if(command=="rin")
+	{
+		this->isFree   = false;
+//			this->isRight  = true;
+//			this->isInside = true;
+
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrY(ManBvhPosture::RSHOULDER_JOINT).c_str(), SigCmn::deg2rad(+110.0));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrZ(ManBvhPosture::RSHOULDER_JOINT).c_str(), SigCmn::deg2rad(+this->shoulderZ));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrX(ManBvhPosture::RELBOW_JOINT   ).c_str(), SigCmn::deg2rad(+180.0));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrZ(ManBvhPosture::RELBOW_JOINT   ).c_str(), SigCmn::deg2rad(+(this->waistX+this->shoulderZ)));
+
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrY(ManBvhPosture::LSHOULDER_JOINT).c_str(), SigCmn::deg2rad(0.0));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrZ(ManBvhPosture::LSHOULDER_JOINT).c_str(), SigCmn::deg2rad(-90.0));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrX(ManBvhPosture::LELBOW_JOINT   ).c_str(), SigCmn::deg2rad(0.0));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrZ(ManBvhPosture::LELBOW_JOINT   ).c_str(), SigCmn::deg2rad(0.0));
+
+		return true;
+	}
+	if(command=="rout")
+	{
+		this->isFree   = false;
+//			this->isRight  = true;
+//			this->isInside = false;
+
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrY(ManBvhPosture::RSHOULDER_JOINT).c_str(), SigCmn::deg2rad(+110.0));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrZ(ManBvhPosture::RSHOULDER_JOINT).c_str(), SigCmn::deg2rad(+this->shoulderZ));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrX(ManBvhPosture::RELBOW_JOINT   ).c_str(), SigCmn::deg2rad(0.0));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrZ(ManBvhPosture::RELBOW_JOINT   ).c_str(), SigCmn::deg2rad(-(this->waistX+this->shoulderZ)));
+
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrY(ManBvhPosture::LSHOULDER_JOINT).c_str(), SigCmn::deg2rad(0.0));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrZ(ManBvhPosture::LSHOULDER_JOINT).c_str(), SigCmn::deg2rad(-90.0));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrX(ManBvhPosture::LELBOW_JOINT   ).c_str(), SigCmn::deg2rad(0.0));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrZ(ManBvhPosture::LELBOW_JOINT   ).c_str(), SigCmn::deg2rad(0.0));
+
+		return true;
+	}
+	if(command=="lin")
+	{
+		this->isFree   = false;
+//			this->isRight  = false;
+//			this->isInside = true;
+
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrY(ManBvhPosture::LSHOULDER_JOINT).c_str(), SigCmn::deg2rad(-110.0));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrZ(ManBvhPosture::LSHOULDER_JOINT).c_str(), SigCmn::deg2rad(-this->shoulderZ));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrX(ManBvhPosture::LELBOW_JOINT   ).c_str(), SigCmn::deg2rad(+180.0));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrZ(ManBvhPosture::LELBOW_JOINT   ).c_str(), SigCmn::deg2rad(-(this->waistX+this->shoulderZ)));
+
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrY(ManBvhPosture::RSHOULDER_JOINT).c_str(), SigCmn::deg2rad(0.0));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrZ(ManBvhPosture::RSHOULDER_JOINT).c_str(), SigCmn::deg2rad(+90.0));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrX(ManBvhPosture::RELBOW_JOINT   ).c_str(), SigCmn::deg2rad(0.0));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrZ(ManBvhPosture::RELBOW_JOINT   ).c_str(), SigCmn::deg2rad(0.0));
+
+		return true;
+	}
+	if(command=="lout")
+	{
+		this->isFree   = false;
+//			this->isRight  = false;
+//			this->isInside = false;
+
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrY(ManBvhPosture::LSHOULDER_JOINT).c_str(), SigCmn::deg2rad(-110.0));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrZ(ManBvhPosture::LSHOULDER_JOINT).c_str(), SigCmn::deg2rad(-this->shoulderZ));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrX(ManBvhPosture::LELBOW_JOINT   ).c_str(), SigCmn::deg2rad(0.0));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrZ(ManBvhPosture::LELBOW_JOINT   ).c_str(), SigCmn::deg2rad(+(this->waistX+this->shoulderZ)));
+
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrY(ManBvhPosture::RSHOULDER_JOINT).c_str(), SigCmn::deg2rad(0.0));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrZ(ManBvhPosture::RSHOULDER_JOINT).c_str(), SigCmn::deg2rad(+90.0));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrX(ManBvhPosture::RELBOW_JOINT   ).c_str(), SigCmn::deg2rad(0.0));
+		myself->setJointAngle(ManBvhPosture::manBvhJointTypeStrZ(ManBvhPosture::RELBOW_JOINT   ).c_str(), SigCmn::deg2rad(0.0));
+
+		return true;
+	}
+	if(command=="free")
+	{
+		this->isFree = true;
+		return true;
+	}
+
+	return false;
+}
+
+
 
 
 ///@brief Read parameter file.

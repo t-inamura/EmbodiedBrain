@@ -37,6 +37,8 @@ public:
 	///@brief Initialize this controller.
 	void onInit(InitEvent &evt);
 
+	bool resetArmPosture(const std::string command);
+
 	void readIniFileAndInitialize();
 
 	bool usingOculus = false;
@@ -47,6 +49,10 @@ public:
 
 	double waistX = 20;
 	double shoulderZ = 30;
+
+	bool isFree   = false;
+//	bool isRight  = true;
+//	bool isInside = true;
 };
 
 ///@brief Parameter file name.
