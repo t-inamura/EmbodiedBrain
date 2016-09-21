@@ -132,6 +132,10 @@ void MotionSwitchController::onRecvMsg(RecvMsgEvent &evt)
 
 				sensorData.setSensorData(sensorDataMap);
 
+				sensorData.rootPosition.x = this->perceptionNeuronDeviceManager.iniPos.x;
+				sensorData.rootPosition.y = this->perceptionNeuronDeviceManager.iniPos.y;
+				sensorData.rootPosition.z = this->perceptionNeuronDeviceManager.iniPos.z;
+
 				ManBvhPosture posture = this->perceptionNeuronDeviceManager.convertSensorData2ManBvhPosture(sensorData);
 
 				posture.joint[ManBvhPosture::HIP_JOINT  ].isValid = false;
