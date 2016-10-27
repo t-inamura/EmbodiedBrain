@@ -21,12 +21,20 @@ int         Param::getSwitchUserId() { return switchUserId; }
 
 int         Param::getSwitchFakeMaxTime(){ return switchFakeMaxTime; }
 
+int         Param::getSwitchNumberOfIterations(){ return switchNumberOfIterations; }
 int         Param::getSwitchFakeRecId(){ return switchFakeRecId; }
 
 std::string Param::getSwitchDbPerceptionNeuronMemo() { return switchDbPerceptionNeuronMemo; }
 std::string Param::getSwitchDbMswRecordingInfoMemo() { return switchDbMswRecordingInfoMemo; }
 
+int         Param::getSwitchFramesNumberForDelay(){ return switchFramesNumberForDelay; }
+
+bool        Param::getSwitchInvertFlg(){ return switchInvertFlg; }
+bool        Param::getSwitchInvertFakeFlg(){ return switchInvertFakeFlg; }
+
 Param::Mode Param::getMode(){ return mode; }
+Param::SmoothingType Param::getSmoothingType() { return smoothingType; }
+
 
 
 /*
@@ -60,11 +68,18 @@ void Param::readConfigFile()
 
 	switchFakeMaxTime = pt.get<int>  ("switch.fake_max_time");
 
-	switchFakeRecId   = pt.get<int>  ("switch.fake_rec_id");
+	switchNumberOfIterations = pt.get<int>  ("switch.number_of_iterations");
+	switchFakeRecId          = pt.get<int>  ("switch.fake_rec_id");
 
 	switchDbPerceptionNeuronMemo  = pt.get<std::string>("switch.db_perception_neuron_memo");
 	switchDbMswRecordingInfoMemo  = pt.get<std::string>("switch.db_msw_recording_info_memo");
 
+	std::string switchSmoothingType = pt.get<std::string>("switch.smoothing_type");
+
+	switchFramesNumberForDelay =  pt.get<int> ("switch.frames_number_for_delay");
+
+	switchInvertFlg     = pt.get<bool> ("switch.invert_flg");
+	switchInvertFakeFlg = pt.get<bool> ("switch.invert_fake_flg");
 
 	//表示
 	std::cout << "◆ コンフィグ内容 ◆" << std::endl;
@@ -88,6 +103,8 @@ void Param::readConfigFile()
 	{
 		Param::mode = Mode::RecFake;
 		std::cout << "[switch]fake_max_time = " << switchFakeMaxTime << std::endl;
+
+		switchNumberOfIterations = 1;
 	}
 	else if (switchMode == "Experiment")
 	{
@@ -100,8 +117,34 @@ void Param::readConfigFile()
 		exit(EXIT_FAILURE);
 	}
 
+	std::cout << "[switch]number_of_iterations   = " << switchNumberOfIterations << std::endl;
+
 	std::cout << "[switch]db_perception_neuron_memo   = " << switchDbPerceptionNeuronMemo << std::endl;
 	std::cout << "[switch]db_msw_recording_info_memo  = " << switchDbMswRecordingInfoMemo << std::endl;
+	std::cout << "[switch]smoothing_type  = " << switchSmoothingType << std::endl;
+
+	if (switchSmoothingType == "None")
+	{
+		Param::smoothingType = SmoothingType::None;
+	}
+	else if (switchSmoothingType == "SubtractLastPosture")
+	{
+		Param::smoothingType = SmoothingType::SubtractLastPosture;
+	}
+	else if (switchSmoothingType == "SubtractLastPostureWithRate")
+	{
+		Param::smoothingType = SmoothingType::SubtractLastPostureWithRate;
+	}
+	else
+	{
+		std::cout << "illegal smoothing type! type=" << switchSmoothingType << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	std::cout << "[switch]frames_number_for_delay  = " << switchFramesNumberForDelay << std::endl;
+
+	std::cout << "[switch]invert_flg      = " << switchInvertFlg << std::endl;
+	std::cout << "[switch]invert_fake_flg = " << switchInvertFakeFlg << std::endl;
 }
 
 

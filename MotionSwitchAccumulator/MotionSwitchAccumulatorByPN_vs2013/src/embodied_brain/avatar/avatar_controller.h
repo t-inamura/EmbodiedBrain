@@ -9,6 +9,7 @@
 #include <tchar.h>
 #include <time.h>
 #include <string>
+#include <queue>
 
 #include <SIGService/SIGService.h>
 #include <embodied_brain/database/table/perception_neuron_dao.h>
@@ -21,12 +22,12 @@
 class AvatarController
 {
 private:
-
 	//動作情報電文データ構造
 	struct MotionInfoTelegram
 	{
 		int elapsedTime;
-		std::string motionInfoStr;
+//		std::string motionInfoStr;
+		PerceptionNeuronSensorData sensorData;
 	};
 
 	//SIGService
@@ -34,6 +35,10 @@ private:
 
 	//SIGVerse送信用動作情報電文リスト
 	std::list<MotionInfoTelegram> motionInfoTelegramList;
+
+	std::queue<PerceptionNeuronSensorData> motionListForDelay;
+
+	PerceptionNeuronSensorData motionDataBeforeSwitching;
 
 	std::string           messageHeader;
 	PerceptionNeuronData  *perceptionNeuronData;
@@ -47,10 +52,25 @@ public:
 	void checkRecvSIGServiceData();
 
 	void makeTelegramForAvatar(const std::list<PerceptionNeuronDAO::TimeSeries_t> &motionData);
+	void setFakeData(const std::list<PerceptionNeuronDAO::TimeSeries_t> &motionData);
+
 	void sendMotionDataToSIGVerse();
 	bool isConnectedToSIGServer();
 
 	std::string latestMotionInfoStr;
+
+	PerceptionNeuronSensorData getDelayedSensorData(PerceptionNeuronSensorData sensorData);
+
+	PerceptionNeuronSensorData getSmoothenedSensorData(PerceptionNeuronSensorData sensorData, PerceptionNeuronSensorData motionDataBeforeSwitching);
+		void smoothingSubtractLastPostureWithRate(PerceptionNeuronSensorData &sensorData, PerceptionNeuronSensorData motionDataBeforeSwitching);
+		void smoothingSubtractLastPosture(PerceptionNeuronSensorData &sensorData, PerceptionNeuronSensorData motionDataBeforeSwitching);
+
+	void smoothingAddPosture1Link(PerceptionNeuronSensorData &sensorData, PerceptionNeuronSensorData diffSensorData, NeuronBVH::BonesType bonesType, float rate);
+	void smoothingAddPosture1LinkZ(PerceptionNeuronSensorData &sensorData, PerceptionNeuronSensorData diffSensorData, NeuronBVH::BonesType bonesType, float rate);
+
+	PerceptionNeuronSensorData getLeftRightInvertedSensorData(PerceptionNeuronSensorData &sensorData);
+	void invertPosture1Link(PerceptionNeuronSensorData &sensorData, NeuronBVH::BonesType bonesType1, NeuronBVH::BonesType bonesType2);
+	void invertPosture1LinkZ(PerceptionNeuronSensorData &sensorData, NeuronBVH::BonesType bonesType1, NeuronBVH::BonesType bonesType2);
 
 	bool isSwitched;
 	bool isReplaying;

@@ -75,8 +75,6 @@ void PerceptionNeuronData::updateBvhData(BvhDataHeader* header, float* data)
 
 
 
-
-
 /*
  * 最新の動作情報を共有メモリに保存
  */

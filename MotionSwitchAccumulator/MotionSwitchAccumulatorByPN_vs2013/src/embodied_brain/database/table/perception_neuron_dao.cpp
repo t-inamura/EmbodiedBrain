@@ -85,7 +85,7 @@ bool PerceptionNeuronDAO::duplicationCheck(const int recId)
 /*
  * データベースから動作データを取得する
  */
-int  PerceptionNeuronDAO::selectMotionData(std::list<PerceptionNeuronDAO::TimeSeries_t> &timeSeries, const std::string &recId)
+int  PerceptionNeuronDAO::selectMotionData(std::list<PerceptionNeuronDAO::TimeSeries_t> &timeSeries, const std::string &recId, const int serialNumber)
 {
 	try
 	{
@@ -118,17 +118,18 @@ int  PerceptionNeuronDAO::selectMotionData(std::list<PerceptionNeuronDAO::TimeSe
 		sql::ResultSet *rs;
 
 		stmt = con->createStatement();
-		rs = stmt->executeQuery("SELECT * FROM perception_neuron_motions_time_series WHERE rec_id = " + recId + " ORDER BY elapsed_time ASC ");
+		rs = stmt->executeQuery("SELECT * FROM perception_neuron_motions_time_series WHERE rec_id = " + recId + " AND serial_number = " + std::to_string(serialNumber) + " ORDER BY elapsed_time ASC ");
 
 		while(rs->next())
 		{
 			PerceptionNeuronDAO::TimeSeries_t motion;
 
-			motion.recId       = rs->getInt("rec_id");
-			motion.elapsedTime = rs->getInt("elapsed_time");
-			motion.hips_pos.x  = (float)(rs->getDouble("hips_pos_x"));
-			motion.hips_pos.y  = (float)(rs->getDouble("hips_pos_y"));
-			motion.hips_pos.z  = (float)(rs->getDouble("hips_pos_z"));
+			motion.recId        = rs->getInt("rec_id");
+			motion.serialNumber = rs->getInt("serial_number");
+			motion.elapsedTime  = rs->getInt("elapsed_time");
+			motion.hips_pos.x   = (float)(rs->getDouble("hips_pos_x"));
+			motion.hips_pos.y   = (float)(rs->getDouble("hips_pos_y"));
+			motion.hips_pos.z   = (float)(rs->getDouble("hips_pos_z"));
 
 			PerceptionNeuronDAO::setJointPosition(motion.links[NeuronBVH::BonesType::Hips],              NeuronBVH::BonesType::Hips,              rs->getDouble("hips_rot_x"),                 rs->getDouble("hips_rot_y"),                 rs->getDouble("hips_rot_z"));
 			PerceptionNeuronDAO::setJointPosition(motion.links[NeuronBVH::BonesType::RightUpLeg],        NeuronBVH::BonesType::RightUpLeg,        rs->getDouble("right_up_leg_rot_x"),         rs->getDouble("right_up_leg_rot_y"),         rs->getDouble("right_up_leg_rot_z"));
@@ -311,8 +312,9 @@ void PerceptionNeuronDAO::insert(sql::Connection *con, const PerceptionNeuronDAO
 
 	sql::SQLString insertQuery
 		=
-		"INSERT INTO perception_neuron_motions_summary (rec_id, user_id, rec_total_time, rec_start_time, rec_interval, memo) VALUES ("
+		"INSERT INTO perception_neuron_motions_summary (rec_id, serial_number, user_id, rec_total_time, rec_start_time, rec_interval, memo) VALUES ("
 		+ std::to_string(motionInfo.summary.recId) + ","
+		+ std::to_string(motionInfo.summary.serialNumber) + ","
 		+ std::to_string(motionInfo.summary.userId) + ","
 		+ std::to_string(motionInfo.summary.recTotalTime) + ","
 		+ "'" + motionInfo.summary.getRecStartTimeStr() + "'" + ","
@@ -334,7 +336,7 @@ void PerceptionNeuronDAO::insert(sql::Connection *con, const PerceptionNeuronDAO
 	sql::SQLString insertQueryPStmt
 		=
 		"INSERT INTO perception_neuron_motions_time_series VALUES ("
-		"?,?,"                                                                  // rec_id, elapsed_time
+		"?,?,?,"                                                                // rec_id, serial_number, elapsed_time
 		"?,?,?,"                                                                // hips_pos_x, hips_pos_y, hips_pos_z
 		"?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?," // 10
 		"?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?, ?,?,?," // 20
@@ -356,13 +358,14 @@ void PerceptionNeuronDAO::insert(sql::Connection *con, const PerceptionNeuronDAO
 	while (it != motionInfo.timeSeries.end())
 	{
 		pstmt->setInt(1, motionInfo.summary.recId);
-		pstmt->setInt(2, (*it).elapsedTime);
+		pstmt->setInt(2, motionInfo.summary.serialNumber);
+		pstmt->setInt(3, (*it).elapsedTime);
 
-		pstmt->setDouble(3, (*it).hips_pos.x);
-		pstmt->setDouble(4, (*it).hips_pos.y);
-		pstmt->setDouble(5, (*it).hips_pos.z);
+		pstmt->setDouble(4, (*it).hips_pos.x);
+		pstmt->setDouble(5, (*it).hips_pos.y);
+		pstmt->setDouble(6, (*it).hips_pos.z);
 
-		int index = 6;
+		int index = 7;
 
 		for (int linkNo = 0; linkNo < NeuronBVH::BonesType::BonesTypeCount; linkNo++)
 		{

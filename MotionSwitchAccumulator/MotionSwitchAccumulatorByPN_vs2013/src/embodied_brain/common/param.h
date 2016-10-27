@@ -19,6 +19,14 @@ public :
 		Experiment,
 	};
 
+	enum SmoothingType
+	{
+		None,
+		SubtractLastPosture,
+		SubtractLastPostureWithRate,
+	};
+
+
 	//パラメータファイル名
 	static const std::string PARAM_FILE_NAME;
 
@@ -40,12 +48,19 @@ private:
 
 	static int         switchFakeMaxTime;
 
+	static int         switchNumberOfIterations;
 	static int         switchFakeRecId;
 
 	static std::string switchDbPerceptionNeuronMemo;
 	static std::string switchDbMswRecordingInfoMemo;
 
+	static int         switchFramesNumberForDelay;
+
+	static bool        switchInvertFlg;
+	static bool        switchInvertFakeFlg;
+
 	static Mode mode;
+	static SmoothingType smoothingType;
 
 public:
 
@@ -67,12 +82,19 @@ public:
 
 	static int         getSwitchFakeMaxTime();
 
+	static int         getSwitchNumberOfIterations();
 	static int         getSwitchFakeRecId();
 
 	static std::string getSwitchDbPerceptionNeuronMemo();
 	static std::string getSwitchDbMswRecordingInfoMemo();
 
+	static int         getSwitchFramesNumberForDelay();
+
+	static bool        getSwitchInvertFlg();
+	static bool        getSwitchInvertFakeFlg();
+
 	static Mode getMode();
+	static SmoothingType getSmoothingType();
 
 	static void readConfigFile();
 };

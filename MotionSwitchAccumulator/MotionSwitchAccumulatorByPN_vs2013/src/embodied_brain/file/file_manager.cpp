@@ -19,7 +19,7 @@
 /*
  * ファイルから動作データを取得する
  */
-int  FileManager::getMotionData(std::list<PerceptionNeuronDAO::TimeSeries_t> &timeSeries, const std::string &fileName, const std::string &recId)
+int  FileManager::getMotionData(std::list<PerceptionNeuronDAO::TimeSeries_t> &timeSeries, const std::string &fileName, const std::string &recId, const int serialNumber)
 {
 	try
 	{
@@ -45,7 +45,7 @@ int  FileManager::getMotionData(std::list<PerceptionNeuronDAO::TimeSeries_t> &ti
 			boost::regex_split(back_inserter(results), lineStr, delimiter);
 
 			//１件でも動作IDが異なるデータが存在した場合は、強制終了する
-			if(recId!=results[0])
+			if(recId!=results[0] && std::to_string(serialNumber)!=results[1])
 			{
 				std::cout << "ファイル内に、引数で指定した動作IDと異なる動作IDが存在したため終了します。" << std::endl;
 				exit(EXIT_FAILURE);
@@ -53,14 +53,15 @@ int  FileManager::getMotionData(std::list<PerceptionNeuronDAO::TimeSeries_t> &ti
 
 			PerceptionNeuronDAO::TimeSeries_t motion;
 
-			motion.recId       = std::atoi(results[0].c_str());
-			motion.elapsedTime = std::atoi(results[1].c_str());
+			motion.recId        = std::atoi(results[0].c_str());
+			motion.serialNumber = std::atoi(results[1].c_str());
+			motion.elapsedTime  = std::atoi(results[2].c_str());
 
-			motion.hips_pos.x  = (float)atof(results[2].c_str());
-			motion.hips_pos.y  = (float)atof(results[3].c_str());
-			motion.hips_pos.z  = (float)atof(results[4].c_str());
+			motion.hips_pos.x   = (float)atof(results[3].c_str());
+			motion.hips_pos.y   = (float)atof(results[4].c_str());
+			motion.hips_pos.z   = (float)atof(results[5].c_str());
 
-			int index = 5;
+			int index = 6;
 
 			this->setJointPosition(motion.links[NeuronBVH::BonesType::Hips],              NeuronBVH::BonesType::Hips,              results, index); index+=jointDataNum;
 			this->setJointPosition(motion.links[NeuronBVH::BonesType::RightUpLeg],        NeuronBVH::BonesType::RightUpLeg,        results, index); index+=jointDataNum;
@@ -278,6 +279,7 @@ void FileManager::outputDataFilePerceptionNeuron(const PerceptionNeuronDAO::Data
 	ofs.open(filePath);
 
 	ofs << motionData.summary.recId                << "\t"
+		<< motionData.summary.serialNumber         << "\t"
 		<< motionData.summary.userId               << "\t"
 		<< motionData.summary.recTotalTime         << "\t"
 		<< motionData.summary.getRecStartTimeStr() << "\t"
@@ -349,6 +351,7 @@ void FileManager::outputDataFileSwitching(const MswRecordingInfoDAO::DataSet &re
 	ofs.open(filePath);
 
 	ofs << recordingInfo.afterSwitchingRecId << "\t"
+		<< recordingInfo.seialNumber << "\t"
 		<< recordingInfo.beforeSwitchingRecId << "\t"
 		<< recordingInfo.fakeRecId << "\t"
 		<< "'" << recordingInfo.memo << "'"

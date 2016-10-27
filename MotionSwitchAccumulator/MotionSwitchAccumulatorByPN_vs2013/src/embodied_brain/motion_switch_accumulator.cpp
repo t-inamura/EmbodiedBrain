@@ -94,15 +94,23 @@ int         Param::switchAccumInterval;
 std::string Param::switchMotionDataFilePath;
 
 int         Param::switchRecId;
+int         Param::switchUserId;
+
 int         Param::switchFakeMaxTime;
 
-int         Param::switchUserId;
+int         Param::switchNumberOfIterations;
 int         Param::switchFakeRecId;
 
 std::string Param::switchDbPerceptionNeuronMemo;
 std::string Param::switchDbMswRecordingInfoMemo;
 
+int         Param::switchFramesNumberForDelay;
+
+bool        Param::switchInvertFlg;
+bool        Param::switchInvertFakeFlg;
+
 Param::Mode Param::mode;
+Param::SmoothingType Param::smoothingType;
 
 
 /*
@@ -211,10 +219,11 @@ int MotionSwitchAccumulator::run(int argc, char **argv)
 			/*
 			 * 偽の動作情報を取得
 			 */
-			std::list<PerceptionNeuronDAO::TimeSeries_t> motionData = this->getMotionDataFromDBorFile(std::to_string(Param::getSwitchFakeRecId()));
+			std::list<PerceptionNeuronDAO::TimeSeries_t> motionData = this->getMotionDataFromDBorFile(std::to_string(Param::getSwitchFakeRecId()), MotionSwitchAccumulator::fakeMotionSerialNumber);
 
 			//DBから取得した偽動作情報を使用してSIGVerseへ送信する電文リストを作成する
-			avatarController.makeTelegramForAvatar(motionData);
+//			avatarController.makeTelegramForAvatar(motionData);
+			avatarController.setFakeData(motionData);
 
 			//不要になった動作情報リストの全要素を削除
 			motionData.clear();
@@ -234,59 +243,64 @@ int MotionSwitchAccumulator::run(int argc, char **argv)
 		}
 
 
-		std::cout << "■ 収録開始 ■" << std::endl;
-
-		/*
-		 * カウントダウンを表示
-		 */
-		int showCnt = 10;
-
-		while (showCnt > 0)
+		// 反復収録
+		for (int serialNumber = 1; serialNumber<=Param::getSwitchNumberOfIterations(); serialNumber++)
 		{
-			std::cout << "収録開始 " << showCnt << " 秒前" << std::endl;
+			std::cout << "■ 収録開始 (" << serialNumber << "回目)■" << std::endl;
 
-			Sleep(1000); //１秒スリープ
+			/*
+			 * カウントダウンを表示
+			 */
+			int showCnt = 3;
 
-			showCnt--;
+			while (showCnt > 0)
+			{
+				std::cout << "収録開始 " << showCnt << " 秒前" << std::endl;
+
+				Sleep(1000); //１秒スリープ
+
+				showCnt--;
+			}
+
+			if (Param::getMode() == Param::Mode::RecFake)
+			{
+				std::cout << "('q'キー押下で終了)" << std::endl;
+			}
+			else
+			{
+				std::cout << "('s'キー押下で 偽動作にSwitch)(Switch後なら 'q'キー押下で終了可能)" << std::endl;
+			}
+
+
+			/*
+			 * 真似動作収録時は、別スレッドでSIGVerseアバターに偽動作を送信する
+			 */
+			boost::thread thSendMotionDataToSIGVerse;
+
+			if (Param::getMode() == Param::Mode::Experiment)
+			{
+				//アバターに電文を送って操作
+				thSendMotionDataToSIGVerse = boost::thread(&AvatarController::sendMotionDataToSIGVerse, &avatarController);
+			}
+
+			/*
+			 * 動作情報取得、データベースへの蓄積、ファイル出力処理の開始
+			 */
+			if (Param::getMode() == Param::Mode::RecFake)
+			{
+				this->accumulateMotionData4RecFake(MotionSwitchAccumulator::fakeMotionSerialNumber);
+			}
+			else
+			{
+				this->accumulateMotionData4Experiment(avatarController, serialNumber);
+			}
+
+			if (Param::getMode() == Param::Mode::Experiment){ thSendMotionDataToSIGVerse.join(); }
+
+			std::cout << "■ 収録終了 (" << serialNumber << "回目)■" << std::endl;
 		}
-
-		if (Param::getMode() == Param::Mode::RecFake)
-		{
-			std::cout << "('q'キー押下で終了)" << std::endl;
-		}
-		else
-		{
-			std::cout << "('s'キー押下で 偽動作にSwitch)(Switch後なら 'q'キー押下で終了可能)" << std::endl;
-		}
-
-
-		/*
-		 * 真似動作収録時は、別スレッドでSIGVerseアバターに偽動作を送信する
-		 */
-		boost::thread thSendMotionDataToSIGVerse;
-
-		if (Param::getMode() == Param::Mode::Experiment)
-		{
-			//アバターに電文を送って操作
-			thSendMotionDataToSIGVerse = boost::thread(&AvatarController::sendMotionDataToSIGVerse, &avatarController);
-		}
-
-		/*
-		 * 動作情報取得、データベースへの蓄積、ファイル出力処理の開始
-		 */
-		if (Param::getMode() == Param::Mode::RecFake)
-		{
-			this->accumulateMotionData4RecFake();
-		}
-		else
-		{
-			this->accumulateMotionData4Experiment(avatarController);
-		}
-
-		if (Param::getMode() == Param::Mode::Experiment){ thSendMotionDataToSIGVerse.join(); }
-
-		std::cout << "■ 収録終了 ■" << std::endl;
 	}
+
 
 	// ★★★★ メインループ 終了 ★★★★
 
@@ -321,7 +335,7 @@ void __stdcall MotionSwitchAccumulator::bvhFrameDataReceived(void* customedObj, 
 /*
  * 偽動作情報をDB (or ファイル) から取得する
  */
-std::list<PerceptionNeuronDAO::TimeSeries_t> MotionSwitchAccumulator::getMotionDataFromDBorFile(const std::string &fakeRecIdStr)
+std::list<PerceptionNeuronDAO::TimeSeries_t> MotionSwitchAccumulator::getMotionDataFromDBorFile(const std::string &fakeRecIdStr, const int serialNumber)
 {
 	std::list<PerceptionNeuronDAO::TimeSeries_t> motionInfo;
 	int motionDataNum;
@@ -329,13 +343,13 @@ std::list<PerceptionNeuronDAO::TimeSeries_t> MotionSwitchAccumulator::getMotionD
 	if(Param::getSwitchMotionDataFilePath()=="")
 	{
 		//データベースから動作情報を取得
-		motionDataNum = PerceptionNeuronDAO::selectMotionData(motionInfo, fakeRecIdStr);
+		motionDataNum = PerceptionNeuronDAO::selectMotionData(motionInfo, fakeRecIdStr, serialNumber);
 	}
 	else
 	{
 		//ファイルから動作情報を取得
 		FileManager fileManager;
-		motionDataNum = fileManager.getMotionData(motionInfo, Param::getSwitchMotionDataFilePath(), fakeRecIdStr);
+		motionDataNum = fileManager.getMotionData(motionInfo, Param::getSwitchMotionDataFilePath(), fakeRecIdStr, serialNumber);
 	}
 	if(motionDataNum==0)
 	{
@@ -350,16 +364,16 @@ std::list<PerceptionNeuronDAO::TimeSeries_t> MotionSwitchAccumulator::getMotionD
 /*
  * Perception Neuronから動作情報を取得・蓄積し、データベースへの追加とファイル出力を行う（偽動作収録モード用）
  */
-void MotionSwitchAccumulator::accumulateMotionData4RecFake()
+void MotionSwitchAccumulator::accumulateMotionData4RecFake(const int serialNumber)
 {
 	AvatarController dummyAvatarController(this->generateMessageHeader(), this->perceptionNeuronData);
 
-	//動作
-	PerceptionNeuronDAO::DataSet pnDataSet = this->accumulateMotionDataAfterSwitching(dummyAvatarController);
+	//時系列モーションデータを共有メモリに保持しつつ、サマリ情報を作成
+	PerceptionNeuronDAO::DataSet pnDataSet = this->accumulateMotionDataAfterSwitching(dummyAvatarController, serialNumber);
 
 	std::cout << "収録を終了します" << std::endl;
 
-	//モーションデータを、DataSet型に入れなおす
+	//時系列モーションデータを、DataSet型に追加する
 	this->setMotionDataAfterSwitching(pnDataSet,  this->accumulatedDataMapAfterSwitching);
 
 	// 少しだけキー入力待機
@@ -378,8 +392,26 @@ void MotionSwitchAccumulator::accumulateMotionData4RecFake()
 
 	if (inputKey.compare("y") == 0)
 	{
-		// Perception Neuron動作関連
-		PerceptionNeuronDAO::insertDatabaseExec(pnDataSet);
+		try
+		{
+			// Perception Neuron動作関連
+			PerceptionNeuronDAO::insertDatabaseExec(pnDataSet);
+		}
+		catch (std::string &ex)
+		{
+			std::cout << " ERR :" << ex << std::endl;
+			std::cout << "Inserting data to database is failed." << std::endl;
+		}
+		catch (boost::exception &ex) 
+		{
+			std::cout << " ERR :" << boost::diagnostic_information_what(ex) << std::endl;
+			std::cout << "Inserting data to database is failed." << std::endl;
+		}
+		catch (std::exception ex)
+		{
+			std::cout << " ERR :" << ex.what() << std::endl;
+			std::cout << "Inserting data to database is failed." << std::endl;
+		}
 	}
 	else
 	{
@@ -400,15 +432,15 @@ void MotionSwitchAccumulator::accumulateMotionData4RecFake()
 /*
  * Perception Neuronから動作情報を取得・蓄積し、データベースへの追加とファイル出力を行う（実験(動作切替・収録)モード用）
  */
-void MotionSwitchAccumulator::accumulateMotionData4Experiment(AvatarController &avatarController)
+void MotionSwitchAccumulator::accumulateMotionData4Experiment(AvatarController &avatarController, const int serialNumber)
 {
-	//切替前後のモーションデータを共有メモリに保持する
-	PerceptionNeuronDAO::DataSet pnDataSetBeforeSwitching = this->accumulateMotionDataBeforeSwitching(avatarController);
-	PerceptionNeuronDAO::DataSet pnDataSetAfterSwitching  = this->accumulateMotionDataAfterSwitching(avatarController);
+	//切替前後の時系列モーションデータを共有メモリに保持しつつ、サマリ情報を作成
+	PerceptionNeuronDAO::DataSet pnDataSetBeforeSwitching = this->accumulateMotionDataBeforeSwitching(avatarController, serialNumber);
+	PerceptionNeuronDAO::DataSet pnDataSetAfterSwitching  = this->accumulateMotionDataAfterSwitching(avatarController, serialNumber);
 
 	std::cout << "収録を終了します" << std::endl;
 
-	//切替前後のモーションデータを、DataSet型に入れなおす
+	//切替前後の時系列モーションデータを、DataSet型に追加する
 	this->setMotionDataBeforeSwitching(pnDataSetBeforeSwitching, this->accumulatedDataMapBeforeSwitching);
 	this->setMotionDataAfterSwitching (pnDataSetAfterSwitching,  this->accumulatedDataMapAfterSwitching);
 
@@ -418,9 +450,15 @@ void MotionSwitchAccumulator::accumulateMotionData4Experiment(AvatarController &
 	MswRecordingInfoDAO::DataSet recordingInfo;
 
 	recordingInfo.afterSwitchingRecId     = Param::getSwitchRecId();
+	recordingInfo.seialNumber             = serialNumber;
 	recordingInfo.beforeSwitchingRecId    = Param::getSwitchRecId() + additionalId4before;
 	recordingInfo.fakeRecId               = Param::getSwitchFakeRecId();
 	recordingInfo.memo                    = Param::getSwitchDbMswRecordingInfoMemo();
+	recordingInfo.numberOfIterations      = Param::getSwitchNumberOfIterations();
+	recordingInfo.smoothingType           = (int)(Param::getSmoothingType());
+	recordingInfo.framesNumberForDelay    = Param::getSwitchFramesNumberForDelay();
+	recordingInfo.invertFlg               = Param::getSwitchInvertFlg();
+	recordingInfo.invertFakeFlg           = Param::getSwitchInvertFakeFlg();
 
 	// 少しだけキー入力待機
 	Sleep(500);
@@ -464,14 +502,15 @@ void MotionSwitchAccumulator::accumulateMotionData4Experiment(AvatarController &
 /*
  * 切替前のモーションデータを共有メモリに保持する（キー"s"が入力されるまでループを繰り返す）
  */
-PerceptionNeuronDAO::DataSet MotionSwitchAccumulator::accumulateMotionDataBeforeSwitching(AvatarController &avatarController)
+PerceptionNeuronDAO::DataSet MotionSwitchAccumulator::accumulateMotionDataBeforeSwitching(AvatarController &avatarController, const int serialNumber)
 {
 	PerceptionNeuronDAO::DataSet motionSet;
 
-	motionSet.summary.recId       = Param::getSwitchRecId()+additionalId4before;
-	motionSet.summary.userId      = Param::getSwitchUserId();
-	motionSet.summary.recInterval = Param::getSwitchAccumInterval();
-	motionSet.summary.memo        = Param::getSwitchDbPerceptionNeuronMemo();
+	motionSet.summary.recId        = Param::getSwitchRecId()+additionalId4before;
+	motionSet.summary.serialNumber = serialNumber;
+	motionSet.summary.userId       = Param::getSwitchUserId();
+	motionSet.summary.recInterval  = Param::getSwitchAccumInterval();
+	motionSet.summary.memo         = Param::getSwitchDbPerceptionNeuronMemo();
 
 	//時間計測関連変数
 	LARGE_INTEGER startLi, nowLi, freqLi;
@@ -558,16 +597,17 @@ PerceptionNeuronDAO::DataSet MotionSwitchAccumulator::accumulateMotionDataBefore
 
 
 /*
- * 切替後のモーションデータを共有メモリに保持する
+ * 切替後の時系列モーションデータを共有メモリに保持しつつ、サマリ情報を作成
  */
-PerceptionNeuronDAO::DataSet MotionSwitchAccumulator::accumulateMotionDataAfterSwitching(AvatarController &avatarController)
+PerceptionNeuronDAO::DataSet MotionSwitchAccumulator::accumulateMotionDataAfterSwitching(AvatarController &avatarController, const int serialNumber)
 {
 	PerceptionNeuronDAO::DataSet motionSet;
 
-	motionSet.summary.recId       = Param::getSwitchRecId();
-	motionSet.summary.userId      = Param::getSwitchUserId();
-	motionSet.summary.recInterval = Param::getSwitchAccumInterval();
-	motionSet.summary.memo        = Param::getSwitchDbPerceptionNeuronMemo();
+	motionSet.summary.recId        = Param::getSwitchRecId();
+	motionSet.summary.serialNumber = serialNumber;
+	motionSet.summary.userId       = Param::getSwitchUserId();
+	motionSet.summary.recInterval  = Param::getSwitchAccumInterval();
+	motionSet.summary.memo         = Param::getSwitchDbPerceptionNeuronMemo();
 
 	double maxTime;
 
@@ -699,11 +739,12 @@ void MotionSwitchAccumulator::setMotionDataBeforeSwitching(PerceptionNeuronDAO::
 	while (it != accumulatedDataMap.rend())
 	{
 		PerceptionNeuronDAO::TimeSeries_t posture;
-		posture.recId       = Param::getSwitchRecId()+additionalId4before;
-		posture.elapsedTime = (*it).first;
-		posture.hips_pos.x  = ((*it).second).bvhData.data[0];
-		posture.hips_pos.y  = ((*it).second).bvhData.data[1];
-		posture.hips_pos.z  = ((*it).second).bvhData.data[2];
+		posture.recId        = motionSet.summary.recId;
+		posture.serialNumber = motionSet.summary.serialNumber;
+		posture.elapsedTime  = (*it).first;
+		posture.hips_pos.x   = ((*it).second).bvhData.data[0];
+		posture.hips_pos.y   = ((*it).second).bvhData.data[1];
+		posture.hips_pos.z   = ((*it).second).bvhData.data[2];
 
 		// 切替直前の時刻の10秒前（直近10秒の開始時刻）を算出する
 		if (startPointOfElapsedTime < 0)
@@ -739,11 +780,12 @@ void MotionSwitchAccumulator::setMotionDataAfterSwitching(PerceptionNeuronDAO::D
 	while (it != accumulatedDataMap.end())
 	{
 		PerceptionNeuronDAO::TimeSeries_t posture;
-		posture.recId       = Param::getSwitchRecId();
-		posture.elapsedTime = (*it).first;
-		posture.hips_pos.x  = ((*it).second).bvhData.data[0];
-		posture.hips_pos.y  = ((*it).second).bvhData.data[1];
-		posture.hips_pos.z  = ((*it).second).bvhData.data[2];
+		posture.recId        = motionSet.summary.recId;
+		posture.serialNumber = motionSet.summary.serialNumber;
+		posture.elapsedTime  = (*it).first;
+		posture.hips_pos.x   = ((*it).second).bvhData.data[0];
+		posture.hips_pos.y   = ((*it).second).bvhData.data[1];
+		posture.hips_pos.z   = ((*it).second).bvhData.data[2];
 
 		for (int i = 0; i < NeuronBVH::BonesType::BonesTypeCount; i++)
 		{

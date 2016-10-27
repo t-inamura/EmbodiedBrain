@@ -17,9 +17,15 @@ public:
 	struct DataSet
 	{
 		int          afterSwitchingRecId;
+		int          seialNumber;
 		int          beforeSwitchingRecId;
 		int          fakeRecId;
 		std::string  memo;
+		int          numberOfIterations;
+		int          smoothingType;
+		int          framesNumberForDelay;
+		bool         invertFlg;
+		bool         invertFakeFlg;
 	};
 
 public:

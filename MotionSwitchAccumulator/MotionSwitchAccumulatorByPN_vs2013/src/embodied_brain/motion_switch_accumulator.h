@@ -20,12 +20,15 @@ protected :
 	// 切替前の動作IDは切替後動作ID＋100万とする
 	static const int additionalId4before = 1000000;
 
-	std::list<PerceptionNeuronDAO::TimeSeries_t> getMotionDataFromDBorFile(const std::string &recIdStr);
+	// 偽動作のSerial Numberは 0固定
+	static const int fakeMotionSerialNumber = 0;
 
-	void accumulateMotionData4RecFake();
-	void accumulateMotionData4Experiment(AvatarController &avatarController);
-	PerceptionNeuronDAO::DataSet accumulateMotionDataBeforeSwitching(AvatarController &avatarController);
-	PerceptionNeuronDAO::DataSet accumulateMotionDataAfterSwitching(AvatarController &avatarController);
+	std::list<PerceptionNeuronDAO::TimeSeries_t> getMotionDataFromDBorFile(const std::string &recIdStr, const int serialNumber);
+
+	void accumulateMotionData4RecFake(const int serialNumber);
+	void accumulateMotionData4Experiment(AvatarController &avatarController, const int serialNumber);
+	PerceptionNeuronDAO::DataSet accumulateMotionDataBeforeSwitching(AvatarController &avatarController, const int serialNumber);
+	PerceptionNeuronDAO::DataSet accumulateMotionDataAfterSwitching(AvatarController &avatarController, const int serialNumber);
 
 	void setMotionDataBeforeSwitching(PerceptionNeuronDAO::DataSet &motionSet, const std::map<int, PerceptionNeuronSensorData> &accumulatedDataMap);
 	void setMotionDataAfterSwitching(PerceptionNeuronDAO::DataSet &motionSet, const std::map<int, PerceptionNeuronSensorData> &accumulatedDataMap);

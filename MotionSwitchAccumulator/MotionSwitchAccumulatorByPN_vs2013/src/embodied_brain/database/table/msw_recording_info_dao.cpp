@@ -161,14 +161,26 @@ void MswRecordingInfoDAO::insert(sql::Connection *con, const MswRecordingInfoDAO
 		=
 		"INSERT INTO motion_switching_recording_info ("
 			"after_switching_rec_id, "
+			"serial_number, "
 			"before_switching_rec_id, "
 			"fake_rec_id, "
-			"memo "
+			"memo, "
+			"number_of_iterations, "
+			"smoothing_type, "
+			"frames_number_for_delay, "
+			"invert_flg, "
+			"invert_fake_flg "
 		")VALUES ("
 			+ std::to_string(motionInfo.afterSwitchingRecId) + ","
+			+ std::to_string(motionInfo.seialNumber) + ","
 			+ std::to_string(motionInfo.beforeSwitchingRecId) + ","
 			+ std::to_string(motionInfo.fakeRecId) + ","
-			+ "'" + motionInfo.memo + "'" +
+			+ "'" + motionInfo.memo + "'" + ","
+			+ std::to_string(motionInfo.numberOfIterations) + ","
+			+ std::to_string(motionInfo.smoothingType) + ","
+			+ std::to_string(motionInfo.framesNumberForDelay) + ","
+			+ std::to_string(motionInfo.invertFlg) + ","
+			+ std::to_string(motionInfo.invertFakeFlg) + ","
 		") ";
 
 	stmt = con->createStatement();
