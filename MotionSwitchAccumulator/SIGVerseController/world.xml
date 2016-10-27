@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf8"?>
+<world name="MotionSwitchWorld">
+
+	<!--Gravity-->
+	<gravity x="0.0" y="-980.7" z="0.0"/>
+
+	<!--Agent -->
+	<instanciate class="Man-bvh_yxz_finger_real_for_motion_switch.xml">
+		
+		<!--Agent name-->
+		<set-attr-value name="name" value="motion_switch_man"/>
+
+		<!--C++-->
+		<set-attr-value name="language" value="c++"/>
+
+		<!--Object file -->
+		<set-attr-value name="implementation" value="./MotionSwitchController.so"/>
+
+		<!--Kinetics set as false-->
+		<set-attr-value name="dynamics" value="false"/>
+
+		<!--Agent position(x,y,z)-->
+		<set-attr-value name="x" value="0.0"/>
+		<set-attr-value name="y" value="40.0"/>
+		<set-attr-value name="z" value="-20.0"/>
+
+		<camera id="1" link="HEAD_LINK" direction="0 0 1" position="0.0 0.0 5.0"/>
+		
+	</instanciate>
+	
+	<!-- 
+	  Set house, situation is in the house 0
+	-->
+	<!-- Chair for avatar to sit -->
+	<instanciate class="seChair_B_c02.xml">
+		<set-attr-value name="name" value="sos_chair"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="0.0"/>
+		<set-attr-value name="y" value="44.0"/>
+		<set-attr-value name="z" value="-25.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="0.8"/>
+		<set-attr-value name="scaley" value="0.8"/>
+		<set-attr-value name="scalez" value="0.8"/>
+	</instanciate>
+
+	<!-- Table for Hand mode -->
+
+	<instanciate class="seLowtable_A_black.xml">
+		<set-attr-value name="name" value="table_black"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="0.0"/>
+		<set-attr-value name="y" value="30.0"/>
+		<set-attr-value name="z" value="25.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="2.2"/>
+		<set-attr-value name="scalez" value="2"/>
+	</instanciate>
+
+	<instanciate class="A1_room.xml">
+		<set-attr-value name="name" value="Room0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="0.0"/>
+		<set-attr-value name="y" value="215.0"/>
+		<set-attr-value name="z" value="0.0"/>
+	</instanciate>
+
+	<instanciate class="seTVbass_A.xml">
+		<set-attr-value name="name" value="TVBass0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="100.0"/>
+		<set-attr-value name="y" value="50.0"/>
+		<set-attr-value name="z" value="195.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+	<instanciate class="seSpeaker.xml">
+		<set-attr-value name="name" value="Speaker_A0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="160.0"/>
+		<set-attr-value name="y" value="80.0"/>
+		<set-attr-value name="z" value="190.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+	<instanciate class="seSpeaker.xml">
+		<set-attr-value name="name" value="Speaker_B0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="40.0"/>
+		<set-attr-value name="y" value="80.0"/>
+		<set-attr-value name="z" value="190.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+	<instanciate class="A1_magazines.xml">
+		<set-attr-value name="name" value="Magagines0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="120.0"/>
+		<set-attr-value name="y" value="60.0"/>
+		<set-attr-value name="z" value="180.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+	<instanciate class="seStove.xml">
+		<set-attr-value name="name" value="Stove0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="-10.0"/>
+		<set-attr-value name="y" value="50.0"/>
+		<set-attr-value name="z" value="180.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+	<instanciate class="seSofa_2seater.xml">
+		<set-attr-value name="name" value="Sofa0"/>
+		<set-attr-value name="dynamics" value="false"/>
+		<set-attr-value name="x" value="280.0"/>
+		<set-attr-value name="y" value="50.0"/>
+		<set-attr-value name="z" value="180.0"/>
+		<set-attr-value name="qw" value="0.0"/>
+		<set-attr-value name="qx" value="0.0"/>
+		<set-attr-value name="qy" value="1.0"/>
+		<set-attr-value name="qz" value="0.0"/>
+		<set-attr-value name="scalex" value="1.0"/>
+		<set-attr-value name="scaley" value="1.0"/>
+		<set-attr-value name="scalez" value="1.0"/>
+	</instanciate>
+</world>
