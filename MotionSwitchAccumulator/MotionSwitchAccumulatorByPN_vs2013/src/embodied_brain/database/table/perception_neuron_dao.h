@@ -59,7 +59,7 @@ protected:
 
 public:
 	static bool duplicationCheck(const int recId);
-	static int  selectMotionData(std::list<PerceptionNeuronDAO::TimeSeries_t> &motionInfo, const std::string &recId, const int serialNumber);
+	static int  selectMotionData(std::list<PerceptionNeuronDAO::TimeSeries_t> &motionInfo, const int recId, const int serialNumber);
 	static void insertDatabase(const PerceptionNeuronDAO::DataSet &motionInfo);
 	static void insertDatabaseExec(const PerceptionNeuronDAO::DataSet &motionInfo);
 	static void insert(sql::Connection *con, const PerceptionNeuronDAO::DataSet &motionInfo);

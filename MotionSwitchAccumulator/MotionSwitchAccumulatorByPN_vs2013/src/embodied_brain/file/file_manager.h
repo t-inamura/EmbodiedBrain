@@ -17,7 +17,7 @@ private:
 	void setJointPosition(PerceptionNeuronSensorData::PerceptionNeuronBVHJoint &joint, const NeuronBVH::BonesType &bonesType, const std::vector<std::string> &vecStr, const int index);
 
 public:
-	int  getMotionData(std::list<PerceptionNeuronDAO::TimeSeries_t> &timeSeries, const std::string &fileName, const std::string &motionId, const int serialNumber);
+	int  getMotionData(std::list<PerceptionNeuronDAO::TimeSeries_t> &timeSeries, const std::string &fileName, const int motionId, const int serialNumber);
 
 	void outputDataFile(const PerceptionNeuronDAO::DataSet &motionDataBeforeSwitching, const PerceptionNeuronDAO::DataSet &motionDataAfterSwitching, const MswRecordingInfoDAO::DataSet &recordingInfo);
 	void outputDataFile(const PerceptionNeuronDAO::DataSet &motionData);

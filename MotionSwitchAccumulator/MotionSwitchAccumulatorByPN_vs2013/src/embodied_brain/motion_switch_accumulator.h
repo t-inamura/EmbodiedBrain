@@ -23,10 +23,13 @@ protected :
 	// 偽動作のSerial Numberは 0固定
 	static const int fakeMotionSerialNumber = 0;
 
-	std::list<PerceptionNeuronDAO::TimeSeries_t> getMotionDataFromDBorFile(const std::string &recIdStr, const int serialNumber);
+	//// 偽動作IDの再生順キュー
+	//std::queue<int> fakeIdPlayOrderQueue;
+
+	std::list<PerceptionNeuronDAO::TimeSeries_t> getMotionDataFromDBorFile(const int fakeRecId, const int serialNumber);
 
 	void accumulateMotionData4RecFake(const int serialNumber);
-	void accumulateMotionData4Experiment(AvatarController &avatarController, const int serialNumber);
+	void accumulateMotionData4Experiment(AvatarController &avatarController, const int serialNumber, const int fakeRecId);
 	PerceptionNeuronDAO::DataSet accumulateMotionDataBeforeSwitching(AvatarController &avatarController, const int serialNumber);
 	PerceptionNeuronDAO::DataSet accumulateMotionDataAfterSwitching(AvatarController &avatarController, const int serialNumber);
 

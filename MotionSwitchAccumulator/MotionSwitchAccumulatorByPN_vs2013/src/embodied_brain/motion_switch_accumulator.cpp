@@ -67,6 +67,8 @@
 #include <sstream>
 #include <conio.h>
 #include <limits>
+#include <ctime>
+#include <random>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/regex.hpp>
@@ -90,27 +92,28 @@ std::string Param::dbPass;
 std::string Param::generalServiceName;
 int         Param::sigAvatarDispInterval;
 
-int         Param::switchAccumInterval;
-std::string Param::switchMotionDataFilePath;
+int             Param::switchAccumInterval;
+std::string     Param::switchMotionDataFilePath;
 
-int         Param::switchRecId;
-int         Param::switchUserId;
+int             Param::switchRecId;
+int             Param::switchUserId;
 
-int         Param::switchFakeMaxTime;
+int             Param::switchFakeMaxTime;
 
-int         Param::switchNumberOfIterations;
-int         Param::switchFakeRecId;
+int             Param::switchNumberOfIterations;
+std::list<int>  Param::switchFakeRecIdList;
 
-std::string Param::switchDbPerceptionNeuronMemo;
-std::string Param::switchDbMswRecordingInfoMemo;
+std::string     Param::switchDbPerceptionNeuronMemo;
+std::string     Param::switchDbMswRecordingInfoMemo;
 
-int         Param::switchFramesNumberForDelay;
+int             Param::switchFramesNumberForDelay;
 
-bool        Param::switchInvertFlg;
-bool        Param::switchInvertFakeFlg;
+bool            Param::switchInvertFlg;
+bool            Param::switchInvertFakeFlg;
 
 Param::Mode Param::mode;
 Param::SmoothingType Param::smoothingType;
+Param::FakeMotionsSelectionMethod Param::fakeMotionSelectionMethod;
 
 
 /*
@@ -178,9 +181,9 @@ int MotionSwitchAccumulator::run(int argc, char **argv)
 		std::cout << "■ コンフィグファイル読込 開始 ■" << std::endl;
 		Param::readConfigFile();
 
-		if (Param::getSwitchRecId() > additionalId4before)
+		if (Param::getSwitchRecId() > MotionSwitchAccumulator::additionalId4before || Param::getSwitchRecId()==0)
 		{
-			std::cout << std::endl << "RecIdは、" << additionalId4before << " 以下にしてください。" << std::endl;
+			std::cout << std::endl << "RecIdは、" << MotionSwitchAccumulator::additionalId4before << " 以下にしてください。あと０も禁止。" << std::endl;
 			continue;
 		}
 
@@ -207,26 +210,17 @@ int MotionSwitchAccumulator::run(int argc, char **argv)
 		std::cout << "■ データベースの重複チェック (PerceptionNeuron関連) 開始 ■" << std::endl;
 		//データベースのID重複チェック
 		if (!PerceptionNeuronDAO::duplicationCheck(Param::getSwitchRecId())){ continue; }
-		if (!PerceptionNeuronDAO::duplicationCheck(Param::getSwitchRecId()+additionalId4before)){ continue; } //切替前ID
+		if (!PerceptionNeuronDAO::duplicationCheck(Param::getSwitchRecId()+MotionSwitchAccumulator::additionalId4before)){ continue; } //切替前ID
 
-		// 真似動作収録時は、偽動作をDBから取得したり、SIGServerに接続する必要がある
+		// 偽動作IDの再生順配列動的確保
+		int *fakeIdPlayOrderList = new int[Param::getSwitchNumberOfIterations()];
+
+		// 真似動作収録時は、SIGServerに接続する必要がある
 		if (Param::getMode() == Param::Mode::Experiment)
 		{
 			std::cout << "■ データベースの重複チェック (動作切替・収録情報関連) 開始 ■" << std::endl;
 			//データベースのID重複チェック
 			if (!MswRecordingInfoDAO::duplicationCheck(Param::getSwitchRecId())){ continue; }
-
-			/*
-			 * 偽の動作情報を取得
-			 */
-			std::list<PerceptionNeuronDAO::TimeSeries_t> motionData = this->getMotionDataFromDBorFile(std::to_string(Param::getSwitchFakeRecId()), MotionSwitchAccumulator::fakeMotionSerialNumber);
-
-			//DBから取得した偽動作情報を使用してSIGVerseへ送信する電文リストを作成する
-//			avatarController.makeTelegramForAvatar(motionData);
-			avatarController.setFakeData(motionData);
-
-			//不要になった動作情報リストの全要素を削除
-			motionData.clear();
 
 			std::cout << "■ SIGVerseへの接続 開始 ■" << std::endl;
 			/*
@@ -240,12 +234,88 @@ int MotionSwitchAccumulator::run(int argc, char **argv)
 				//SIGVerseからの定期データ受信スレッド実行
 				avatarController.checkRecvSIGServiceData();
 			}
-		}
 
+			// 偽動作IDの再生順配列初期化
+			for (int i = 0; i<Param::getSwitchNumberOfIterations(); i++)
+			{
+				fakeIdPlayOrderList[i] = 0;
+			}
+
+			// 偽動作IDの再生順配列作成
+			switch (Param::getFakeMotionsSelectionMethod())
+			{
+				case Param::FakeMotionsSelectionMethod::Random:
+				{
+					std::srand((unsigned int)time(NULL));
+				
+					std::list<int>::const_iterator it = Param::getSwitchFakeRecIdList().begin();
+
+					for (int i = 0; i<Param::getSwitchNumberOfIterations(); i++)
+					{
+						while (true)
+						{
+							int j = std::rand() % Param::getSwitchNumberOfIterations();
+
+							if (fakeIdPlayOrderList[j] == 0)
+							{
+								fakeIdPlayOrderList[j] = *it;
+								break;
+							}
+						}
+
+						it++;
+
+						if (it == Param::getSwitchFakeRecIdList().end())
+						{
+							it = Param::getSwitchFakeRecIdList().begin();
+						}
+					}
+
+					break;
+				}
+				case Param::FakeMotionsSelectionMethod::Sequentially:
+				{
+					std::list<int>::const_iterator it = Param::getSwitchFakeRecIdList().begin();
+
+					for (int i = 0; i<Param::getSwitchNumberOfIterations(); i++)
+					{
+						fakeIdPlayOrderList[i] = *it;
+						it++;
+					}
+
+					break;
+				}
+				default:
+				{
+					std::cout << "incorrect FakeMotionsSelectionMethod!" << std::endl;
+					exit(EXIT_FAILURE);
+				}
+			}
+		}
 
 		// 反復収録
 		for (int serialNumber = 1; serialNumber<=Param::getSwitchNumberOfIterations(); serialNumber++)
 		{
+			int fakeRecId;
+
+			// 真似動作収録時は、偽動作をDBから取得する必要がある
+			if (Param::getMode() == Param::Mode::Experiment)
+			{
+				fakeRecId = fakeIdPlayOrderList[serialNumber-1];
+
+				/*
+				 * 偽の動作情報を取得
+				 */
+				std::list<PerceptionNeuronDAO::TimeSeries_t> motionData = this->getMotionDataFromDBorFile(fakeRecId, MotionSwitchAccumulator::fakeMotionSerialNumber);
+
+				//DBから取得した偽動作情報を使用してSIGVerseへ送信する電文リストを作成する
+				//			avatarController.makeTelegramForAvatar(motionData);
+				avatarController.setFakeData(motionData);
+
+				//不要になった動作情報リストの全要素を削除
+				motionData.clear();
+			}
+
 			std::cout << "■ 収録開始 (" << serialNumber << "回目)■" << std::endl;
 
 			/*
@@ -292,13 +362,15 @@ int MotionSwitchAccumulator::run(int argc, char **argv)
 			}
 			else
 			{
-				this->accumulateMotionData4Experiment(avatarController, serialNumber);
+				this->accumulateMotionData4Experiment(avatarController, serialNumber, fakeRecId);
 			}
 
 			if (Param::getMode() == Param::Mode::Experiment){ thSendMotionDataToSIGVerse.join(); }
 
 			std::cout << "■ 収録終了 (" << serialNumber << "回目)■" << std::endl;
 		}
+
+		delete[] fakeIdPlayOrderList;
 	}
 
 
@@ -335,7 +407,7 @@ void __stdcall MotionSwitchAccumulator::bvhFrameDataReceived(void* customedObj, 
 /*
  * 偽動作情報をDB (or ファイル) から取得する
  */
-std::list<PerceptionNeuronDAO::TimeSeries_t> MotionSwitchAccumulator::getMotionDataFromDBorFile(const std::string &fakeRecIdStr, const int serialNumber)
+std::list<PerceptionNeuronDAO::TimeSeries_t> MotionSwitchAccumulator::getMotionDataFromDBorFile(const int fakeRecId, const int serialNumber)
 {
 	std::list<PerceptionNeuronDAO::TimeSeries_t> motionInfo;
 	int motionDataNum;
@@ -343,13 +415,13 @@ std::list<PerceptionNeuronDAO::TimeSeries_t> MotionSwitchAccumulator::getMotionD
 	if(Param::getSwitchMotionDataFilePath()=="")
 	{
 		//データベースから動作情報を取得
-		motionDataNum = PerceptionNeuronDAO::selectMotionData(motionInfo, fakeRecIdStr, serialNumber);
+		motionDataNum = PerceptionNeuronDAO::selectMotionData(motionInfo, fakeRecId, serialNumber);
 	}
 	else
 	{
 		//ファイルから動作情報を取得
 		FileManager fileManager;
-		motionDataNum = fileManager.getMotionData(motionInfo, Param::getSwitchMotionDataFilePath(), fakeRecIdStr, serialNumber);
+		motionDataNum = fileManager.getMotionData(motionInfo, Param::getSwitchMotionDataFilePath(), fakeRecId, serialNumber);
 	}
 	if(motionDataNum==0)
 	{
@@ -432,7 +504,7 @@ void MotionSwitchAccumulator::accumulateMotionData4RecFake(const int serialNumbe
 /*
  * Perception Neuronから動作情報を取得・蓄積し、データベースへの追加とファイル出力を行う（実験(動作切替・収録)モード用）
  */
-void MotionSwitchAccumulator::accumulateMotionData4Experiment(AvatarController &avatarController, const int serialNumber)
+void MotionSwitchAccumulator::accumulateMotionData4Experiment(AvatarController &avatarController, const int serialNumber, const int fakeRecId)
 {
 	//切替前後の時系列モーションデータを共有メモリに保持しつつ、サマリ情報を作成
 	PerceptionNeuronDAO::DataSet pnDataSetBeforeSwitching = this->accumulateMotionDataBeforeSwitching(avatarController, serialNumber);
@@ -451,8 +523,8 @@ void MotionSwitchAccumulator::accumulateMotionData4Experiment(AvatarController &
 
 	recordingInfo.afterSwitchingRecId     = Param::getSwitchRecId();
 	recordingInfo.seialNumber             = serialNumber;
-	recordingInfo.beforeSwitchingRecId    = Param::getSwitchRecId() + additionalId4before;
-	recordingInfo.fakeRecId               = Param::getSwitchFakeRecId();
+	recordingInfo.beforeSwitchingRecId    = Param::getSwitchRecId() + MotionSwitchAccumulator::additionalId4before;
+	recordingInfo.fakeRecId               = fakeRecId;
 	recordingInfo.memo                    = Param::getSwitchDbMswRecordingInfoMemo();
 	recordingInfo.numberOfIterations      = Param::getSwitchNumberOfIterations();
 	recordingInfo.smoothingType           = (int)(Param::getSmoothingType());
@@ -506,7 +578,7 @@ PerceptionNeuronDAO::DataSet MotionSwitchAccumulator::accumulateMotionDataBefore
 {
 	PerceptionNeuronDAO::DataSet motionSet;
 
-	motionSet.summary.recId        = Param::getSwitchRecId()+additionalId4before;
+	motionSet.summary.recId        = Param::getSwitchRecId()+MotionSwitchAccumulator::additionalId4before;
 	motionSet.summary.serialNumber = serialNumber;
 	motionSet.summary.userId       = Param::getSwitchUserId();
 	motionSet.summary.recInterval  = Param::getSwitchAccumInterval();

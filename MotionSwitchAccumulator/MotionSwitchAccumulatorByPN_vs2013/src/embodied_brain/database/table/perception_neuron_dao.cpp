@@ -85,7 +85,7 @@ bool PerceptionNeuronDAO::duplicationCheck(const int recId)
 /*
  * データベースから動作データを取得する
  */
-int  PerceptionNeuronDAO::selectMotionData(std::list<PerceptionNeuronDAO::TimeSeries_t> &timeSeries, const std::string &recId, const int serialNumber)
+int  PerceptionNeuronDAO::selectMotionData(std::list<PerceptionNeuronDAO::TimeSeries_t> &timeSeries, const int recId, const int serialNumber)
 {
 	try
 	{
@@ -118,7 +118,7 @@ int  PerceptionNeuronDAO::selectMotionData(std::list<PerceptionNeuronDAO::TimeSe
 		sql::ResultSet *rs;
 
 		stmt = con->createStatement();
-		rs = stmt->executeQuery("SELECT * FROM perception_neuron_motions_time_series WHERE rec_id = " + recId + " AND serial_number = " + std::to_string(serialNumber) + " ORDER BY elapsed_time ASC ");
+		rs = stmt->executeQuery("SELECT * FROM perception_neuron_motions_time_series WHERE rec_id = " + std::to_string(recId) + " AND serial_number = " + std::to_string(serialNumber) + " ORDER BY elapsed_time ASC ");
 
 		while(rs->next())
 		{

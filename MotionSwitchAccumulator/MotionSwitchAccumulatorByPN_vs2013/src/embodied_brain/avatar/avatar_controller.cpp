@@ -36,6 +36,13 @@ void AvatarController::reset()
 {
 	this->isSwitched  = false;
 	this->isReplaying = true;
+
+	this->fakeMotions.clear();
+
+	std::queue<PerceptionNeuronSensorData> empty;
+	std::swap(this->tempMotionsForDelay, empty);
+
+	this->motionDataBeforeSwitching = PerceptionNeuronSensorData();
 }
 
 /*
@@ -195,7 +202,7 @@ void AvatarController::setFakeData(const std::list<PerceptionNeuronDAO::TimeSeri
 			motionInfoTelegram.elapsedTime = (*it).elapsedTime;
 			motionInfoTelegram.sensorData  = sensorData;
 
-			this->motionInfoTelegramList.push_back(motionInfoTelegram);
+			this->fakeMotions.push_back(motionInfoTelegram);
 
 			it++;
 		}
@@ -216,7 +223,7 @@ void AvatarController::sendMotionDataToSIGVerse()
 	{
 //		std::cout << "◆描画　－開始－◆" << std::endl;
 
-		if(this->motionInfoTelegramList.size()==0)
+		if(this->fakeMotions.size()==0)
 		{
 			std::cout << "描画データが１件もありません。終了します。" << std::endl;
 			return;
@@ -227,7 +234,7 @@ void AvatarController::sendMotionDataToSIGVerse()
 
 		start_time = timeGetTime();
 
-		std::list<MotionInfoTelegram>::iterator it = this->motionInfoTelegramList.begin();
+		std::list<MotionInfoTelegram>::iterator it = this->fakeMotions.begin();
 
 		//最初のデータの経過時間を設定する
 		startFakeElapsedTime = (*it).elapsedTime;
@@ -314,13 +321,13 @@ void AvatarController::sendMotionDataToSIGVerse()
 				//イテレータを次の送信データまで進める
 				nextFakeElapsedTime = startFakeElapsedTime + Param::getSigAvatarDispInterval() * fakeCnt;
 
-				while(it != this->motionInfoTelegramList.end() && (*it).elapsedTime < nextFakeElapsedTime)
+				while(it != this->fakeMotions.end() && (*it).elapsedTime < nextFakeElapsedTime)
 				{
 					it++;
 				}
 
 				//イテレータの最後に達したらループを抜ける
-				if(it == this->motionInfoTelegramList.end()){ break; }
+				if(it == this->fakeMotions.end()){ break; }
 			}
 
 			//次の送信時刻までsleepする
@@ -338,7 +345,7 @@ void AvatarController::sendMotionDataToSIGVerse()
 
 		this->isReplaying = false;
 
-		this->motionInfoTelegramList.clear();
+		this->fakeMotions.clear();
 
 		std::cout << "◆描画　－終了－◆" << std::endl;
 	}
@@ -359,18 +366,18 @@ PerceptionNeuronSensorData AvatarController::getDelayedSensorData(PerceptionNeur
 	{
 		PerceptionNeuronSensorData delayedSensorData;
 
-		if (this->motionListForDelay.size() == Param::getSwitchFramesNumberForDelay())
+		if (this->tempMotionsForDelay.size() == Param::getSwitchFramesNumberForDelay())
 		{
-			delayedSensorData = this->motionListForDelay.front();
+			delayedSensorData = this->tempMotionsForDelay.front();
 
-			this->motionListForDelay.pop(); //delete
+			this->tempMotionsForDelay.pop(); //delete
 		}
 		else
 		{
 			delayedSensorData = sensorData;
 		}
 
-		this->motionListForDelay.push(sensorData);
+		this->tempMotionsForDelay.push(sensorData);
 
 		return delayedSensorData;
 	}

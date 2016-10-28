@@ -13,27 +13,29 @@ std::string Param::getDbPass()   { return dbPass; }
 std::string    Param::getGeneralServiceName()   { return generalServiceName; }
 int            Param::getSigAvatarDispInterval(){ return sigAvatarDispInterval; }
 
-int         Param::getSwitchAccumInterval()     { return switchAccumInterval; }
-std::string Param::getSwitchMotionDataFilePath(){ return switchMotionDataFilePath; };
+int             Param::getSwitchAccumInterval()     { return switchAccumInterval; }
+std::string     Param::getSwitchMotionDataFilePath(){ return switchMotionDataFilePath; };
 
-int         Param::getSwitchRecId()  { return switchRecId; }
-int         Param::getSwitchUserId() { return switchUserId; }
+int             Param::getSwitchRecId()  { return switchRecId; }
+int             Param::getSwitchUserId() { return switchUserId; }
 
-int         Param::getSwitchFakeMaxTime(){ return switchFakeMaxTime; }
+int             Param::getSwitchFakeMaxTime(){ return switchFakeMaxTime; }
 
-int         Param::getSwitchNumberOfIterations(){ return switchNumberOfIterations; }
-int         Param::getSwitchFakeRecId(){ return switchFakeRecId; }
+int             Param::getSwitchNumberOfIterations(){ return switchNumberOfIterations; }
+std::list<int>  Param::getSwitchFakeRecIdList(){ return switchFakeRecIdList; }
 
-std::string Param::getSwitchDbPerceptionNeuronMemo() { return switchDbPerceptionNeuronMemo; }
-std::string Param::getSwitchDbMswRecordingInfoMemo() { return switchDbMswRecordingInfoMemo; }
+std::string     Param::getSwitchDbPerceptionNeuronMemo() { return switchDbPerceptionNeuronMemo; }
+std::string     Param::getSwitchDbMswRecordingInfoMemo() { return switchDbMswRecordingInfoMemo; }
 
-int         Param::getSwitchFramesNumberForDelay(){ return switchFramesNumberForDelay; }
+int             Param::getSwitchFramesNumberForDelay(){ return switchFramesNumberForDelay; }
 
-bool        Param::getSwitchInvertFlg(){ return switchInvertFlg; }
-bool        Param::getSwitchInvertFakeFlg(){ return switchInvertFakeFlg; }
+bool            Param::getSwitchInvertFlg(){ return switchInvertFlg; }
+bool            Param::getSwitchInvertFakeFlg(){ return switchInvertFakeFlg; }
 
 Param::Mode Param::getMode(){ return mode; }
 Param::SmoothingType Param::getSmoothingType() { return smoothingType; }
+Param::FakeMotionsSelectionMethod Param::getFakeMotionsSelectionMethod() { return fakeMotionSelectionMethod; }
+
 
 
 
@@ -68,8 +70,29 @@ void Param::readConfigFile()
 
 	switchFakeMaxTime = pt.get<int>  ("switch.fake_max_time");
 
-	switchNumberOfIterations = pt.get<int>  ("switch.number_of_iterations");
-	switchFakeRecId          = pt.get<int>  ("switch.fake_rec_id");
+	switchNumberOfIterations = pt.get<int>("switch.number_of_iterations");
+
+	std::string switchFakeMotionsSelectionMethodStr = pt.get<std::string>("switch.fake_motions_selection_method");
+
+	if (switchFakeMotionsSelectionMethodStr == "Random")
+	{
+		Param::fakeMotionSelectionMethod = FakeMotionsSelectionMethod::Random;
+	}
+	else if (switchFakeMotionsSelectionMethodStr == "Sequentially")
+	{
+		Param::fakeMotionSelectionMethod = FakeMotionsSelectionMethod::Sequentially;
+	}
+	else
+	{
+		std::cout << "illegal fake_motions_selection_method! :" << switchFakeMotionsSelectionMethodStr << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	std::string switchFakeRecIdListStr = pt.get<std::string>("switch.fake_rec_id_list");
+
+	switchFakeRecIdList = Param::splitStrIntoIntList(switchFakeRecIdListStr, ",");
+
+
 
 	switchDbPerceptionNeuronMemo  = pt.get<std::string>("switch.db_perception_neuron_memo");
 	switchDbMswRecordingInfoMemo  = pt.get<std::string>("switch.db_msw_recording_info_memo");
@@ -109,7 +132,8 @@ void Param::readConfigFile()
 	else if (switchMode == "Experiment")
 	{
 		Param::mode = Mode::Experiment;
-		std::cout << "[switch]fake_rec_id   = " << switchFakeRecId << std::endl;
+		std::cout << "[switch]fake_motions_selection_method = " << switchFakeMotionsSelectionMethodStr << std::endl;
+		std::cout << "[switch]fake_rec_id_list = " << switchFakeRecIdListStr << std::endl;
 	}
 	else
 	{
@@ -148,39 +172,39 @@ void Param::readConfigFile()
 }
 
 
-///*
-// * 文字列を区切り、整数リストを作成する
-// */
-//std::list<int> Param::splitStrIntoIntlist(const std::string &dataStr, const std::string &delimiter)
-//{
-//	/*
-//	 * 文字列を区切り文字で分割し、文字列ベクタを作成
-//	 */
-//	boost::regex delimiterRegex(delimiter);
-//	std::string dataStrTmp = dataStr; //regex_split用に別変数に格納
-//
-//	std::vector<std::string> dataVec;
-//	boost::regex_split(back_inserter(dataVec), dataStrTmp, delimiterRegex);
-//
-//	/*
-//	 * 文字列ベクタを整数リストに変換
-//	 */
-//	std::list<int> intList;
-//
-//	std::vector<std::string>::iterator it = dataVec.begin();
-//
-//	char *endp;
-//
-//	while (it != dataVec.end())
-//	{
-//		int intValue = std::strtol((*it).c_str(),&endp,10);
-//
-//		if(*endp!='\0'){ throw std::string("整数リストに分割できませんでした。元文字列=["+dataStr+"]"); }
-//
-//		intList.push_back(intValue);
-//
-//		it++;
-//	}
-//
-//	return intList;
-//}
+/*
+ * 文字列を区切り、整数リストを作成する
+ */
+std::list<int> Param::splitStrIntoIntList(const std::string &dataStr, const std::string &delimiter)
+{
+	/*
+	 * 文字列を区切り文字で分割し、文字列ベクタを作成
+	 */
+	boost::regex delimiterRegex(delimiter);
+	std::string dataStrTmp = dataStr; //regex_split用に別変数に格納
+
+	std::vector<std::string> dataVec;
+	boost::regex_split(back_inserter(dataVec), dataStrTmp, delimiterRegex);
+
+	/*
+	 * 文字列ベクタを整数リストに変換
+	 */
+	std::list<int> intList;
+
+	std::vector<std::string>::iterator it = dataVec.begin();
+
+	char *endp;
+
+	while (it != dataVec.end())
+	{
+		int intValue = std::strtol((*it).c_str(),&endp,10);
+
+		if(*endp!='\0'){ throw std::string("整数リストに分割できませんでした。元文字列=["+dataStr+"]"); }
+
+		intList.push_back(intValue);
+
+		it++;
+	}
+
+	return intList;
+}

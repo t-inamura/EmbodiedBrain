@@ -19,7 +19,7 @@
 /*
  * ファイルから動作データを取得する
  */
-int  FileManager::getMotionData(std::list<PerceptionNeuronDAO::TimeSeries_t> &timeSeries, const std::string &fileName, const std::string &recId, const int serialNumber)
+int  FileManager::getMotionData(std::list<PerceptionNeuronDAO::TimeSeries_t> &timeSeries, const std::string &fileName, const int recId, const int serialNumber)
 {
 	try
 	{
@@ -45,7 +45,7 @@ int  FileManager::getMotionData(std::list<PerceptionNeuronDAO::TimeSeries_t> &ti
 			boost::regex_split(back_inserter(results), lineStr, delimiter);
 
 			//１件でも動作IDが異なるデータが存在した場合は、強制終了する
-			if(recId!=results[0] && std::to_string(serialNumber)!=results[1])
+			if(std::to_string(recId)!=results[0] && std::to_string(serialNumber)!=results[1])
 			{
 				std::cout << "ファイル内に、引数で指定した動作IDと異なる動作IDが存在したため終了します。" << std::endl;
 				exit(EXIT_FAILURE);

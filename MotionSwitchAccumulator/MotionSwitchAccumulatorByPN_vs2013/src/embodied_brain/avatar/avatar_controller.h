@@ -33,10 +33,10 @@ private:
 	//SIGService
 	sigverse::SIGService *m_srv = NULL;
 
-	//SIGVerse送信用動作情報電文リスト
-	std::list<MotionInfoTelegram> motionInfoTelegramList;
+	//偽動作時系列データ
+	std::list<MotionInfoTelegram> fakeMotions;
 
-	std::queue<PerceptionNeuronSensorData> motionListForDelay;
+	std::queue<PerceptionNeuronSensorData> tempMotionsForDelay;
 
 	PerceptionNeuronSensorData motionDataBeforeSwitching;
 

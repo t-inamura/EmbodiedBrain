@@ -26,6 +26,12 @@ public :
 		SubtractLastPostureWithRate,
 	};
 
+	enum FakeMotionsSelectionMethod
+	{
+		Random,
+		Sequentially,
+	};
+
 
 	//パラメータファイル名
 	static const std::string PARAM_FILE_NAME;
@@ -40,27 +46,29 @@ private:
 	static std::string generalServiceName;
 	static int         sigAvatarDispInterval;
 
-	static int         switchAccumInterval;
-	static std::string switchMotionDataFilePath;
+	static int            switchAccumInterval;
+	static std::string    switchMotionDataFilePath;
 
-	static int         switchRecId;
-	static int         switchUserId;
+	static int            switchRecId;
+	static int            switchUserId;
 
-	static int         switchFakeMaxTime;
+	static int            switchFakeMaxTime;
 
-	static int         switchNumberOfIterations;
-	static int         switchFakeRecId;
+	static int            switchNumberOfIterations;
 
-	static std::string switchDbPerceptionNeuronMemo;
-	static std::string switchDbMswRecordingInfoMemo;
+	static std::list<int> switchFakeRecIdList;
 
-	static int         switchFramesNumberForDelay;
+	static std::string    switchDbPerceptionNeuronMemo;
+	static std::string    switchDbMswRecordingInfoMemo;
 
-	static bool        switchInvertFlg;
-	static bool        switchInvertFakeFlg;
+	static int            switchFramesNumberForDelay;
+
+	static bool           switchInvertFlg;
+	static bool           switchInvertFakeFlg;
 
 	static Mode mode;
 	static SmoothingType smoothingType;
+	static FakeMotionsSelectionMethod fakeMotionSelectionMethod;
 
 public:
 
@@ -74,29 +82,34 @@ public:
 
 	static int         getSigAvatarDispInterval();
 
-	static int         getSwitchAccumInterval();
-	static std::string getSwitchMotionDataFilePath();
+	static int             getSwitchAccumInterval();
+	static std::string     getSwitchMotionDataFilePath();
 
-	static int         getSwitchRecId();
-	static int         getSwitchUserId();
+	static int             getSwitchRecId();
+	static int             getSwitchUserId();
 
-	static int         getSwitchFakeMaxTime();
+	static int             getSwitchFakeMaxTime();
 
-	static int         getSwitchNumberOfIterations();
-	static int         getSwitchFakeRecId();
+	static int             getSwitchNumberOfIterations();
 
-	static std::string getSwitchDbPerceptionNeuronMemo();
-	static std::string getSwitchDbMswRecordingInfoMemo();
+	static std::list<int>  getSwitchFakeRecIdList();
 
-	static int         getSwitchFramesNumberForDelay();
+	static std::string     getSwitchDbPerceptionNeuronMemo();
+	static std::string     getSwitchDbMswRecordingInfoMemo();
 
-	static bool        getSwitchInvertFlg();
-	static bool        getSwitchInvertFakeFlg();
+	static int             getSwitchFramesNumberForDelay();
 
-	static Mode getMode();
-	static SmoothingType getSmoothingType();
+	static bool            getSwitchInvertFlg();
+	static bool            getSwitchInvertFakeFlg();
+
+	static Mode  getMode();
+	static SmoothingType  getSmoothingType();
+	static FakeMotionsSelectionMethod  getFakeMotionsSelectionMethod();
 
 	static void readConfigFile();
+
+
+	static std::list<int> splitStrIntoIntList(const std::string &dataStr, const std::string &delimiter);
 };
 
 #endif //EMBODIED_BRAIN_PARAM_H
