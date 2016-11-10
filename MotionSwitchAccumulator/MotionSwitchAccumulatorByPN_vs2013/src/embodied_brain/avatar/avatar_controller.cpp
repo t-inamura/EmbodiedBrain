@@ -26,7 +26,6 @@ AvatarController::AvatarController(std::string messageHeader, PerceptionNeuronDa
 {
 	this->messageHeader        = messageHeader;
 	this->perceptionNeuronData = perceptionNeuronData; // Shared data. Latest Perception Neuron data.
-	this->reset();
 }
 
 /*
@@ -43,6 +42,11 @@ void AvatarController::reset()
 	std::swap(this->tempMotionsForDelay, empty);
 
 	this->motionDataBeforeSwitching = PerceptionNeuronSensorData();
+
+	this->isFirstForSmoothingSubtractLastPosture = true;
+
+	this->isFirstForSmoothingSubtractLastPostureWithRate = true;
+	this->rateCoeffForSmoothingSubtractLastPostureWithRate = 1000 / Param::getSigAvatarDispInterval() - 1;
 }
 
 /*
@@ -52,7 +56,12 @@ void AvatarController::connectSIGServer(const std::string &ipAddress, const int 
 {
 	this->m_srv = new sigverse::SIGService(Param::getGeneralServiceName());
 	
-	this->m_srv->connect(ipAddress, portNum);
+	bool connected = this->m_srv->connect(ipAddress, portNum);
+
+	if (!connected)
+	{
+		throw std::string("SIGVerseに接続できませんでした。");
+	}
 //	this->m_srv->connectToViewer();
 //	this->m_srv->setAutoExitProc(true);
 }
@@ -206,6 +215,8 @@ void AvatarController::setFakeData(const std::list<PerceptionNeuronDAO::TimeSeri
 
 			it++;
 		}
+
+		std::cout << "◆SIGVerse送信用動作情報セット　－終了－◆" << std::endl;
 	}
 	catch (std::exception& ex)
 	{
@@ -221,7 +232,7 @@ void AvatarController::sendMotionDataToSIGVerse()
 {
 	try
 	{
-//		std::cout << "◆描画　－開始－◆" << std::endl;
+		std::cout << "◆SIGVerseに動作情報電文を送信するスレッド　－開始－◆" << std::endl;
 
 		if(this->fakeMotions.size()==0)
 		{
@@ -347,7 +358,7 @@ void AvatarController::sendMotionDataToSIGVerse()
 
 		this->fakeMotions.clear();
 
-		std::cout << "◆描画　－終了－◆" << std::endl;
+		std::cout << "◆SIGVerseに動作情報電文を送信するスレッド　－終了－◆" << std::endl;
 	}
 	catch (std::exception& ex)
 	{
@@ -356,7 +367,54 @@ void AvatarController::sendMotionDataToSIGVerse()
 }
 
 
-PerceptionNeuronSensorData AvatarController::getDelayedSensorData(PerceptionNeuronSensorData sensorData)
+//PerceptionNeuronSensorData AvatarController::getDelayedSensorData(const PerceptionNeuronSensorData &sensorData)
+//{
+//	if (Param::getSwitchFramesNumberForDelay() <= 0)
+//	{
+//		return sensorData;
+//	}
+//	else
+//	{
+//		PerceptionNeuronSensorData delayedSensorData;
+//
+//		if (this->tempMotionsForDelay.size() > 0)
+//		{
+//			delayedSensorData = this->tempMotionsForDelay.front();
+//
+//			std::cout << "size1=" << this->tempMotionsForDelay.size() << ", data=" << delayedSensorData.bvhData.data[179] << ", arg=" << sensorData.bvhData.data[179] << std::endl;
+//
+//			if (this->tempMotionsForDelay.size() == Param::getSwitchFramesNumberForDelay())
+//			{
+//				this->tempMotionsForDelay.pop(); //delete
+//			}
+//		}
+//		else
+//		{
+//			delayedSensorData = sensorData;
+//
+//			std::cout << "size0=" << this->tempMotionsForDelay.size() << ", data=" << delayedSensorData.bvhData.data[179] << std::endl;
+//		}
+//
+//		PerceptionNeuronSensorData newSensorData;
+//		newSensorData.dataType = PerceptionNeuronSensorData::DataTypeEnum::BVH;	
+//		newSensorData.bvhData.avatarIndex   = sensorData.bvhData.avatarIndex;
+//		newSensorData.bvhData.avatarName    = sensorData.bvhData.avatarName;
+//		newSensorData.bvhData.withDisp      = sensorData.bvhData.withDisp;
+//		newSensorData.bvhData.withReference = sensorData.bvhData.withReference;
+//		newSensorData.bvhData.frameIndex    = sensorData.bvhData.frameIndex;
+//		newSensorData.bvhData.dataCount     = sensorData.bvhData.dataCount;
+//
+//		newSensorData.bvhData.data = (float *)malloc(sensorData.bvhData.dataCount * sizeof(float));
+//		memcpy(newSensorData.bvhData.data, sensorData.bvhData.data, sensorData.bvhData.dataCount * sizeof(float));
+//
+//		this->tempMotionsForDelay.push(newSensorData);
+//
+//		return delayedSensorData;
+//	}
+//}
+
+
+PerceptionNeuronSensorData AvatarController::getDelayedSensorData(const PerceptionNeuronSensorData &sensorData)
 {
 	if (Param::getSwitchFramesNumberForDelay() <= 0)
 	{
@@ -364,28 +422,48 @@ PerceptionNeuronSensorData AvatarController::getDelayedSensorData(PerceptionNeur
 	}
 	else
 	{
-		PerceptionNeuronSensorData delayedSensorData;
-
-		if (this->tempMotionsForDelay.size() == Param::getSwitchFramesNumberForDelay())
+		// delete
+		if ((int)this->tempMotionsForDelay.size() > Param::getSwitchFramesNumberForDelay())
 		{
-			delayedSensorData = this->tempMotionsForDelay.front();
-
 			this->tempMotionsForDelay.pop(); //delete
+		}
+
+		// insert
+		this->tempMotionsForDelay.push(sensorData);
+
+		// get
+		PerceptionNeuronSensorData delayedSensorData = this->tempMotionsForDelay.front();
+
+
+		if ((int)this->tempMotionsForDelay.size() > Param::getSwitchFramesNumberForDelay())
+		{
+//			std::cout << "size1=" << this->tempMotionsForDelay.size() << ", data=" << delayedSensorData.bvhData.data[179] << ", arg=" << sensorData.bvhData.data[179] << std::endl;
+
+			return delayedSensorData;
 		}
 		else
 		{
-			delayedSensorData = sensorData;
+			PerceptionNeuronSensorData copiedSensorData;
+			copiedSensorData.dataType = PerceptionNeuronSensorData::DataTypeEnum::BVH;	
+			copiedSensorData.bvhData.avatarIndex   = delayedSensorData.bvhData.avatarIndex;
+			copiedSensorData.bvhData.avatarName    = delayedSensorData.bvhData.avatarName;
+			copiedSensorData.bvhData.withDisp      = delayedSensorData.bvhData.withDisp;
+			copiedSensorData.bvhData.withReference = delayedSensorData.bvhData.withReference;
+			copiedSensorData.bvhData.frameIndex    = delayedSensorData.bvhData.frameIndex;
+			copiedSensorData.bvhData.dataCount     = delayedSensorData.bvhData.dataCount;
+
+			copiedSensorData.bvhData.data = (float *)malloc(delayedSensorData.bvhData.dataCount * sizeof(float));
+			memcpy(copiedSensorData.bvhData.data, delayedSensorData.bvhData.data, delayedSensorData.bvhData.dataCount * sizeof(float));
+
+//			std::cout << "size0=" << this->tempMotionsForDelay.size() << ", data=" << copiedSensorData.bvhData.data[179] << ", arg=" << sensorData.bvhData.data[179] << std::endl;
+
+			return copiedSensorData;
 		}
-
-		this->tempMotionsForDelay.push(sensorData);
-
-		return delayedSensorData;
 	}
 }
 
 
-
-PerceptionNeuronSensorData AvatarController::getSmoothenedSensorData(PerceptionNeuronSensorData sensorData, PerceptionNeuronSensorData motionDataBeforeSwitching)
+PerceptionNeuronSensorData AvatarController::getSmoothenedSensorData(PerceptionNeuronSensorData &sensorData, const PerceptionNeuronSensorData &motionDataBeforeSwitching)
 {
 	switch (Param::getSmoothingType())
 	{
@@ -418,81 +496,78 @@ PerceptionNeuronSensorData AvatarController::getSmoothenedSensorData(PerceptionN
  * スムージング（姿勢減算）
  *   切替直前の姿勢との差分を、偽動作から引き続ける
  */
-void AvatarController::smoothingSubtractLastPosture(PerceptionNeuronSensorData &sensorData, PerceptionNeuronSensorData motionDataBeforeSwitching)
+void AvatarController::smoothingSubtractLastPosture(PerceptionNeuronSensorData &sensorData, const PerceptionNeuronSensorData &motionDataBeforeSwitching)
 {
-	static bool isFirst = true;
-	static PerceptionNeuronSensorData diffSensorData;
-
 	//ダミー引く本当を、ダミーから引けばいい
-	if (isFirst)
+	if (this->isFirstForSmoothingSubtractLastPosture)
 	{
-		diffSensorData.dataType = PerceptionNeuronSensorData::DataTypeEnum::BVH;
+		this->diffSensorDataForSmoothingSubtractLastPosture.dataType = PerceptionNeuronSensorData::DataTypeEnum::BVH;
 			
-		//diffSensorData.bvhData.avatarIndex   = 0;
-		//diffSensorData.bvhData.avatarName    = "PN01";
-		//diffSensorData.bvhData.withDisp      = false;
-		//diffSensorData.bvhData.withReference = false;
-		//diffSensorData.bvhData.frameIndex    = i;
-		diffSensorData.bvhData.dataCount     = 180;
-		diffSensorData.bvhData.data          = (float *)malloc(diffSensorData.bvhData.dataCount * sizeof(float));
+		//this->diffSensorDataForSmoothingSubtractLastPosture.bvhData.avatarIndex   = 0;
+		//this->diffSensorDataForSmoothingSubtractLastPosture.bvhData.avatarName    = "PN01";
+		//this->diffSensorDataForSmoothingSubtractLastPosture.bvhData.withDisp      = false;
+		//this->diffSensorDataForSmoothingSubtractLastPosture.bvhData.withReference = false;
+		//this->diffSensorDataForSmoothingSubtractLastPosture.bvhData.frameIndex    = i;
+		this->diffSensorDataForSmoothingSubtractLastPosture.bvhData.dataCount     = 180;
+		this->diffSensorDataForSmoothingSubtractLastPosture.bvhData.data          = (float *)malloc(this->diffSensorDataForSmoothingSubtractLastPosture.bvhData.dataCount * sizeof(float));
 	
-		diffSensorData.bvhData.data[0] = sensorData.bvhData.data[0] - motionDataBeforeSwitching.bvhData.data[0];
-		diffSensorData.bvhData.data[1] = sensorData.bvhData.data[1] - motionDataBeforeSwitching.bvhData.data[1];
-		diffSensorData.bvhData.data[2] = sensorData.bvhData.data[2] - motionDataBeforeSwitching.bvhData.data[2];
+		this->diffSensorDataForSmoothingSubtractLastPosture.bvhData.data[0] = sensorData.bvhData.data[0] - motionDataBeforeSwitching.bvhData.data[0];
+		this->diffSensorDataForSmoothingSubtractLastPosture.bvhData.data[1] = sensorData.bvhData.data[1] - motionDataBeforeSwitching.bvhData.data[1];
+		this->diffSensorDataForSmoothingSubtractLastPosture.bvhData.data[2] = sensorData.bvhData.data[2] - motionDataBeforeSwitching.bvhData.data[2];
 
 		for (int j = 0; j < NeuronBVH::BonesType::BonesTypeCount; j++)
 		{
-			diffSensorData.bvhData.data[3*(j+1)+0] = sensorData.bvhData.data[3*(j+1)+0] - motionDataBeforeSwitching.bvhData.data[3*(j+1)+0];
-			diffSensorData.bvhData.data[3*(j+1)+1] = sensorData.bvhData.data[3*(j+1)+1] - motionDataBeforeSwitching.bvhData.data[3*(j+1)+1];
-			diffSensorData.bvhData.data[3*(j+1)+2] = sensorData.bvhData.data[3*(j+1)+2] - motionDataBeforeSwitching.bvhData.data[3*(j+1)+2];
+			this->diffSensorDataForSmoothingSubtractLastPosture.bvhData.data[3*(j+1)+0] = sensorData.bvhData.data[3*(j+1)+0] - motionDataBeforeSwitching.bvhData.data[3*(j+1)+0];
+			this->diffSensorDataForSmoothingSubtractLastPosture.bvhData.data[3*(j+1)+1] = sensorData.bvhData.data[3*(j+1)+1] - motionDataBeforeSwitching.bvhData.data[3*(j+1)+1];
+			this->diffSensorDataForSmoothingSubtractLastPosture.bvhData.data[3*(j+1)+2] = sensorData.bvhData.data[3*(j+1)+2] - motionDataBeforeSwitching.bvhData.data[3*(j+1)+2];
 		}
+
+		this->isFirstForSmoothingSubtractLastPosture = false;
 	}
 
 	float rate = 1.0;
 
-	this->smoothingAddPosture1Link (sensorData, diffSensorData, NeuronBVH::BonesType::RightHand, rate);
-	this->smoothingAddPosture1Link (sensorData, diffSensorData, NeuronBVH::BonesType::RightHandThumb1, rate);
-	this->smoothingAddPosture1Link (sensorData, diffSensorData, NeuronBVH::BonesType::RightHandThumb2, rate);
-	this->smoothingAddPosture1Link (sensorData, diffSensorData, NeuronBVH::BonesType::RightHandThumb3, rate);
-//	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightInHandIndex, rate);
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandIndex1, rate);
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandIndex2, rate);
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandIndex3, rate);
-//	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightInHandMiddle, rate);
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandMiddle1, rate);
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandMiddle2, rate);
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandMiddle3, rate);
-//	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightInHandRing, rate);
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandRing1, rate);
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandRing2, rate);
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandRing3, rate);
-//	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightInHandPinky, rate);
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandPinky1, rate);
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandPinky2, rate);
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandPinky3, rate);
+	this->smoothingAddPosture1Link (sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::RightHand, rate);
+	this->smoothingAddPosture1Link (sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::RightHandThumb1, rate);
+	this->smoothingAddPosture1Link (sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::RightHandThumb2, rate);
+	this->smoothingAddPosture1Link (sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::RightHandThumb3, rate);
+//	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::RightInHandIndex, rate);
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::RightHandIndex1, rate);
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::RightHandIndex2, rate);
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::RightHandIndex3, rate);
+//	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::RightInHandMiddle, rate);
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::RightHandMiddle1, rate);
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::RightHandMiddle2, rate);
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::RightHandMiddle3, rate);
+//	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::RightInHandRing, rate);
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::RightHandRing1, rate);
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::RightHandRing2, rate);
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::RightHandRing3, rate);
+//	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::RightInHandPinky, rate);
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::RightHandPinky1, rate);
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::RightHandPinky2, rate);
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::RightHandPinky3, rate);
 
-	this->smoothingAddPosture1Link (sensorData, diffSensorData, NeuronBVH::BonesType::LeftHand, rate);
-	this->smoothingAddPosture1Link (sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandThumb1, rate);
-	this->smoothingAddPosture1Link (sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandThumb2, rate);
-	this->smoothingAddPosture1Link (sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandThumb3, rate);
-//	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftInHandIndex, rate);
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandIndex1, rate);
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandIndex2, rate);
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandIndex3, rate);
-//	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftInHandMiddle, rate);
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandMiddle1, rate);
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandMiddle2, rate);
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandMiddle3, rate);
-//	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftInHandRing, rate;
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandRing1, rate);
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandRing2, rate);
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandRing3, rate);
-//	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftInHandPinky, rate);
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandPinky1, rate);
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandPinky2, rate);
-	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandPinky3, rate);
-
-	if (isFirst){ isFirst = false; }
+	this->smoothingAddPosture1Link (sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::LeftHand, rate);
+	this->smoothingAddPosture1Link (sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::LeftHandThumb1, rate);
+	this->smoothingAddPosture1Link (sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::LeftHandThumb2, rate);
+	this->smoothingAddPosture1Link (sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::LeftHandThumb3, rate);
+//	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::LeftInHandIndex, rate);
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::LeftHandIndex1, rate);
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::LeftHandIndex2, rate);
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::LeftHandIndex3, rate);
+//	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::LeftInHandMiddle, rate);
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::LeftHandMiddle1, rate);
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::LeftHandMiddle2, rate);
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::LeftHandMiddle3, rate);
+//	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::LeftInHandRing, rate;
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::LeftHandRing1, rate);
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::LeftHandRing2, rate);
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::LeftHandRing3, rate);
+//	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::LeftInHandPinky, rate);
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::LeftHandPinky1, rate);
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::LeftHandPinky2, rate);
+	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPosture, NeuronBVH::BonesType::LeftHandPinky3, rate);
 }
 
 
@@ -500,101 +575,96 @@ void AvatarController::smoothingSubtractLastPosture(PerceptionNeuronSensorData &
  * スムージング（姿勢減算）
  *   切替直前の姿勢との差分を偽動作から引くが、徐々にその比率を下げ、１秒後位には偽動作そのものを使用する
  */
-void AvatarController::smoothingSubtractLastPostureWithRate(PerceptionNeuronSensorData &sensorData, PerceptionNeuronSensorData motionDataBeforeSwitching)
+void AvatarController::smoothingSubtractLastPostureWithRate(PerceptionNeuronSensorData &sensorData, const PerceptionNeuronSensorData &motionDataBeforeSwitching)
 {
-	static bool isFirst = true;
-	static PerceptionNeuronSensorData diffSensorData;
-	static int rateCoeff = 1000 / Param::getSigAvatarDispInterval() - 1;
-
 	//ダミー引く本当を、ダミーから引けばいい
-	if (isFirst)
+	if (this->isFirstForSmoothingSubtractLastPostureWithRate)
 	{
-		diffSensorData.dataType = PerceptionNeuronSensorData::DataTypeEnum::BVH;
+		this->diffSensorDataForSmoothingSubtractLastPostureWithRate.dataType = PerceptionNeuronSensorData::DataTypeEnum::BVH;
 			
-		//diffSensorData.bvhData.avatarIndex   = 0;
-		//diffSensorData.bvhData.avatarName    = "PN01";
-		//diffSensorData.bvhData.withDisp      = false;
-		//diffSensorData.bvhData.withReference = false;
-		//diffSensorData.bvhData.frameIndex    = i;
-		diffSensorData.bvhData.dataCount     = 180;
-		diffSensorData.bvhData.data          = (float *)malloc(diffSensorData.bvhData.dataCount * sizeof(float));
+		//this->diffSensorDataForSmoothingSubtractLastPostureWithRate.bvhData.avatarIndex   = 0;
+		//this->diffSensorDataForSmoothingSubtractLastPostureWithRate.bvhData.avatarName    = "PN01";
+		//this->diffSensorDataForSmoothingSubtractLastPostureWithRate.bvhData.withDisp      = false;
+		//this->diffSensorDataForSmoothingSubtractLastPostureWithRate.bvhData.withReference = false;
+		//this->diffSensorDataForSmoothingSubtractLastPostureWithRate.bvhData.frameIndex    = i;
+		this->diffSensorDataForSmoothingSubtractLastPostureWithRate.bvhData.dataCount     = 180;
+		this->diffSensorDataForSmoothingSubtractLastPostureWithRate.bvhData.data          = (float *)malloc(this->diffSensorDataForSmoothingSubtractLastPostureWithRate.bvhData.dataCount * sizeof(float));
 	
-		diffSensorData.bvhData.data[0] = sensorData.bvhData.data[0] - motionDataBeforeSwitching.bvhData.data[0];
-		diffSensorData.bvhData.data[1] = sensorData.bvhData.data[1] - motionDataBeforeSwitching.bvhData.data[1];
-		diffSensorData.bvhData.data[2] = sensorData.bvhData.data[2] - motionDataBeforeSwitching.bvhData.data[2];
+		this->diffSensorDataForSmoothingSubtractLastPostureWithRate.bvhData.data[0] = sensorData.bvhData.data[0] - motionDataBeforeSwitching.bvhData.data[0];
+		this->diffSensorDataForSmoothingSubtractLastPostureWithRate.bvhData.data[1] = sensorData.bvhData.data[1] - motionDataBeforeSwitching.bvhData.data[1];
+		this->diffSensorDataForSmoothingSubtractLastPostureWithRate.bvhData.data[2] = sensorData.bvhData.data[2] - motionDataBeforeSwitching.bvhData.data[2];
 
 		for (int j = 0; j < NeuronBVH::BonesType::BonesTypeCount; j++)
 		{
-			diffSensorData.bvhData.data[3*(j+1)+0] = sensorData.bvhData.data[3*(j+1)+0] - motionDataBeforeSwitching.bvhData.data[3*(j+1)+0];
-			diffSensorData.bvhData.data[3*(j+1)+1] = sensorData.bvhData.data[3*(j+1)+1] - motionDataBeforeSwitching.bvhData.data[3*(j+1)+1];
-			diffSensorData.bvhData.data[3*(j+1)+2] = sensorData.bvhData.data[3*(j+1)+2] - motionDataBeforeSwitching.bvhData.data[3*(j+1)+2];
+			this->diffSensorDataForSmoothingSubtractLastPostureWithRate.bvhData.data[3*(j+1)+0] = sensorData.bvhData.data[3*(j+1)+0] - motionDataBeforeSwitching.bvhData.data[3*(j+1)+0];
+			this->diffSensorDataForSmoothingSubtractLastPostureWithRate.bvhData.data[3*(j+1)+1] = sensorData.bvhData.data[3*(j+1)+1] - motionDataBeforeSwitching.bvhData.data[3*(j+1)+1];
+			this->diffSensorDataForSmoothingSubtractLastPostureWithRate.bvhData.data[3*(j+1)+2] = sensorData.bvhData.data[3*(j+1)+2] - motionDataBeforeSwitching.bvhData.data[3*(j+1)+2];
 		}
+
+		this->isFirstForSmoothingSubtractLastPostureWithRate = false;
 	}
 
 
-	if (rateCoeff > 0)
+	if (this->rateCoeffForSmoothingSubtractLastPostureWithRate > 0)
 	{
-		float rate = rateCoeff * Param::getSigAvatarDispInterval() / 1000.0f;
+		float rate = this->rateCoeffForSmoothingSubtractLastPostureWithRate * Param::getSigAvatarDispInterval() / 1000.0f;
 
-		this->smoothingAddPosture1Link (sensorData, diffSensorData, NeuronBVH::BonesType::RightHand, rate);
-		this->smoothingAddPosture1Link (sensorData, diffSensorData, NeuronBVH::BonesType::RightHandThumb1, rate);
-		this->smoothingAddPosture1Link (sensorData, diffSensorData, NeuronBVH::BonesType::RightHandThumb2, rate);
-		this->smoothingAddPosture1Link (sensorData, diffSensorData, NeuronBVH::BonesType::RightHandThumb3, rate);
-	//	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightInHandIndex, rate);
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandIndex1, rate);
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandIndex2, rate);
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandIndex3, rate);
-	//	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightInHandMiddle, rate);
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandMiddle1, rate);
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandMiddle2, rate);
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandMiddle3, rate);
-	//	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightInHandRing, rate);
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandRing1, rate);
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandRing2, rate);
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandRing3, rate);
-	//	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightInHandPinky, rate);
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandPinky1, rate);
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandPinky2, rate);
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::RightHandPinky3, rate);
+		this->smoothingAddPosture1Link (sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::RightHand, rate);
+		this->smoothingAddPosture1Link (sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::RightHandThumb1, rate);
+		this->smoothingAddPosture1Link (sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::RightHandThumb2, rate);
+		this->smoothingAddPosture1Link (sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::RightHandThumb3, rate);
+	//	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::RightInHandIndex, rate);
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::RightHandIndex1, rate);
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::RightHandIndex2, rate);
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::RightHandIndex3, rate);
+	//	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::RightInHandMiddle, rate);
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::RightHandMiddle1, rate);
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::RightHandMiddle2, rate);
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::RightHandMiddle3, rate);
+	//	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::RightInHandRing, rate);
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::RightHandRing1, rate);
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::RightHandRing2, rate);
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::RightHandRing3, rate);
+	//	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::RightInHandPinky, rate);
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::RightHandPinky1, rate);
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::RightHandPinky2, rate);
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::RightHandPinky3, rate);
 
-		this->smoothingAddPosture1Link (sensorData, diffSensorData, NeuronBVH::BonesType::LeftHand, rate);
-		this->smoothingAddPosture1Link (sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandThumb1, rate);
-		this->smoothingAddPosture1Link (sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandThumb2, rate);
-		this->smoothingAddPosture1Link (sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandThumb3, rate);
-	//	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftInHandIndex, rate);
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandIndex1, rate);
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandIndex2, rate);
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandIndex3, rate);
-	//	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftInHandMiddle, rate);
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandMiddle1, rate);
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandMiddle2, rate);
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandMiddle3, rate);
-	//	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftInHandRing, rate;
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandRing1, rate);
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandRing2, rate);
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandRing3, rate);
-	//	this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftInHandPinky, rate);
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandPinky1, rate);
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandPinky2, rate);
-		this->smoothingAddPosture1LinkZ(sensorData, diffSensorData, NeuronBVH::BonesType::LeftHandPinky3, rate);
+		this->smoothingAddPosture1Link (sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::LeftHand, rate);
+		this->smoothingAddPosture1Link (sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::LeftHandThumb1, rate);
+		this->smoothingAddPosture1Link (sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::LeftHandThumb2, rate);
+		this->smoothingAddPosture1Link (sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::LeftHandThumb3, rate);
+	//	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::LeftInHandIndex, rate);
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::LeftHandIndex1, rate);
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::LeftHandIndex2, rate);
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::LeftHandIndex3, rate);
+	//	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::LeftInHandMiddle, rate);
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::LeftHandMiddle1, rate);
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::LeftHandMiddle2, rate);
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::LeftHandMiddle3, rate);
+	//	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::LeftInHandRing, rate;
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::LeftHandRing1, rate);
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::LeftHandRing2, rate);
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::LeftHandRing3, rate);
+	//	this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::LeftInHandPinky, rate);
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::LeftHandPinky1, rate);
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::LeftHandPinky2, rate);
+		this->smoothingAddPosture1LinkZ(sensorData, this->diffSensorDataForSmoothingSubtractLastPostureWithRate, NeuronBVH::BonesType::LeftHandPinky3, rate);
+
+		this->rateCoeffForSmoothingSubtractLastPostureWithRate--;
 	}
-
-
-	if (isFirst){ isFirst = false; }
-
-	if (rateCoeff > 0){ rateCoeff--; };
 }
 
 
 
-void AvatarController::smoothingAddPosture1Link(PerceptionNeuronSensorData &sensorData, PerceptionNeuronSensorData diffSensorData, NeuronBVH::BonesType bonesType, float rate)
+void AvatarController::smoothingAddPosture1Link(PerceptionNeuronSensorData &sensorData, const PerceptionNeuronSensorData &diffSensorData, NeuronBVH::BonesType bonesType, float rate)
 {
 	sensorData.bvhData.data[3*(bonesType+1)+0] -= diffSensorData.bvhData.data[3*(bonesType+1)+0] * rate;
 	sensorData.bvhData.data[3*(bonesType+1)+1] -= diffSensorData.bvhData.data[3*(bonesType+1)+1] * rate;
 	sensorData.bvhData.data[3*(bonesType+1)+2] -= diffSensorData.bvhData.data[3*(bonesType+1)+2] * rate;
 }
 
-void AvatarController::smoothingAddPosture1LinkZ(PerceptionNeuronSensorData &sensorData, PerceptionNeuronSensorData diffSensorData, NeuronBVH::BonesType bonesType, float rate)
+void AvatarController::smoothingAddPosture1LinkZ(PerceptionNeuronSensorData &sensorData, const PerceptionNeuronSensorData &diffSensorData, NeuronBVH::BonesType bonesType, float rate)
 {
 	sensorData.bvhData.data[3*(bonesType+1)+2] -= diffSensorData.bvhData.data[3*(bonesType+1)+2] * rate;
 }
@@ -632,26 +702,26 @@ PerceptionNeuronSensorData AvatarController::getLeftRightInvertedSensorData(Perc
 
 void AvatarController::invertPosture1Link(PerceptionNeuronSensorData &sensorData, NeuronBVH::BonesType bonesType1, NeuronBVH::BonesType bonesType2)
 {
-	float tempy = sensorData.bvhData.data[3 * (bonesType1 + 1) + 0];
-	float tempx = sensorData.bvhData.data[3 * (bonesType1 + 1) + 1];
-	float tempz = sensorData.bvhData.data[3 * (bonesType1 + 1) + 2];
+	float tempy = sensorData.bvhData.data[3*(bonesType1+1)+0];
+	float tempx = sensorData.bvhData.data[3*(bonesType1+1)+1];
+	float tempz = sensorData.bvhData.data[3*(bonesType1+1)+2];
 
-	sensorData.bvhData.data[3*(bonesType1+1)+0] = sensorData.bvhData.data[3*(bonesType2+1)+0];
-	sensorData.bvhData.data[3*(bonesType1+1)+1] = sensorData.bvhData.data[3*(bonesType2+1)+1];
-	sensorData.bvhData.data[3*(bonesType1+1)+2] = sensorData.bvhData.data[3*(bonesType2+1)+2];
+	sensorData.bvhData.data[3*(bonesType1+1)+0] = -sensorData.bvhData.data[3*(bonesType2+1)+0];
+	sensorData.bvhData.data[3*(bonesType1+1)+1] = +sensorData.bvhData.data[3*(bonesType2+1)+1];
+	sensorData.bvhData.data[3*(bonesType1+1)+2] = -sensorData.bvhData.data[3*(bonesType2+1)+2];
 
-	sensorData.bvhData.data[3*(bonesType2+1)+0] = tempy;
-	sensorData.bvhData.data[3*(bonesType2+1)+1] = tempx;
-	sensorData.bvhData.data[3*(bonesType2+1)+2] = tempz;
+	sensorData.bvhData.data[3*(bonesType2+1)+0] = -tempy;
+	sensorData.bvhData.data[3*(bonesType2+1)+1] = +tempx;
+	sensorData.bvhData.data[3*(bonesType2+1)+2] = -tempz;
 }
 
 void AvatarController::invertPosture1LinkZ(PerceptionNeuronSensorData &sensorData, NeuronBVH::BonesType bonesType1, NeuronBVH::BonesType bonesType2)
 {
-	float tempz = sensorData.bvhData.data[3 * (bonesType1 + 1) + 2];
+	float tempz = sensorData.bvhData.data[3*(bonesType1+1)+2];
 
-	sensorData.bvhData.data[3*(bonesType1+1)+2] = sensorData.bvhData.data[3*(bonesType2+1)+2];
+	sensorData.bvhData.data[3*(bonesType1+1)+2] = -sensorData.bvhData.data[3*(bonesType2+1)+2];
 
-	sensorData.bvhData.data[3*(bonesType2+1)+2] = tempz;
+	sensorData.bvhData.data[3*(bonesType2+1)+2] = -tempz;
 }
 
 

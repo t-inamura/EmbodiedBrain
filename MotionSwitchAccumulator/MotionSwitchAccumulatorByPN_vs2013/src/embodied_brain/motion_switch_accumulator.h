@@ -26,6 +26,9 @@ protected :
 	//// 偽動作IDの再生順キュー
 	//std::queue<int> fakeIdPlayOrderQueue;
 
+	void initFakeIdPlayOrderList(int *fakeIdPlayOrderList);
+	void inputValues();
+
 	std::list<PerceptionNeuronDAO::TimeSeries_t> getMotionDataFromDBorFile(const int fakeRecId, const int serialNumber);
 
 	void accumulateMotionData4RecFake(const int serialNumber);

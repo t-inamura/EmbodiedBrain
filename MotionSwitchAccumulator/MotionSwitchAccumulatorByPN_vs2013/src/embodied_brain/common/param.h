@@ -49,15 +49,19 @@ private:
 	static int            switchAccumInterval;
 	static std::string    switchMotionDataFilePath;
 
+public:
 	static int            switchRecId;
 	static int            switchUserId;
 
+private :
 	static int            switchFakeMaxTime;
 
 	static int            switchNumberOfIterations;
 
+public:
 	static std::list<int> switchFakeRecIdList;
 
+private :
 	static std::string    switchDbPerceptionNeuronMemo;
 	static std::string    switchDbMswRecordingInfoMemo;
 
@@ -92,7 +96,7 @@ public:
 
 	static int             getSwitchNumberOfIterations();
 
-	static std::list<int>  getSwitchFakeRecIdList();
+//	static std::list<int>  getSwitchFakeRecIdList();
 
 	static std::string     getSwitchDbPerceptionNeuronMemo();
 	static std::string     getSwitchDbMswRecordingInfoMemo();

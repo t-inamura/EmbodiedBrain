@@ -274,7 +274,8 @@ void FileManager::outputDataFilePerceptionNeuron(const PerceptionNeuronDAO::Data
 	/*
 	 * Perception Neuron動作サマリファイル出力
 	 */
-	strftime(filePath, sizeof(filePath), "data\\perception_neuron_motions_summary_%Y%m%d_%H%M%S.dat", &nowTm);
+	std::string fileNameSummary = "data\\perception_neuron_motions_summary_" + std::to_string(motionData.summary.recId) + "_" + std::to_string(motionData.summary.serialNumber) + "_%Y%m%d_%H%M%S.dat";
+	strftime(filePath, sizeof(filePath), fileNameSummary.c_str(), &nowTm);
 
 	ofs.open(filePath);
 
@@ -296,7 +297,8 @@ void FileManager::outputDataFilePerceptionNeuron(const PerceptionNeuronDAO::Data
 	/*
 	 * Perception Neuron動作時系列ファイル出力
 	 */
-	strftime(filePath, sizeof(filePath), "data\\perception_neuron_motions_time_series_%Y%m%d_%H%M%S.dat", &nowTm);
+	std::string fileNameTimeSeries = "data\\perception_neuron_motions_time_series_" + std::to_string(motionData.summary.recId) + "_" + std::to_string(motionData.summary.serialNumber) + "_%Y%m%d_%H%M%S.dat";
+	strftime(filePath, sizeof(filePath), fileNameTimeSeries.c_str(), &nowTm);
 
 	ofs.open(filePath);
 
@@ -304,7 +306,7 @@ void FileManager::outputDataFilePerceptionNeuron(const PerceptionNeuronDAO::Data
 
 	while (it != motionData.timeSeries.end())
 	{
-		ofs << (*it).recId << "\t" << (*it).elapsedTime << "\t"
+		ofs << (*it).recId << "\t" << (*it).serialNumber << "\t" << (*it).elapsedTime << "\t"
 			<< (*it).hips_pos.x << "\t" << (*it).hips_pos.y << "\t" << (*it).hips_pos.z;
 
 		std::string linksStr;
@@ -346,7 +348,8 @@ void FileManager::outputDataFileSwitching(const MswRecordingInfoDAO::DataSet &re
 	/*
 	 * 動作切替実験_収録情報ファイル出力
 	 */
-	strftime(filePath, sizeof(filePath), "data\\motion_switching_recording_info_%Y%m%d_%H%M%S.dat", &nowTm);
+	std::string fileNameTime = "data\\motion_switching_recording_info_" + std::to_string(recordingInfo.afterSwitchingRecId) + "_" + std::to_string(recordingInfo.seialNumber) + "_%Y%m%d_%H%M%S.dat";
+	strftime(filePath, sizeof(filePath), fileNameTime.c_str(), &nowTm);
 
 	ofs.open(filePath);
 
@@ -354,7 +357,12 @@ void FileManager::outputDataFileSwitching(const MswRecordingInfoDAO::DataSet &re
 		<< recordingInfo.seialNumber << "\t"
 		<< recordingInfo.beforeSwitchingRecId << "\t"
 		<< recordingInfo.fakeRecId << "\t"
-		<< "'" << recordingInfo.memo << "'"
+		<< "'" << recordingInfo.memo << "'" << "\t"
+		<< recordingInfo.numberOfIterations << "\t"
+		<< recordingInfo.smoothingType << "\t"
+		<< recordingInfo.framesNumberForDelay << "\t"
+		<< recordingInfo.invertFlg << "\t"
+		<< recordingInfo.invertFakeFlg
 		<< std::endl;
 
 	ofs.flush();

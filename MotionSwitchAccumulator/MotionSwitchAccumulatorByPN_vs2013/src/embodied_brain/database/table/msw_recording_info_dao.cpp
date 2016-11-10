@@ -180,7 +180,7 @@ void MswRecordingInfoDAO::insert(sql::Connection *con, const MswRecordingInfoDAO
 			+ std::to_string(motionInfo.smoothingType) + ","
 			+ std::to_string(motionInfo.framesNumberForDelay) + ","
 			+ std::to_string(motionInfo.invertFlg) + ","
-			+ std::to_string(motionInfo.invertFakeFlg) + ","
+			+ std::to_string(motionInfo.invertFakeFlg) +
 		") ";
 
 	stmt = con->createStatement();

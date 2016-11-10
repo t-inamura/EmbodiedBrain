@@ -43,6 +43,15 @@ private:
 	std::string           messageHeader;
 	PerceptionNeuronData  *perceptionNeuronData;
 
+	bool isFirstForSmoothingSubtractLastPosture;
+	PerceptionNeuronSensorData diffSensorDataForSmoothingSubtractLastPosture;
+
+	bool isFirstForSmoothingSubtractLastPostureWithRate;
+	PerceptionNeuronSensorData diffSensorDataForSmoothingSubtractLastPostureWithRate;
+	int rateCoeffForSmoothingSubtractLastPostureWithRate;
+
+
+
 public:
 	AvatarController(std::string messageHeader, PerceptionNeuronData *perceptionNeuronData);
 	void reset();
@@ -59,14 +68,14 @@ public:
 
 	std::string latestMotionInfoStr;
 
-	PerceptionNeuronSensorData getDelayedSensorData(PerceptionNeuronSensorData sensorData);
+	PerceptionNeuronSensorData getDelayedSensorData(const PerceptionNeuronSensorData &sensorData);
 
-	PerceptionNeuronSensorData getSmoothenedSensorData(PerceptionNeuronSensorData sensorData, PerceptionNeuronSensorData motionDataBeforeSwitching);
-		void smoothingSubtractLastPostureWithRate(PerceptionNeuronSensorData &sensorData, PerceptionNeuronSensorData motionDataBeforeSwitching);
-		void smoothingSubtractLastPosture(PerceptionNeuronSensorData &sensorData, PerceptionNeuronSensorData motionDataBeforeSwitching);
+	PerceptionNeuronSensorData getSmoothenedSensorData(PerceptionNeuronSensorData &sensorData, const PerceptionNeuronSensorData &motionDataBeforeSwitching);
+	void smoothingSubtractLastPostureWithRate(PerceptionNeuronSensorData &sensorData, const PerceptionNeuronSensorData &motionDataBeforeSwitching);
+	void smoothingSubtractLastPosture(PerceptionNeuronSensorData &sensorData, const PerceptionNeuronSensorData &motionDataBeforeSwitching);
 
-	void smoothingAddPosture1Link(PerceptionNeuronSensorData &sensorData, PerceptionNeuronSensorData diffSensorData, NeuronBVH::BonesType bonesType, float rate);
-	void smoothingAddPosture1LinkZ(PerceptionNeuronSensorData &sensorData, PerceptionNeuronSensorData diffSensorData, NeuronBVH::BonesType bonesType, float rate);
+	void smoothingAddPosture1Link(PerceptionNeuronSensorData &sensorData, const PerceptionNeuronSensorData &diffSensorData, NeuronBVH::BonesType bonesType, float rate);
+	void smoothingAddPosture1LinkZ(PerceptionNeuronSensorData &sensorData, const PerceptionNeuronSensorData &diffSensorData, NeuronBVH::BonesType bonesType, float rate);
 
 	PerceptionNeuronSensorData getLeftRightInvertedSensorData(PerceptionNeuronSensorData &sensorData);
 	void invertPosture1Link(PerceptionNeuronSensorData &sensorData, NeuronBVH::BonesType bonesType1, NeuronBVH::BonesType bonesType2);

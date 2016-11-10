@@ -151,14 +151,12 @@ int MotionSwitchAccumulator::run(int argc, char **argv)
 
 	while (true)
 	{
-		avatarController.reset();
-
 		// 収録の開始要否をユーザに問う
 		inputKey = "";
 
 		if (inputKey.compare("y") != 0 && inputKey.compare("n") != 0)
 		{
-			std::cout << std::endl << "★★ 収録を行いますか？(y/n)★★ ："; std::cin >> inputKey;
+			std::cout << std::endl << "★★★ 収録を行いますか？(y/n)★★★ ："; std::cin >> inputKey;
 		}
 
 		if (inputKey.compare("y") == 0)
@@ -180,6 +178,10 @@ int MotionSwitchAccumulator::run(int argc, char **argv)
 		 */
 		std::cout << "■ コンフィグファイル読込 開始 ■" << std::endl;
 		Param::readConfigFile();
+
+		// ユーザID、収録ID、偽収録IDリストを入力
+		this->inputValues();
+
 
 		if (Param::getSwitchRecId() > MotionSwitchAccumulator::additionalId4before || Param::getSwitchRecId()==0)
 		{
@@ -235,72 +237,24 @@ int MotionSwitchAccumulator::run(int argc, char **argv)
 				avatarController.checkRecvSIGServiceData();
 			}
 
-			// 偽動作IDの再生順配列初期化
-			for (int i = 0; i<Param::getSwitchNumberOfIterations(); i++)
-			{
-				fakeIdPlayOrderList[i] = 0;
-			}
-
-			// 偽動作IDの再生順配列作成
-			switch (Param::getFakeMotionsSelectionMethod())
-			{
-				case Param::FakeMotionsSelectionMethod::Random:
-				{
-					std::srand((unsigned int)time(NULL));
-				
-					std::list<int>::const_iterator it = Param::getSwitchFakeRecIdList().begin();
-
-					for (int i = 0; i<Param::getSwitchNumberOfIterations(); i++)
-					{
-						while (true)
-						{
-							int j = std::rand() % Param::getSwitchNumberOfIterations();
-
-							if (fakeIdPlayOrderList[j] == 0)
-							{
-								fakeIdPlayOrderList[j] = *it;
-								break;
-							}
-						}
-
-						it++;
-
-						if (it == Param::getSwitchFakeRecIdList().end())
-						{
-							it = Param::getSwitchFakeRecIdList().begin();
-						}
-					}
-
-					break;
-				}
-				case Param::FakeMotionsSelectionMethod::Sequentially:
-				{
-					std::list<int>::const_iterator it = Param::getSwitchFakeRecIdList().begin();
-
-					for (int i = 0; i<Param::getSwitchNumberOfIterations(); i++)
-					{
-						fakeIdPlayOrderList[i] = *it;
-						it++;
-					}
-
-					break;
-				}
-				default:
-				{
-					std::cout << "incorrect FakeMotionsSelectionMethod!" << std::endl;
-					exit(EXIT_FAILURE);
-				}
-			}
+			//偽動作IDの再生順配列作成
+			this->initFakeIdPlayOrderList(fakeIdPlayOrderList);
 		}
 
+		std::cout << "★★ 反復収録　開始 (反復回数="<< Param::getSwitchNumberOfIterations() << ")★★" << std::endl;
+			
 		// 反復収録
 		for (int serialNumber = 1; serialNumber<=Param::getSwitchNumberOfIterations(); serialNumber++)
 		{
+			std::cout << "■ 収録開始 (" << serialNumber << "回目)■" << std::endl;
+
 			int fakeRecId;
 
 			// 真似動作収録時は、偽動作をDBから取得する必要がある
 			if (Param::getMode() == Param::Mode::Experiment)
 			{
+				avatarController.reset();
+
 				fakeRecId = fakeIdPlayOrderList[serialNumber-1];
 
 				/*
@@ -315,8 +269,6 @@ int MotionSwitchAccumulator::run(int argc, char **argv)
 				//不要になった動作情報リストの全要素を削除
 				motionData.clear();
 			}
-
-			std::cout << "■ 収録開始 (" << serialNumber << "回目)■" << std::endl;
 
 			/*
 			 * カウントダウンを表示
@@ -367,16 +319,17 @@ int MotionSwitchAccumulator::run(int argc, char **argv)
 
 			if (Param::getMode() == Param::Mode::Experiment){ thSendMotionDataToSIGVerse.join(); }
 
-			std::cout << "■ 収録終了 (" << serialNumber << "回目)■" << std::endl;
+			std::cout << "■ 収録終了 (" << serialNumber << "回目)■" << std::endl << std::endl << std::endl;
 		}
 
 		delete[] fakeIdPlayOrderList;
-	}
 
+		std::cout << "★★ 反復収録　終了★★" << std::endl << std::endl << std::endl;
+	}
 
 	// ★★★★ メインループ 終了 ★★★★
 
-	std::cout << "★★ プログラム終了 ★★" << std::endl << std::endl;
+	std::cout << "★★★ プログラム終了 ★★★" << std::endl << std::endl;
 
 	//SIGServerからの切断
 	if (Param::getMode() == Param::Mode::Experiment) { avatarController.disconnectFromAllController(); }
@@ -390,6 +343,205 @@ int MotionSwitchAccumulator::run(int argc, char **argv)
 	WSACleanup();
 
 	return EXIT_SUCCESS;
+}
+
+
+/*
+ * 偽動作IDの再生順配列作成
+ */
+void MotionSwitchAccumulator::initFakeIdPlayOrderList(int *fakeIdPlayOrderList)
+{
+	// 偽動作IDの再生順配列初期化
+	for (int i = 0; i<Param::getSwitchNumberOfIterations(); i++)
+	{
+		fakeIdPlayOrderList[i] = 0;
+	}
+
+	// 偽動作IDの再生順配列作成
+	switch (Param::getFakeMotionsSelectionMethod())
+	{
+		case Param::FakeMotionsSelectionMethod::Random:
+		{
+			std::srand((unsigned int)time(NULL));
+				
+//			std::cout << "size=" << Param::switchFakeRecIdList.size() << std::endl;
+
+			std::list<int>::iterator it = Param::switchFakeRecIdList.begin();
+
+			for (int i = 0; i<Param::getSwitchNumberOfIterations(); i++)
+			{
+				while (true)
+				{
+					int j = std::rand() % Param::getSwitchNumberOfIterations();
+
+					if (fakeIdPlayOrderList[j] == 0)
+					{
+//						std::cout << "順序生成 j=" << j << ", val=" << *it << std::endl;
+
+						fakeIdPlayOrderList[j] = (int)(*it);
+						it++;
+						break;
+					}
+				}
+
+				if (it == Param::switchFakeRecIdList.end())
+				{
+					it = Param::switchFakeRecIdList.begin();
+				}
+			}
+
+			break;
+		}
+		case Param::FakeMotionsSelectionMethod::Sequentially:
+		{
+			if (Param::getSwitchNumberOfIterations()!=Param::switchFakeRecIdList.size())
+			{
+				std::cout << "Sequentiallyの場合は、実験反復回数と偽収録IDリストの数を同じにしてください。" << std::endl;
+				exit(EXIT_FAILURE);
+			}
+			std::list<int>::iterator it = Param::switchFakeRecIdList.begin();
+
+			for (int i = 0; i<Param::getSwitchNumberOfIterations(); i++)
+			{
+				fakeIdPlayOrderList[i] = (int)(*it);
+				it++;
+			}
+
+			break;
+		}
+		default:
+		{
+			std::cout << "incorrect FakeMotionsSelectionMethod!" << std::endl;
+			exit(EXIT_FAILURE);
+		}
+	}
+
+	// 偽動作IDの再生順表示
+	std::cout << "偽動作IDの再生順" << std::endl;
+			
+	for (int i = 0; i<Param::getSwitchNumberOfIterations(); i++)
+	{
+		std::cout << fakeIdPlayOrderList[i] << std::endl;
+	}
+}
+
+
+/*
+ * 幾つかのパラメータに関しては、手入力可能とする
+ */
+void MotionSwitchAccumulator::inputValues()
+{
+	const int maxLine = 10;
+	char inputLineAry[maxLine];
+
+	boost::regex regexId("[0-9]{1,9}");
+
+	// ユーザIDの入力
+	std::cout << std::endl;
+	
+	std::cin.getline(inputLineAry, maxLine);
+
+	// 少しだけキー入力待機
+	Sleep(500);
+
+	if (Param::getSwitchUserId()!=0)
+	{
+		std::cout << "> ユーザID (user_id) は設定ファイルのものを使用します。" << std::endl;
+	}
+	else
+	{
+		while (true)
+		{
+			std::cout << "> ユーザID (user_id) を入力してください" << std::endl;
+			std::cout << "> "; std::cin.getline(inputLineAry, maxLine);
+
+			std::string inputLine = inputLineAry;
+			boost::algorithm::trim(inputLine);
+
+			if (regex_match(inputLine, regexId))
+			{
+				Param::switchUserId = std::atoi(inputLine.c_str());
+
+				std::cout << Param::getSwitchUserId() << "に設定しました" << std::endl;
+				break;
+			}
+			else
+			{
+				std::cout << "不正な値です。" << std::endl;
+			}
+		}
+	}
+
+	// 収録IDの入力
+	std::cout << std::endl;
+	
+	// 少しだけキー入力待機
+	Sleep(500);
+
+	if (Param::getSwitchRecId()!=0)
+	{
+		std::cout << "> 収録ID (rec_id) は設定ファイルのものを使用します。"<< std::endl;
+	}
+	else
+	{
+		while (true)
+		{
+			std::cout << "> 収録ID (rec_id) を入力してください" << std::endl;
+			std::cout << "> "; std::cin.getline(inputLineAry, maxLine);
+
+			std::string inputLine = inputLineAry;
+			boost::algorithm::trim(inputLine);
+
+			if (regex_match(inputLine, regexId))
+			{
+				Param::switchRecId = std::atoi(inputLine.c_str());
+
+				std::cout << Param::getSwitchRecId() << "に設定しました" << std::endl;
+				break;
+			}
+			else
+			{
+				std::cout << "不正な値です。" << std::endl;
+			}
+		}
+	}
+
+	// 偽収録IDリスト(カンマ区切り)の入力
+	if (Param::getMode() == Param::Mode::Experiment)
+	{
+		std::cout << std::endl;
+	
+		// 少しだけキー入力待機
+		Sleep(500);
+
+		if (!(Param::switchFakeRecIdList.size()==0))
+		{
+			std::cout << "> 偽収録IDリスト(fake_rec_id_list) は設定ファイルのものを使用します。" << std::endl;
+		}
+		else
+		{
+			while (true)
+			{
+				std::cout << "> 偽収録IDリスト(fake_rec_id_list) をカンマ区切りで入力してください" << std::endl;
+				std::cout << "> "; std::cin.getline(inputLineAry, maxLine);
+
+				std::string inputLine = inputLineAry;
+				boost::algorithm::trim(inputLine);
+
+				try
+				{
+					Param::switchFakeRecIdList = Param::splitStrIntoIntList(inputLine, ",");
+
+					std::cout << inputLine << "に設定しました" << std::endl;
+					break;
+				}
+				catch (std::string str)
+				{
+					std::cout << str << std::endl;
+				}
+			}
+		}
+	}
 }
 
 
@@ -647,6 +799,8 @@ PerceptionNeuronDAO::DataSet MotionSwitchAccumulator::accumulateMotionDataBefore
 			{
 				while (_kbhit() != 0){ _getch(); } //キー入力をクリア
 				avatarController.isSwitched = true;
+
+				std::cout << "切り替え！" << std::endl;
 				break;
 			}
 

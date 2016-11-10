@@ -85,8 +85,15 @@ PerceptionNeuronSensorData PerceptionNeuronData::getLatestSensorData()
 
 	PerceptionNeuronSensorData sensorData;
 
+	sensorData.dataType = PerceptionNeuronSensorData::DataTypeEnum::BVH;	
+	sensorData.bvhData.avatarIndex   = this->latestSensorData.bvhData.avatarIndex;
+	sensorData.bvhData.avatarName    = this->latestSensorData.bvhData.avatarName;
+	sensorData.bvhData.withDisp      = this->latestSensorData.bvhData.withDisp;
+	sensorData.bvhData.withReference = this->latestSensorData.bvhData.withReference;
+	sensorData.bvhData.frameIndex    = this->latestSensorData.bvhData.frameIndex;
+	sensorData.bvhData.dataCount     = this->latestSensorData.bvhData.dataCount;
+
 	sensorData.bvhData.data = (float *)malloc(this->latestSensorData.bvhData.dataCount * sizeof(float));
-	sensorData.bvhData.dataCount = this->latestSensorData.bvhData.dataCount;
 	memcpy(sensorData.bvhData.data, this->latestSensorData.bvhData.data, this->latestSensorData.bvhData.dataCount * sizeof(float));
 
 	return sensorData;
