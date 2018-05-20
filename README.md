@@ -1,7 +1,8 @@
-EmbodiedBrain
+EmbodiedBrain project
 =============
 
-Applications for Embodied-Brain System project  
+Applications for Embodied-Brain System project  based on the SIGVerse ver.2
+主にここで管理されているのは2016年までに開発されたアプリケーションです．SIGVerse ver.3 で開発されているアプリケーションは別レポジトリを参照して下さい
 
 MirrorTherapy_v1
 ----------------
